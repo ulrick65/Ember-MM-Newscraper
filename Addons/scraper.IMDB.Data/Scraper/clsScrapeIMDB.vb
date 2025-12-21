@@ -1093,7 +1093,7 @@ Public Class Scraper
             If CreditCategoriesList IsNot Nothing Then
                 For Each CreditCategory In CreditCategoriesList
                     If CreditCategory.Id IsNot Nothing AndAlso CreditCategory.Section IsNot Nothing Then
-                        If String.Equals(CreditCategory.Name, "writer", StringComparison.OrdinalIgnoreCase) Then
+                        If String.Equals(CreditCategory.Name, "writer", StringComparison.OrdinalIgnoreCase) Or String.Equals(CreditCategory.Name, "writers", StringComparison.OrdinalIgnoreCase) Then
                             'Loop all creditconnection edges wich contains writer members
 
                             For Each json_section_item As CategoryItem In CreditCategory.Section.Items

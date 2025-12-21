@@ -13,7 +13,7 @@ Imports System.Runtime.InteropServices
 <Assembly: AssemblyCompany("Ember Media Manager")>
 <Assembly: AssemblyProduct("scraper.Data.IMDB")>
 <Assembly: AssemblyCopyright("Copyright © 2025")>
-<Assembly: AssemblyTrademark("")> 
+<Assembly: AssemblyTrademark("")>
 
 <Assembly: ComVisible(False)>
 
@@ -31,5 +31,6 @@ Imports System.Runtime.InteropServices
 ' by using the '*' as shown below:
 ' <Assembly: AssemblyVersion("1.0.*")> 
 
-<Assembly: AssemblyVersion("1.11.2.0")>
-<Assembly: AssemblyFileVersion("1.11.2.0")>
+' Updated version after adding writers to the comparison from nagten in the upstream repository 
+<Assembly: AssemblyVersion("1.11.2.7")>
+<Assembly: AssemblyFileVersion("1.11.2.7")>
