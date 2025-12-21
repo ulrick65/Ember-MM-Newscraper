@@ -25,6 +25,7 @@ Imports XBMCRPC
 Imports System.IO
 Imports System.Text.RegularExpressions
 Imports System.Web
+Imports Globalization = System.Globalization
 
 Namespace Kodi
 
@@ -755,7 +756,7 @@ Namespace Kodi
                             newsource.file = remotesource.file
                             newsource.label = remotesource.label
                             lstremotesources.Add(newsource)
-                            logger.Trace(String.Format("[APIKodi] [{0}] [GetSources] Added Source: {1}", _currenthost.Label, remotesource.file))
+                            logger.Trace(String.Format("[APIKodi] [{0] [GetSources] Added Source: {1}", _currenthost.Label, remotesource.file))
                         End If
                     Next
 
@@ -1596,7 +1597,7 @@ Namespace Kodi
                         ).ConfigureAwait(False)
 
                     If response.Contains("error") Then
-                        logger.Error(String.Format("[APIKodi] [{0}] UpdateInfo_TVEpisode: {1}", _currenthost.Label, response))
+                        logger.Error(String.Format("[APIKodi] [{0] UpdateInfo_TVEpisode: {1}", _currenthost.Label, response))
                         Return False
                     Else
                         'Remove old textures (cache)
@@ -2174,7 +2175,7 @@ Namespace Kodi
                     Else
                         'Send message to Kodi?
                         If blnSendHostNotification = True Then
-                            Await SendMessage("Ember Media Manager", String.Format("{0}: {1}: {2}", Master.eLang.GetString(1024, "Removed"), mDBElement.TVShow.Title, mDBElement.TVEpisode.Title)).ConfigureAwait(False)
+                            Await SendMessage("Ember Media Manager", String.Format("{0}: {1}", Master.eLang.GetString(1024, "Removed"), mDBElement.TVEpisode.Title)).ConfigureAwait(False)
                         End If
                         logger.Trace(String.Format("[APIKodi] [{0}] [Remove_TVEpisode]: ""{1}"" | {2} on host", _currenthost.Label, mDBElement.TVEpisode.Title, "Removed"))
                         Return True
@@ -2183,12 +2184,12 @@ Namespace Kodi
                     logger.Error(String.Format("[APIKodi] [{0}] [Remove_TVEpisode]: ""{1}"" | NOT found on host! Abort!", _currenthost.Label, mDBElement.TVEpisode.Title))
                     Return False
                 End If
-
             Catch ex As Exception
                 logger.Error(ex, New StackFrame().GetMethod().Name)
                 Return False
             End Try
         End Function
+
         ''' <summary>
         ''' Remove TVShow details at Kodi
         ''' </summary>
@@ -2341,13 +2342,13 @@ Namespace Kodi
                             'get all items of the wanted playlist
                             Dim wantedplaylistcontent = Await _kodi.Files.GetDirectory(currentplaylist.file, Files.Media.files, XBMCRPC.List.Fields.Files.AllFields)
                             'now get all playlistsIDs avalaible using playlist-API
-                            Dim lstallplaylists = Await _kodi.Playlist.GetPlaylists
+                            Dim lstallplaylists = Await _kodi.Playlist.GetPlaylists()
                             'next loop through each playlist and check if its the one we want by comparing it's content with the content of our wanted playlist
                             For Each tmpplaylist In lstallplaylists
                                 If Not tmpplaylist Is Nothing Then
                                     'get all items of playlist
                                     Dim tmpplaylistcontent = Await _kodi.Playlist.GetItems(tmpplaylist.playlistid)
-                                    'check if current looped playlist has same count as our wanted playlist (we use this to reduce the number of playlists we need to loop through)
+                                    'check if the current looped playlist has same count as our wanted playlist (we use this to reduce the number of playlists we need to loop through)
                                     If Not tmpplaylistcontent Is Nothing AndAlso Not tmpplaylistcontent.items Is Nothing AndAlso tmpplaylistcontent.items.Count = wantedplaylistcontent.files.Count Then
                                         'if the both playlists don't have any items then I don't bother and return this list as the correct one
                                         Dim IsIdenticalPlaylist = True
