@@ -711,7 +711,7 @@ Namespace My.Resources
         End Property
         
         '''<summary>
-        '''  Looks up a localized string similar to https://github.com/DanCooper/Ember-MM-Newscraper/releases.
+        '''  Looks up a localized string similar to https://github.com/ulrick65/Ember-MM-Newscraper.
         '''</summary>
         Friend ReadOnly Property urlReleaseThread() As String
             Get
