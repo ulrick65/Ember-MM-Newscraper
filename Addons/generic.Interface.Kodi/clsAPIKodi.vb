@@ -2668,7 +2668,12 @@ Namespace Kodi
 
         Public Async Function ConnectAsync(hostName As String, port As Integer) As Task Implements ISocket.ConnectAsync
             _socket = New Net.Sockets.Socket(Net.Sockets.AddressFamily.InterNetwork, Net.Sockets.SocketType.Stream, Net.Sockets.ProtocolType.Tcp)
-            _socket.Connect(hostName, port)
+            Await Task.Factory.FromAsync(
+                AddressOf _socket.BeginConnect,
+                AddressOf _socket.EndConnect,
+                hostName,
+                port,
+                Nothing)
         End Function
 
         Public Function GetInputStream() As Stream Implements ISocket.GetInputStream
