@@ -56,17 +56,17 @@ This document tracks the systematic update of NuGet packages across the Ember-MM
 
 ### Current Package Versions
 
-| Package | Current Version(s) | Latest Version | Risk Level | Target Version |
-|---------|-------------------|----------------|------------|----------------|
-| EntityFramework | 6.0.0, 6.1.3 | 6.5.1 | 🟡 Low | 6.5.1 |
-| NLog | 4.2.3 | 5.3.4 | 🔴 High (v5) | 4.7.15 |
-| Newtonsoft.Json | 13.0.4 | 13.0.4 | 🟢 None | 13.0.4 ✓ |
-| System.Data.SQLite | 1.0.108.0 | 1.0.119.0 | 🟡 Low-Medium | 1.0.119.0 |
-| HtmlAgilityPack | 1.11.42 | 1.11.71 | 🟢 Low | 1.11.71 |
-| TMDbLib | 1.8.1 | 2.3.0 | 🟡 Medium | 2.3.0 |
-| TraktApiSharp | 0.11.0 | 1.3.0 | 🟡 Medium | 1.3.0 |
-| SharpZipLib | 0.86.0 | 1.4.2 | 🔴 High | 1.4.2 |
-| VideoLibrary | 3.1.2 | 3.2.3 | 🟢 Low | 3.2.3 |
+| Package               | Current       | Latest    | Risk      | Target    |
+|-----------------------|---------------|-----------|-----------|-----------|
+| EntityFramework       | 6.0.0, 6.1.3  | 6.5.1     | Low       | 6.5.1     |
+| NLog                  | 4.2.3         | 5.3.4     | High (v5) | 4.7.15    |
+| Newtonsoft.Json       | 13.0.4        | 13.0.4    | None      | 13.0.4 ✓  |
+| System.Data.SQLite    | 1.0.108.0     | 1.0.119.0 | Low-Medium| 1.0.119.0 |
+| HtmlAgilityPack       | 1.11.42       | 1.11.71   | Low       | 1.11.71   |
+| TMDbLib               | 1.8.1         | 2.3.0     | Medium    | 2.3.0     |
+| TraktApiSharp         | 0.11.0        | 1.3.0     | Medium    | 1.3.0     |
+| SharpZipLib           | 0.86.0        | 1.4.2     | High      | 1.4.2     |
+| VideoLibrary          | 3.1.2         | 3.2.3     | Low       | 3.2.3     |
 
 ### Package Distribution by Project
 
@@ -672,13 +672,13 @@ This document tracks the systematic update of NuGet packages across the Ember-MM
 
 Last Updated: December 22, 2025
 
-| Phase | Tasks | Completed | In Progress | Not Started | Blocked | Failed |
-|-------|-------|-----------|-------------|-------------|---------|--------|
-| Phase 1 | 1 | 0 | 0 | 1 | 0 | 0 |
-| Phase 2 | 5 | 0 | 0 | 5 | 0 | 0 |
-| Phase 3 | 2 | 0 | 0 | 2 | 0 | 0 |
-| Phase 4 | 2 | 0 | 0 | 1 | 1 | 0 |
-| **Total** | **10** | **0** | **0** | **9** | **1** | **0** |
+| Phase     | Tasks | Completed | In Progress   | Not Started   | Blocked   | Failed    |
+|-----------|-------|-----------|---------------|---------------|-----------|-----------|
+| Phase 1   | 1     | 0         | 0             | 1             | 0         | 0         |
+| Phase 2   | 5     | 0         | 0             | 5             | 0         | 0         |
+| Phase 3   | 2     | 0         | 0             | 2             | 0         | 0         |
+| Phase 4   | 2     | 0         | 0             | 1             | 1         | 0         |
+| Total     | 10    | 0         | 0             | 9             | 1         | 0         |
 
 ### Detailed Task Status
 
@@ -983,7 +983,7 @@ None documented yet.
 
 ### Version History
 
-- **v1.0 (December 22, 2025):** Initial plan created
+- **v1.0 (December 22, 2025 5:00 PM):** - Initial plan created
 
 ---
 
