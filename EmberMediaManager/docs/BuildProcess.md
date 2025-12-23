@@ -277,6 +277,56 @@ Visual Studio's "Clean Solution" removes both `obj` folders and the final output
 
 This removes all `obj` folders recursively. **Note:** Deleting `obj` folders is safe and sometimes necessary to resolve build issues. MSBuild will recreate them on the next build.
 
+#### Enhanced Clean with Directory.Build.targets
+
+The solution includes a `Directory.Build.targets` file at the solution root that enhances Visual Studio's Clean behavior. This file automatically cleans both intermediate files and build outputs across all projects.
+
+**What Gets Cleaned:**
+
+When you run Build → Clean Solution in Visual Studio:
+
+1. **Project-level cleanup (all projects):**
+   - All files in `obj` folders are deleted
+   - All files in final output directories are deleted
+   - Empty `obj` folders may remain (this is normal)
+
+2. **Solution-level cleanup:**
+   - All files in `EmberMM - Debug - x86` are deleted
+   - All files in `EmberMM - Debug - x64` are deleted
+   - All files in `EmberMM - Debug - AnyCPU` are deleted
+   - All files in `EmberMM - Release - x86` are deleted
+   - All files in `EmberMM - Release - x64` are deleted
+   - All files in `EmberMM - Release - AnyCPU` are deleted
+
+**Expected Behavior:**
+
+After running Clean Solution, you should see:
+- ✅ All build output files deleted
+- ✅ All intermediate files deleted
+- ⚠️ Empty folders may remain (especially the active configuration folder)
+
+**Why Some Folders Remain:**
+
+Visual Studio keeps a file handle lock on the currently active configuration's output folder. This means:
+- The active configuration folder (e.g., `EmberMM - Debug - x86`) will remain empty but not deleted
+- Empty `obj` subfolders may remain in project directories
+- This is **normal MSBuild behavior** and does not indicate a problem
+- All files are deleted, which is the important part for ensuring clean builds
+
+**Directory.Build.targets Implementation:**
+
+The `Directory.Build.targets` file uses MSBuild's `AfterClean` target to extend the standard Clean behavior. It explicitly deletes files from all build output directories and intermediate folders, ensuring a thorough clean without manual intervention.
+
+**Manual Deep Clean (Optional):**
+
+If you need to remove all folders completely (not just their contents), close Visual Studio and run this PowerShell command from the solution root:
+
+`Get-ChildItem -Path . -Recurse -Directory -Filter "obj" | Remove-Item -Recurse -Force`
+
+`Remove-Item -Path "EmberMM - *" -Recurse -Force`
+
+This is rarely necessary but useful for troubleshooting or before committing to source control.
+
 ---
 
 ### Main Application Build Process

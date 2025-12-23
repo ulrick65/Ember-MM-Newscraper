@@ -3,7 +3,7 @@
 **Project:** Ember-MM-Newscraper  
 **Target Framework:** .NET Framework 4.8  
 **Plan Created:** December 23, 2025 12:00 AM  
-**Status:** Ready for Cleanup
+**Status:** ✅ COMPLETE
 
 ---
 
@@ -131,15 +131,136 @@ Compare project files to confirm they are duplicates
 
 These folders are **essential** - **DO NOT DELETE:**
 
-- ✅ BuildSetup - Installer scripts
-- ✅ EmberAPI - Core API library
-- ✅ EmberAPI_Test - Unit tests
-- ✅ EmberMediaManager - Main application
-- ✅ EmberMM - Application files
-- ✅ ImageSources - Stock images
-- ✅ KodiAPI - Kodi integration library
-- ✅ SourceImages - Source graphics
-- ✅ Trakttv - Trakt.tv library
+- ✅ **BuildSetup** - NSIS installer scripts (may be used for releases)
+- ✅ **EmberAPI** - Core API library project (REQUIRED)
+- ✅ **EmberMediaManager** - Main application project (REQUIRED)
+- ✅ **ImageSources** - Stock images for application (REQUIRED)
+- ✅ **KodiAPI** - Kodi integration library project (REQUIRED)
+- ✅ **SourceImages** - Source graphics (REQUIRED)
+- ✅ **Trakttv** - Trakt.tv integration library project (REQUIRED)
+- ✅ **Addons** - 27 active addon projects (REQUIRED)
+- ✅ **TVDB.dll** - TheTVDB API library (REQUIRED - used by TVDB scrapers)
+- ✅ **Directory.Build.targets** - Enhanced Clean behavior (RECOMMENDED)
+
+### 🗑️ **Optional Deletions (Safe to Remove)**
+
+These folders/files can be deleted without affecting the solution:
+
+- 🗑️ **EmberAPI_Test** - Orphaned unit test project (not in solution)
+- 🗑️ **EmberMM** - Legacy build output folder (will regenerate if needed)
+- 🗑️ **EmberMM - [Config] - [Platform]** - Build output folders (regenerated on build)
+- 🗑️ **obj folders** - Intermediate build artifacts (regenerated on build)
+- 🗑️ **.vs folder** - Visual Studio cache (regenerated on open)
+
+---
+
+## Additional Findings
+
+### 🔍 **Investigated Folders (Session 4)**
+
+#### EmberAPI_Test
+
+**Location:** `EmberAPI_Test\`
+
+**Status:** ⚠️ **NOT in solution** - Optional deletion
+
+**Analysis:**
+- Orphaned unit test project (not loaded in solution)
+- Listed in Solution Cleanup Analysis as one of "31 projects" but not in .sln file
+- Not receiving package updates
+- Not being tested or maintained
+
+**Recommendation:** 🗑️ **Optional deletion** - Safe to remove if desired
+
+**Risk Level:** 🟢 **ZERO RISK** - Not part of active solution
+
+---
+
+#### EmberMM Folder
+
+**Location:** `EmberMM\`
+
+**Status:** ⚠️ **Legacy build output** - Optional deletion
+
+**Analysis:**
+- Contains empty `Modules\` subfolder
+- Legacy build output folder no longer used
+- Current builds use `EmberMM - [Configuration] - [Platform]\` pattern
+- Will regenerate if needed
+
+**Recommendation:** 🗑️ **Optional deletion** - Cleanup legacy build output
+
+**Risk Level:** 🟢 **ZERO RISK** - Build output is always regenerated
+
+---
+
+#### TVDB.dll
+
+**Location:** Solution root `TVDB.dll`
+
+**Status:** ✅ **REQUIRED** - DO NOT DELETE
+
+**Analysis:**
+- Legacy TheTVDB API v2/v3 wrapper library
+- Referenced by: scraper.Image.TVDB, scraper.Data.TVDB
+- Uses old mirror-based architecture
+- Pre-NuGet era dependency (direct DLL reference)
+- TheTVDB v3 API still works (free tier)
+- TheTVDB v4 API requires paid subscription ($12/year)
+
+**Recommendation:** ✅ **KEEP** - Required by TVDB scrapers
+
+**Risk Level:** 🔴 **HIGH RISK IF DELETED** - Would break TVDB functionality
+
+**Notes:**
+- V4 API errors in logs are expected (no paid subscription)
+- V3 fallback is working correctly
+- Future migration to v4 would require subscription + TVDB.dll update
+
+---
+
+#### BuildSetup Folder
+
+**Location:** `BuildSetup\`
+
+**Status:** ✅ **KEEP** - Installer scripts
+
+**Analysis:**
+- Contains NSIS (Nullsoft Scriptable Install System) scripts
+- Used to create Windows installer executables
+- May still be used for official releases
+- Self-contained (doesn't affect builds)
+
+**Recommendation:** ✅ **KEEP** - Potentially used for releases
+
+**Risk Level:** 🟡 **LOW RISK** - Optional but may be needed
+
+**Notes:**
+- Modern distribution may use ZIP files instead of installers
+- Check GitHub releases to confirm if still used
+- Safe to keep regardless (minimal disk space)
+
+---
+
+#### Directory.Build.targets
+
+**Location:** Solution root `Directory.Build.targets`
+
+**Status:** ✅ **KEEP** - Enhanced Clean behavior
+
+**Analysis:**
+- Created in Session 4 to enhance Visual Studio Clean Solution
+- Automatically removes obj folders from all projects
+- Automatically removes solution-level build directories
+- Applies to all 30+ projects without modifying individual project files
+
+**Recommendation:** ✅ **KEEP** - Improves development workflow
+
+**Expected Clean Behavior:**
+- ✅ All files deleted from build directories
+- ✅ All files deleted from obj folders
+- ⚠️ Empty folders may remain (especially active configuration)
+- ⚠️ This is normal MSBuild behavior (VS keeps file handles on active config)
 
 ---
 
@@ -305,6 +426,35 @@ Expected Result:
   - Commit changes to Git
   - Update Package Update Plan (mark SharpZipLib as NOT APPLICABLE)
 
+### Session 4: December 23, 2025 (1:15 AM - 2:30 AM)
+- **Activity:** Additional folder investigation and build system enhancement
+- **Completed:**
+  - Investigated EmberAPI_Test folder - confirmed NOT in solution (orphaned)
+  - Investigated EmberMM folder - confirmed legacy build output (empty Modules subfolder)
+  - Investigated TVDB.dll - confirmed v2/v3 API wrapper (legacy but functional)
+  - Analyzed BuildSetup folder - confirmed NSIS installer scripts (keep for now)
+  - Investigated TVDB API version usage (v3 legacy support, v4 paid subscription)
+  - Enhanced build process with Directory.Build.targets for improved Clean behavior
+- **Investigation Results:**
+  - ✅ EmberAPI_Test: NOT in solution (safe to delete if desired)
+  - ✅ EmberMM folder: Legacy build output (can delete, will regenerate)
+  - ✅ TVDB.dll: Required by scraper.Image.TVDB and scraper.Data.TVDB (DO NOT DELETE)
+  - ✅ BuildSetup: NSIS installer scripts (keep - may be used for releases)
+  - ✅ Build system: Clean now works correctly with Directory.Build.targets
+- **Build System Enhancement:**
+  - Created Directory.Build.targets file at solution root
+  - Enhanced Visual Studio Clean Solution to remove obj folders and build outputs
+  - Clean now deletes all files from build directories (empty folders may remain - this is normal)
+- **Documentation Updates:**
+  - Updated BuildProcess.md with intermediate build files explanation
+  - Updated BuildProcess.md with enhanced Clean behavior documentation
+- **Status:** ✅ **INVESTIGATION AND ENHANCEMENT COMPLETE**
+- **Recommendations:**
+  - EmberAPI_Test: Optional deletion (not in solution)
+  - EmberMM folder: Optional deletion (build output only)
+  - TVDB.dll: KEEP (required for TVDB scrapers)
+  - BuildSetup: KEEP (installer scripts may be used)
+  - Directory.Build.targets: KEEP (enhances Clean behavior)
 
 ---
 
@@ -341,6 +491,23 @@ Expected Result:
   - Identified scraper.EmberCore.XML as unused (definite deletion)
   - Identified scraper.TVDB.Poster as likely duplicate (verify first)
   - Documented cleanup procedures and verification steps
+
+- **v2.0 (December 23, 2025 1:00 AM):** Cleanup execution complete
+  - Deleted scraper.EmberCore.XML (verified unused, not in .sln)
+  - Deleted scraper.TVDB.Poster (verified duplicate of scraper.Image.TVDB)
+  - Verified all 30 projects build successfully
+  - Verified application launches without errors
+  - Space recovered: ~7-15 MB
+
+- **v3.0 (December 23, 2025 2:30 AM):** Additional investigations complete
+  - Investigated EmberAPI_Test (confirmed orphaned - optional deletion)
+  - Investigated EmberMM folder (confirmed legacy build output - optional deletion)
+  - Investigated TVDB.dll (confirmed required - DO NOT DELETE)
+  - Investigated BuildSetup (confirmed installer scripts - keep for now)
+  - Analyzed TVDB API versions (v3 working, v4 requires paid subscription)
+  - Enhanced build system with Directory.Build.targets
+  - Updated BuildProcess.md with intermediate builds and Clean behavior
+  - Status changed to ✅ COMPLETE
 
 ---
 

@@ -1,58 +1,13 @@
 <Project>
 	<!-- Custom clean target that runs after the standard Clean -->
 	<Target Name="AfterClean">
-		<!-- Remove all contents of obj folder first -->
+		<!-- Remove obj folder for this project -->
 		<ItemGroup>
 			<ObjFiles Include="obj\**\*.*" />
-			<ObjDirs Include="obj\**\*" />
 		</ItemGroup>
 
 		<Delete Files="@(ObjFiles)" ContinueOnError="true" />
-		<RemoveDir Directories="@(ObjDirs)" ContinueOnError="true" />
 		<RemoveDir Directories="$(BaseIntermediateOutputPath)" ContinueOnError="true" />
 		<RemoveDir Directories="obj" ContinueOnError="true" />
-
-		<!-- Remove final output folder (handles relative paths correctly) -->
-		<RemoveDir Directories="$(OutputPath)" Condition="Exists('$(OutputPath)')" ContinueOnError="true" />
-	</Target>
-
-	<!-- Additional clean for solution-level build directories -->
-	<!-- This runs when cleaning from the solution level -->
-	<Target Name="CleanSolutionBuildFolders" AfterTargets="Clean" Condition="'$(SolutionDir)' != ''">
-		<PropertyGroup>
-			<BuildDir1>$(SolutionDir)EmberMM - Debug - x86\</BuildDir1>
-			<BuildDir2>$(SolutionDir)EmberMM - Debug - x64\</BuildDir2>
-			<BuildDir3>$(SolutionDir)EmberMM - Debug - AnyCPU\</BuildDir3>
-			<BuildDir4>$(SolutionDir)EmberMM - Release - x86\</BuildDir4>
-			<BuildDir5>$(SolutionDir)EmberMM - Release - x64\</BuildDir5>
-			<BuildDir6>$(SolutionDir)EmberMM - Release - AnyCPU\</BuildDir6>
-		</PropertyGroup>
-
-		<!-- Delete all files first, then remove directories -->
-		<ItemGroup>
-			<BuildFiles1 Include="$(BuildDir1)**\*.*" Condition="Exists('$(BuildDir1)')" />
-			<BuildFiles2 Include="$(BuildDir2)**\*.*" Condition="Exists('$(BuildDir2)')" />
-			<BuildFiles3 Include="$(BuildDir3)**\*.*" Condition="Exists('$(BuildDir3)')" />
-			<BuildFiles4 Include="$(BuildDir4)**\*.*" Condition="Exists('$(BuildDir4)')" />
-			<BuildFiles5 Include="$(BuildDir5)**\*.*" Condition="Exists('$(BuildDir5)')" />
-			<BuildFiles6 Include="$(BuildDir6)**\*.*" Condition="Exists('$(BuildDir6)')" />
-		</ItemGroup>
-
-		<Delete Files="@(BuildFiles1)" ContinueOnError="true" />
-		<Delete Files="@(BuildFiles2)" ContinueOnError="true" />
-		<Delete Files="@(BuildFiles3)" ContinueOnError="true" />
-		<Delete Files="@(BuildFiles4)" ContinueOnError="true" />
-		<Delete Files="@(BuildFiles5)" ContinueOnError="true" />
-		<Delete Files="@(BuildFiles6)" ContinueOnError="true" />
-
-		<!-- Now remove the directories -->
-		<RemoveDir Directories="$(BuildDir1)" Condition="Exists('$(BuildDir1)')" ContinueOnError="true" />
-		<RemoveDir Directories="$(BuildDir2)" Condition="Exists('$(BuildDir2)')" ContinueOnError="true" />
-		<RemoveDir Directories="$(BuildDir3)" Condition="Exists('$(BuildDir3)')" ContinueOnError="true" />
-		<RemoveDir Directories="$(BuildDir4)" Condition="Exists('$(BuildDir4)')" ContinueOnError="true" />
-		<RemoveDir Directories="$(BuildDir5)" Condition="Exists('$(BuildDir5)')" ContinueOnError="true" />
-		<RemoveDir Directories="$(BuildDir6)" Condition="Exists('$(BuildDir6)')" ContinueOnError="true" />
-
-		<Message Text="Cleaned solution-level build directories" Importance="high" />
 	</Target>
 </Project>
