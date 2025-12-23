@@ -215,6 +215,70 @@ Each addon is built into its own subdirectory under the Modules folder. The stru
 
 ## How Projects Build
 
+### Understanding MSBuild's Two-Stage Build Process
+
+Before diving into how each project builds, it's important to understand that MSBuild uses a **two-stage build process**:
+
+#### Stage 1: Compilation (Intermediate Files)
+
+**Location Pattern:** `<ProjectFolder>\obj\<Platform>\<Configuration>\`
+
+**Example:** `Addons\scraper.Data.TMDB\obj\x86\Release\`
+
+MSBuild first compiles source code into **intermediate build artifacts**:
+- Compiled assemblies (`.dll` or `.exe`) - temporary copies
+- Debug symbols (`.pdb` files) if configured
+- Build cache files (`.cache`) for dependency resolution
+- Compiled resources in `TempPE\` folder
+- Assembly manifest and metadata files
+
+**Purpose:**
+- Enables incremental builds (only recompile changed files)
+- Isolates each project's intermediate files
+- Supports parallel builds without conflicts
+- Stores compilation metadata for faster subsequent builds
+
+**Important:** These are NOT the final output! The `obj` folder contains temporary compilation artifacts.
+
+#### Stage 2: Copy to Output (Final Files)
+
+**Location:** Defined by `<OutputPath>` in project file
+
+**Example:** `EmberMM - Release - x86\Modules\scraper.data.tmdb\`
+
+After compilation, MSBuild copies files to the final output location:
+- Final compiled assemblies from `obj` folder
+- All dependencies (NuGet packages marked `Private=True`)
+- Configuration files (`.config`, `NLog.config`, etc.)
+- XML documentation files
+- Content files marked for copying
+
+**This is your deployment directory** - only these files should be distributed.
+
+#### Visual Comparison
+
+For `scraper.Data.TMDB` building in `Release|x86`:
+
+**Intermediate Files (can safely delete):**
+- Location: `Addons\scraper.Data.TMDB\obj\x86\Release\`
+- Contains: `scraper.Data.TMDB.dll` (temp), `.pdb`, `.cache` files
+- Purpose: MSBuild internal use only
+
+**Final Output Files (deploy these):**
+- Location: `EmberMM - Release - x86\Modules\scraper.data.tmdb\`
+- Contains: `scraper.Data.TMDB.dll` (final), `TMDbLib.dll`, `Newtonsoft.Json.dll`, `NLog.dll`
+- Purpose: Application deployment
+
+#### Cleaning Intermediate Files
+
+Visual Studio's "Clean Solution" removes both `obj` folders and the final output directories. To manually clean only intermediate files, use this PowerShell command:
+
+`Get-ChildItem -Path . -Recurse -Directory -Filter "obj" | Remove-Item -Recurse -Force`
+
+This removes all `obj` folders recursively. **Note:** Deleting `obj` folders is safe and sometimes necessary to resolve build issues. MSBuild will recreate them on the next build.
+
+---
+
 ### Main Application Build Process
 
 **Project:** `EmberMediaManager\EmberMediaManager.vbproj`

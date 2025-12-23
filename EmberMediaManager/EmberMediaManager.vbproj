@@ -513,6 +513,7 @@
     <None Include="App.config" />
     <None Include="docs\BuildProcess.md" />
     <None Include="docs\EMM Release Notes, v1.12.0.0.md" />
+    <None Include="docs\File Cleanup Plan.md" />
     <None Include="docs\Package Update Plan.md" />
     <None Include="docs\Solution Cleanup Analysis.md" />
     <None Include="My Project\app.manifest" />
