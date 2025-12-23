@@ -67,8 +67,6 @@ Namespace YouTube
             Select Case codec
                 Case AudioFormat.Aac
                     Return Enums.AudioCodec.AAC
-                Case AudioFormat.Mp3
-                    Return Enums.AudioCodec.MP3
                 Case AudioFormat.Opus
                     Return Enums.AudioCodec.Opus
                 Case AudioFormat.Vorbis
