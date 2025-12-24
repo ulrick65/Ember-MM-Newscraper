@@ -64,8 +64,6 @@
     <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
     <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.vb</CodeAnalysisModuleSuppressionsFile>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-    
-    
     <Optimize>false</Optimize>
     <DocumentationFile>
     </DocumentationFile>
@@ -84,8 +82,6 @@
     <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
     <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.vb</CodeAnalysisModuleSuppressionsFile>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-    
-    
     <DocumentationFile>
     </DocumentationFile>
     <Prefer32Bit>false</Prefer32Bit>
@@ -513,7 +509,9 @@
     <None Include="App.config" />
     <None Include="docs\BuildProcess.md" />
     <None Include="docs\EMM Release Notes, v1.12.0.0.md" />
+    <None Include="docs\FFmpeg-Integration-Analysis.md" />
     <None Include="docs\File Cleanup Plan.md" />
+    <None Include="docs\Media Info Process.md" />
     <None Include="docs\Package Update Plan.md" />
     <None Include="docs\Solution Cleanup Analysis.md" />
     <None Include="My Project\app.manifest" />
