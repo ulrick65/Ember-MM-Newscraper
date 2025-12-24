@@ -508,12 +508,13 @@
   <ItemGroup>
     <None Include="App.config" />
     <None Include="docs\BuildProcess.md" />
-    <None Include="docs\EMM Release Notes, v1.12.0.0.md" />
-    <None Include="docs\FFmpeg-Integration-Analysis.md" />
-    <None Include="docs\File Cleanup Plan.md" />
-    <None Include="docs\Media Info Process.md" />
-    <None Include="docs\Package Update Plan.md" />
-    <None Include="docs\Solution Cleanup Analysis.md" />
+    <None Include="docs\ReleaseNotes-v1.12.0.0.md" />
+    <None Include="docs\FFmpegProcess.md" />
+    <None Include="docs\FileCleanUpPlan.md" />
+    <None Include="docs\GenreProcess.md" />
+    <None Include="docs\MediaInfoProcess.md" />
+    <None Include="docs\PackageUpdatePlan.md" />
+    <None Include="docs\SolutionCleanupAnalysis.md" />
     <None Include="My Project\app.manifest" />
     <None Include="My Project\Application.myapp">
       <Generator>MyApplicationCodeGenerator</Generator>
