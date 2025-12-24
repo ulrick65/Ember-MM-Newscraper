@@ -79,18 +79,18 @@ if (Test-Path ".vs") {
 Write-Host ""
 
 # Optional: Remove bin folders (uncomment if desired)
-# Write-Host "🗑️  Removing bin folders from all projects..." -ForegroundColor Yellow
-# $binFolders = Get-ChildItem -Path . -Recurse -Directory -Filter "bin" -ErrorAction SilentlyContinue | Where-Object { $_.FullName -notlike "*\packages\*" }
-# $binCount = ($binFolders | Measure-Object).Count
-# if ($binCount -gt 0) {
-#     $binFolders | ForEach-Object {
-#         Remove-Item -Path $_.FullName -Recurse -Force -ErrorAction SilentlyContinue
-#     }
-#     Write-Host "   ✅ Removed $binCount bin folder(s)" -ForegroundColor Green
-# } else {
-#     Write-Host "   ℹ️  No bin folders found" -ForegroundColor Gray
-# }
-# Write-Host ""
+Write-Host "🗑️  Removing bin folders from all projects..." -ForegroundColor Yellow
+$binFolders = Get-ChildItem -Path . -Recurse -Directory -Filter "bin" -ErrorAction SilentlyContinue | Where-Object { $_.FullName -notlike "*\packages\*" }
+$binCount = ($binFolders | Measure-Object).Count
+if ($binCount -gt 0) {
+    $binFolders | ForEach-Object {
+    Remove-Item -Path $_.FullName -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    Write-Host "   ✅ Removed $binCount bin folder(s)" -ForegroundColor Green
+    } else {
+    Write-Host "   ℹ️  No bin folders found" -ForegroundColor Gray
+}
+Write-Host ""
 
 Write-Host "═══════════════════════════════════════════════════════" -ForegroundColor Green
 Write-Host "  ✅ Deep Clean Complete!" -ForegroundColor Green
