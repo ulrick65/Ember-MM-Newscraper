@@ -133,22 +133,18 @@ Public Class clsXMLGenreMapping
                 If existingInput IsNot Nothing Then
                     nResult.AddRange(existingInput.MappedTo)
                 ElseIf addNewInputs Then
-                    ' Validate and auto-fix genre name
-                    Dim genreToAdd As String = aInput
-
                     If Not IsValidGenreName(aInput) Then
                         ' Try to auto-fix by converting spaces to hyphens
                         Dim suggestedName As String = SuggestValidGenreName(aInput)
 
                         If Not String.IsNullOrEmpty(suggestedName) Then
                             ' Successfully auto-fixed (had only spaces as invalid characters)
-                            _Logger.Warn(String.Format("Genre '{0}' contains spaces. Auto-fixed to '{1}'", aInput, suggestedName))
-                            genreToAdd = suggestedName
+                            _Logger.Info(String.Format("Genre '{0}' auto-fixed to '{1}'", aInput, suggestedName))
 
                             ' Check if the fixed name already exists as a genre
                             Dim existingGenre As GenreProperty = Genres.FirstOrDefault(Function(f) f.Name = suggestedName)
                             If existingGenre Is Nothing Then
-                                ' Add the fixed genre name
+                                ' Add ONLY the fixed genre name
                                 Genres.Add(New GenreProperty With {.Name = suggestedName})
                             End If
 
@@ -160,21 +156,29 @@ Public Class clsXMLGenreMapping
                             nResult.Add(suggestedName)
                             bNewInputAdded = True
                         Else
-                            ' Contains special characters - skip and let user map manually
-                            _Logger.Warn(String.Format("Genre '{0}' contains special characters. Skipping - user must create mapping manually.", aInput))
+                            ' Contains special characters - skip and create empty mapping
+                            _Logger.Warn(String.Format("Genre '{0}' contains invalid characters and cannot be auto-fixed. Skipping.", aInput))
+
+                            ' Create empty mapping to prevent re-processing
+                            Mappings.Add(New GenreMapping With {
+                                         .MappedTo = New List(Of String),
+                                         .SearchString = aInput
+                                         })
+                            bNewInputAdded = True
+                            ' Note: We don't add anything to nResult, so this genre will be filtered out
                         End If
                     Else
                         ' Genre name is valid - proceed normally
-                        Dim gProperty As GenreProperty = Genres.FirstOrDefault(Function(f) f.Name = genreToAdd)
+                        Dim gProperty As GenreProperty = Genres.FirstOrDefault(Function(f) f.Name = aInput)
                         If gProperty Is Nothing Then
-                            Genres.Add(New GenreProperty With {.Name = genreToAdd})
+                            Genres.Add(New GenreProperty With {.Name = aInput})
                         End If
 
                         Mappings.Add(New GenreMapping With {
-                                     .MappedTo = New List(Of String) From {genreToAdd},
+                                     .MappedTo = New List(Of String) From {aInput},
                                      .SearchString = aInput
                                      })
-                        nResult.Add(genreToAdd)
+                        nResult.Add(aInput)
                         bNewInputAdded = True
                     End If
                 End If
@@ -298,7 +302,9 @@ Public Class clsXMLGenreMapping
     ''' Returns empty string if genre contains special characters (user must map manually)
     ''' </summary>
     Public Shared Function SuggestValidGenreName(ByVal genreName As String) As String
-        If String.IsNullOrWhiteSpace(genreName) Then Return String.Empty
+        If String.IsNullOrWhiteSpace(genreName) Then
+            Return String.Empty
+        End If
 
         Dim trimmedName As String = genreName.Trim()
 

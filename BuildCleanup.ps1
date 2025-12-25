@@ -1,14 +1,23 @@
-# Deep Clean Script for Ember Media Manager
-# Run this when you want to completely remove all build outputs
+# Cleaning Script for Ember Media Manager
+# Run this when you want to remove all build outputs
+# NORMAL mode keeps the .vs folder, DEEP mode removes it too
 # DO NOT run this during active development - use "Clean Solution" for that
 
 param(
+    [switch]$Deep,
     [switch]$KeepActiveConfig
 )
 
 Write-Host "═══════════════════════════════════════════════════════" -ForegroundColor Cyan
 Write-Host "  Ember Media Manager - Deep Clean" -ForegroundColor Cyan
 Write-Host "═══════════════════════════════════════════════════════" -ForegroundColor Cyan
+Write-Host ""
+
+if ($Deep) {
+    Write-Host "Mode: DEEP (includes .vs cleanup)" -ForegroundColor Cyan
+} else {
+    Write-Host "Mode: NORMAL (keeps .vs folder)" -ForegroundColor Cyan
+}
 Write-Host ""
 
 # Verify VS is closed (optional - comment out if annoying)
@@ -64,33 +73,38 @@ if ($objCount -gt 0) {
 }
 Write-Host ""
 
-# Remove .vs folder (Visual Studio cache)
-Write-Host "🗑️  Removing .vs folder (Visual Studio cache)..." -ForegroundColor Yellow
-if (Test-Path ".vs") {
-    Remove-Item -Path ".vs" -Recurse -Force -ErrorAction SilentlyContinue
-    if (-not (Test-Path ".vs")) {
-        Write-Host "   ✅ Removed .vs folder" -ForegroundColor Green
-    } else {
-        Write-Host "   ⚠️  Could not fully remove .vs folder (VS may be running)" -ForegroundColor Yellow
-    }
-} else {
-    Write-Host "   ℹ️  No .vs folder found" -ForegroundColor Gray
-}
-Write-Host ""
-
-# Optional: Remove bin folders (uncomment if desired)
+# Remove bin folders
 Write-Host "🗑️  Removing bin folders from all projects..." -ForegroundColor Yellow
 $binFolders = Get-ChildItem -Path . -Recurse -Directory -Filter "bin" -ErrorAction SilentlyContinue | Where-Object { $_.FullName -notlike "*\packages\*" }
 $binCount = ($binFolders | Measure-Object).Count
 if ($binCount -gt 0) {
     $binFolders | ForEach-Object {
-    Remove-Item -Path $_.FullName -Recurse -Force -ErrorAction SilentlyContinue
+        Remove-Item -Path $_.FullName -Recurse -Force -ErrorAction SilentlyContinue
     }
     Write-Host "   ✅ Removed $binCount bin folder(s)" -ForegroundColor Green
-    } else {
+} else {
     Write-Host "   ℹ️  No bin folders found" -ForegroundColor Gray
 }
 Write-Host ""
+
+# Remove .vs folder (Visual Studio cache) - only in -Deep mode
+if ($Deep) {
+    Write-Host "🗑️  Removing .vs folder (Visual Studio cache)..." -ForegroundColor Yellow
+    if (Test-Path ".vs") {
+        Remove-Item -Path ".vs" -Recurse -Force -ErrorAction SilentlyContinue
+        if (-not (Test-Path ".vs")) {
+            Write-Host "   ✅ Removed .vs folder" -ForegroundColor Green
+        } else {
+            Write-Host "   ⚠️  Could not fully remove .vs folder (VS may be running)" -ForegroundColor Yellow
+        }
+    } else {
+        Write-Host "   ℹ️  No .vs folder found" -ForegroundColor Gray
+    }
+    Write-Host ""
+} else {
+    Write-Host "ℹ️  Skipping .vs folder cleanup (use -Deep to include it)" -ForegroundColor Gray
+    Write-Host ""
+}
 
 Write-Host "═══════════════════════════════════════════════════════" -ForegroundColor Green
 Write-Host "  ✅ Deep Clean Complete!" -ForegroundColor Green
@@ -98,6 +112,5 @@ Write-Host "══════════════════════�
 Write-Host ""
 Write-Host "📋 Next steps:" -ForegroundColor Cyan
 Write-Host "   1. Reopen Visual Studio (if closed)" -ForegroundColor White
-Write-Host "   2. Restore NuGet packages (right-click solution → Restore NuGet Packages)" -ForegroundColor White
-Write-Host "   3. Build → Rebuild Solution" -ForegroundColor White
+Write-Host "   2. Build → Rebuild Solution" -ForegroundColor White
 Write-Host ""

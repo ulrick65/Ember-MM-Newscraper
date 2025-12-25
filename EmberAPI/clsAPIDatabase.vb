@@ -2057,6 +2057,7 @@ Public Class Database
 
     Public Sub LoadAll_Genres()
         Dim nList As New List(Of String)
+        Dim bChangesWereMade As Boolean = False
 
         Using SQLcommand As SQLiteCommand = _myvideosDBConn.CreateCommand()
             SQLcommand.CommandText = "SELECT strGenre FROM genre ORDER BY strGenre;"
@@ -2070,15 +2071,75 @@ Public Class Database
         For Each aGenre As String In nList
             Dim gMapping As GenreMapping = APIXML.GenreMapping.Mappings.FirstOrDefault(Function(f) f.SearchString = aGenre)
             If gMapping Is Nothing Then
-                'check if the tGenre is already existing in Gernes list
-                Dim gProperty As GenreProperty = APIXML.GenreMapping.Genres.FirstOrDefault(Function(f) f.Name = aGenre)
-                If gProperty Is Nothing Then
-                    APIXML.GenreMapping.Genres.Add(New GenreProperty With {.isNew = False, .Name = aGenre})
+                bChangesWereMade = True
+
+                ' Validate genre name
+                If Not clsXMLGenreMapping.IsValidGenreName(aGenre) Then
+                    Dim suggestedName As String = clsXMLGenreMapping.SuggestValidGenreName(aGenre)
+
+                    If Not String.IsNullOrEmpty(suggestedName) Then
+                        ' Auto-fix: spaces only (e.g., "Science Fiction" → "Science-Fiction")
+                        logger.Info(String.Format("Genre '{0}' auto-fixed to '{1}'", aGenre, suggestedName))
+
+                        ' Check if the fixed name already exists as a genre
+                        Dim gProperty As GenreProperty = APIXML.GenreMapping.Genres.FirstOrDefault(Function(f) f.Name = suggestedName)
+                        If gProperty Is Nothing Then
+                            ' Add the fixed genre name (marked as NEW for user review)
+                            APIXML.GenreMapping.Genres.Add(New GenreProperty With {
+                            .isNew = True,
+                            .Name = suggestedName
+                        })
+                        End If
+
+                        ' Create mapping from original invalid name to fixed valid name
+                        APIXML.GenreMapping.Mappings.Add(New GenreMapping With {
+                        .isNew = True,
+                        .MappedTo = New List(Of String) From {suggestedName},
+                        .SearchString = aGenre
+                    })
+                    Else
+                        ' Cannot auto-fix: contains special characters (e.g., "War & Politics")
+                        logger.Warn(String.Format("Genre '{0}' contains invalid characters and cannot be auto-fixed. Creating empty mapping to skip.", aGenre))
+
+                        ' Create empty mapping to prevent re-processing
+                        APIXML.GenreMapping.Mappings.Add(New GenreMapping With {
+                        .isNew = False,
+                        .MappedTo = New List(Of String),
+                        .SearchString = aGenre
+                    })
+                        ' Note: Genre is NOT added to Genres list, so it will be filtered out
+                    End If
+                Else
+                    ' Valid genre name - add normally
+                    Dim gProperty As GenreProperty = APIXML.GenreMapping.Genres.FirstOrDefault(Function(f) f.Name = aGenre)
+                    If gProperty Is Nothing Then
+                        APIXML.GenreMapping.Genres.Add(New GenreProperty With {
+                        .isNew = False,
+                        .Name = aGenre
+                    })
+                    End If
+
+                    ' Add 1:1 mapping for valid genre
+                    APIXML.GenreMapping.Mappings.Add(New GenreMapping With {
+                    .isNew = False,
+                    .MappedTo = New List(Of String) From {aGenre},
+                    .SearchString = aGenre
+                })
                 End If
-                'add a new mapping if tGenre is not in the MappingTable
-                APIXML.GenreMapping.Mappings.Add(New GenreMapping With {.isNew = False, .MappedTo = New List(Of String) From {aGenre}, .SearchString = aGenre})
             End If
         Next
+
+        ' Save if we made any changes
+        If bChangesWereMade Then
+            APIXML.GenreMapping.Sort()
+
+            ' Auto-match images
+            Dim genresPath As String = Path.Combine(Functions.AppPath, "Images", "Genres")
+            APIXML.GenreMapping.AutoMatchImages(genresPath)
+            APIXML.GenreMapping.Sort()
+            APIXML.GenreMapping.Save()
+            logger.Info("Genre mapping changes saved to XML file.")
+        End If
     End Sub
 
     Public Function LoadAll_Movies() As List(Of DBElement)
