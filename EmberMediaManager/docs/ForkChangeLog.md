@@ -15,7 +15,7 @@ This document tracks all changes made to this fork of Ember Media Manager, start
 
 | Property | Value |
 |----------|-------|
-| **Document Version** | 1.0.0 |
+| **Document Version** | 1.0.1 |
 | **Created** | December 25, 2025 |
 | **Last Updated** | December 25, 2025 |
 | **Author** | Eric H. Anderson |
@@ -206,7 +206,7 @@ The following features are deprecated and slated for removal in a future version
 | Configuration | Created copilot-instructions.md | `.github\copilot-instructions.md` |
 | Build | Created BuildCleanup.ps1 | `BuildCleanup.ps1` |
 | Build | Created Directory.Build.targets | `Directory.Build.targets` |
-| Script | Created Update-AssemblyVersions.ps1 | `EmberMediaManager\scripts\Update-AssemblyVersions.ps1` |
+| Script | Created UpdateAssemblyVersions.ps1 | `EmberMediaManager\scripts\UpdateAssemblyVersions.ps1` |
 | Script | Created VersionConfig.json | `EmberMediaManager\scripts\VersionConfig.json` |
 
 ---
@@ -329,9 +329,9 @@ The following documents provide detailed information about specific initiatives:
 
 | Script | Location | Purpose |
 |--------|----------|---------|
-| Update-AssemblyVersions.ps1 | `EmberMediaManager\scripts\` | Update assembly versions across all projects (run with -Help for usage) |
+| UpdateAssemblyVersions.ps1 | `EmberMediaManager\scripts\` | Update assembly versions across all projects (run with -Help for usage) |
 | VersionConfig.json | `EmberMediaManager\scripts\` | Configuration file for version targets |
-| BuildCleanup.ps1 | Solution root | Clean build artifacts |
+| BuildCleanup.ps1 | `EmberMediaManager\scripts\` | Clean build artifacts |
 
 ---
 
@@ -383,7 +383,7 @@ When making changes to the codebase:
 3. Add a new entry to the Detailed Change History section
 4. Update the Version History Summary table
 5. If deprecating features, update the Deprecated Features section
-6. Run `Update-AssemblyVersions.ps1` if bulk version updates are needed (use -Help for options)
+6. Run `UpdateAssemblyVersions.ps1` if bulk version updates are needed (use -Help for options)
 
 ---
 

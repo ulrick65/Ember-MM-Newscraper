@@ -29,33 +29,33 @@
     Path to the version configuration JSON file. Defaults to VersionConfig.json in script directory.
 
 .EXAMPLE
-    .\Update-AssemblyVersions.ps1 -Help
+    .\UpdateAssemblyVersions.ps1 -Help
     Displays help information and usage examples.
 
 .EXAMPLE
-    .\Update-AssemblyVersions.ps1 -WhatIf
+    .\UpdateAssemblyVersions.ps1 -WhatIf
     Shows what changes would be made without modifying files.
 
 .EXAMPLE
-    .\Update-AssemblyVersions.ps1 -Category GenericAddons
+    .\UpdateAssemblyVersions.ps1 -Category GenericAddons
     Updates only generic addon projects.
 
 .EXAMPLE
-    .\Update-AssemblyVersions.ps1 -IncrementBuild -Category All
+    .\UpdateAssemblyVersions.ps1 -IncrementBuild -Category All
     Increments build number for all active projects.
 
 .EXAMPLE
-    .\Update-AssemblyVersions.ps1 -IncludeDeprecated
+    .\UpdateAssemblyVersions.ps1 -IncludeDeprecated
     Updates all projects including deprecated ones.
 
 .NOTES
     Author: Eric H. Anderson
-    Version: 2.1.0
+    Version: 2.1.1
     Last Updated: 2025-12-25
     
-    Configuration: VersionConfig.json in the scripts directory
-    Results: Saved to EmberMediaManager\docs\VersionUpdates_*.csv
-    Backups: Created in solution root as AssemblyInfo_Backup_*
+    Configuration: EmberMediaManager\scripts\VersionConfig.json
+    Results: Saved to EmberMediaManager\docs\version-updates\VersionUpdates_*.csv
+    Backups: Created in TempBackups\AssemblyInfo_Backup_*
 #>
 
 [CmdletBinding(SupportsShouldProcess)]
@@ -81,7 +81,7 @@ if ($Help) {
     Write-Host ""
     Write-Host "============================================================" -ForegroundColor Cyan
     Write-Host " Ember Media Manager - Assembly Version Updater" -ForegroundColor Cyan
-    Write-Host " Version 2.1.0" -ForegroundColor Cyan
+    Write-Host " Version 2.1.1" -ForegroundColor Cyan
     Write-Host "============================================================" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "DESCRIPTION:" -ForegroundColor Yellow
@@ -101,21 +101,21 @@ if ($Help) {
     Write-Host ""
     Write-Host "USAGE EXAMPLES:" -ForegroundColor Yellow
     Write-Host "  # Preview all changes" -ForegroundColor DarkGray
-    Write-Host "  .\Update-AssemblyVersions.ps1 -WhatIf"
+    Write-Host "  .\UpdateAssemblyVersions.ps1 -WhatIf"
     Write-Host ""
     Write-Host "  # Update all active projects to config versions" -ForegroundColor DarkGray
-    Write-Host "  .\Update-AssemblyVersions.ps1"
+    Write-Host "  .\UpdateAssemblyVersions.ps1"
     Write-Host ""
     Write-Host "  # Increment build number for all projects" -ForegroundColor DarkGray
-    Write-Host "  .\Update-AssemblyVersions.ps1 -IncrementBuild -IncludeDeprecated"
+    Write-Host "  .\UpdateAssemblyVersions.ps1 -IncrementBuild -IncludeDeprecated"
     Write-Host ""
     Write-Host "  # Update only scrapers" -ForegroundColor DarkGray
-    Write-Host "  .\Update-AssemblyVersions.ps1 -Category DataScrapers"
+    Write-Host "  .\UpdateAssemblyVersions.ps1 -Category DataScrapers"
     Write-Host ""
     Write-Host "FILES:" -ForegroundColor Yellow
     Write-Host "  Config:   EmberMediaManager\scripts\VersionConfig.json"
-    Write-Host "  Results:  EmberMediaManager\docs\VersionUpdates_*.csv"
-    Write-Host "  Backups:  <SolutionRoot>\AssemblyInfo_Backup_*"
+    Write-Host "  Results:  EmberMediaManager\docs\version-updates\VersionUpdates_*.csv"
+    Write-Host "  Backups:  TempBackups\AssemblyInfo_Backup_*"
     Write-Host ""
     Write-Host "WORKFLOW:" -ForegroundColor Yellow
     Write-Host "  1. Edit VersionConfig.json with new target versions"
@@ -134,7 +134,8 @@ if ($Help) {
 $ErrorActionPreference = "Stop"
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $solutionRoot = Split-Path -Parent (Split-Path -Parent $scriptDir)
-$docsDir = Join-Path $solutionRoot "EmberMediaManager\docs"
+$docsDir = Join-Path $solutionRoot "EmberMediaManager\docs\version-updates"
+$backupRootDir = Join-Path $solutionRoot "TempBackups"
 
 # Default config path if not specified
 if (-not $ConfigPath) {
@@ -304,10 +305,10 @@ function Update-AssemblyInfoFile {
 }
 
 function New-BackupDirectory {
-    # Creates a timestamped backup directory in the solution root
-    param([string]$SolutionRoot)
+    # Creates a timestamped backup directory in the TempBackups folder
+    param([string]$BackupRootDir)
     
-    $backupDir = Join-Path $SolutionRoot "AssemblyInfo_Backup_$timestamp"
+    $backupDir = Join-Path $BackupRootDir "AssemblyInfo_Backup_$timestamp"
     New-Item -ItemType Directory -Path $backupDir -Force | Out-Null
     return $backupDir
 }
@@ -337,7 +338,7 @@ function Backup-AssemblyInfo {
 
 #region Main Script
 
-Write-Banner "Ember Media Manager - Assembly Version Updater v2.1"
+Write-Banner "Ember Media Manager - Assembly Version Updater v2.1.1"
 
 # Load and validate configuration file
 if (-not (Test-Path $ConfigPath)) {
@@ -392,7 +393,7 @@ Write-Host ""
 # Create backup directory (skip in WhatIf mode)
 $backupDir = $null
 if (-not $NoBackup -and -not $WhatIfPreference) {
-    $backupDir = New-BackupDirectory -SolutionRoot $solutionRoot
+    $backupDir = New-BackupDirectory -BackupRootDir $backupRootDir
     Write-Status "BACKUP" "Backup directory created" $backupDir
     Write-Host ""
 }
@@ -484,7 +485,7 @@ if ($backupDir) {
     Write-Host "  Backup:   $backupDir" -ForegroundColor DarkGray
 }
 
-# Export results to CSV in docs folder
+# Export results to CSV in docs/version-updates folder
 if ($results.Count -gt 0 -and -not $WhatIfPreference) {
     if (-not (Test-Path $docsDir)) {
         New-Item -ItemType Directory -Path $docsDir -Force | Out-Null
