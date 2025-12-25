@@ -507,7 +507,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="docs\BuildCleanup.ps1" />
     <None Include="docs\BuildProcess.md" />
     <None Include="docs\CertificationMappingProcess.md" />
     <None Include="docs\CountryMappingProcess.md" />
@@ -524,6 +523,7 @@
     <None Include="docs\SolutionCleanupAnalysis.md" />
     <None Include="docs\StatusMappingProcess.md" />
     <None Include="docs\StudioMappingProcess.md" />
+    <None Include="scripts\BuildCleanup.ps1" />
     <None Include="scripts\Update-AssemblyVersions.ps1" />
     <None Include="My Project\app.manifest" />
     <None Include="My Project\Application.myapp">

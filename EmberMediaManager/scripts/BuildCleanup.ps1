@@ -8,9 +8,16 @@ param(
     [switch]$KeepActiveConfig
 )
 
+# Navigate to solution root (script is in EmberMediaManager\docs)
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$solutionRoot = Split-Path -Parent (Split-Path -Parent $scriptDir)
+Push-Location $solutionRoot
+
 Write-Host "═══════════════════════════════════════════════════════" -ForegroundColor Cyan
 Write-Host "  Ember Media Manager - Deep Clean" -ForegroundColor Cyan
 Write-Host "═══════════════════════════════════════════════════════" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Solution Root: $solutionRoot" -ForegroundColor DarkGray
 Write-Host ""
 
 if ($Deep) {
@@ -28,6 +35,7 @@ if ($vsProcesses) {
     $continue = Read-Host "   Continue anyway? (y/N)"
     if ($continue -ne 'y' -and $continue -ne 'Y') {
         Write-Host "Cancelled." -ForegroundColor Gray
+        Pop-Location
         exit 0
     }
     Write-Host ""
@@ -105,6 +113,9 @@ if ($Deep) {
     Write-Host "ℹ️  Skipping .vs folder cleanup (use -Deep to include it)" -ForegroundColor Gray
     Write-Host ""
 }
+
+# Return to original directory
+Pop-Location
 
 Write-Host "═══════════════════════════════════════════════════════" -ForegroundColor Green
 Write-Host "  ✅ Deep Clean Complete!" -ForegroundColor Green
