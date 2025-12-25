@@ -108,13 +108,22 @@ Public Class APIXML
             End If
 
             'Genre images
-            If Directory.Exists(Directory.GetParent(String.Concat(Functions.AppPath, "Images", Path.DirectorySeparatorChar, "Genres", Path.DirectorySeparatorChar)).FullName) Then
+            Dim genresPath As String = Path.Combine(Functions.AppPath, "Images", "Genres")
+            If Directory.Exists(genresPath) Then
                 Try
-                    alGenres.AddRange(Directory.GetFiles(Directory.GetParent(String.Concat(Functions.AppPath, "Images", Path.DirectorySeparatorChar, "Genres", Path.DirectorySeparatorChar)).FullName, "*.jpg"))
+                    alGenres.AddRange(Directory.GetFiles(genresPath, "*.jpg"))
+                    alGenres.AddRange(Directory.GetFiles(genresPath, "*.png"))
                 Catch
                 End Try
                 alGenres = alGenres.ConvertAll(Function(s) s.ToLower)
             End If
+
+            'Auto-match genre images to filenames
+            Try
+                GenreMapping.AutoMatchImages(genresPath)
+            Catch ex As Exception
+                _Logger.Error(ex, New StackFrame().GetMethod().Name)
+            End Try
 
             'Status mapping
             If File.Exists(StatusMapping.FileNameFullPath) Then

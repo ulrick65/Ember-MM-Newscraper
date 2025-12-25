@@ -192,6 +192,38 @@ Public Class clsXMLGenreMapping
         Mappings.Sort()
     End Sub
 
+    ''' <summary>
+    ''' Automatically matches genres to image files based on genre name
+    ''' Converts genre name to lowercase and looks for matching image file
+    ''' </summary>
+    Public Sub AutoMatchImages(ByVal genresPath As String)
+        If Not Directory.Exists(genresPath) Then Return
+
+        Try
+            ' Get all available image files
+            Dim imageFiles As New List(Of String)
+            imageFiles.AddRange(Directory.GetFiles(genresPath, "*.jpg"))
+            imageFiles.AddRange(Directory.GetFiles(genresPath, "*.png"))
+
+            ' Try to match genres without images
+            For Each genre In Genres.Where(Function(g) String.IsNullOrEmpty(g.Image))
+                ' Convert genre name to lowercase for matching
+                Dim genreFileName As String = genre.Name.ToLower()
+
+                ' Look for exact match (case-insensitive)
+                Dim matchedFile = imageFiles.FirstOrDefault(Function(f) _
+                    Path.GetFileNameWithoutExtension(f).ToLower() = genreFileName)
+
+                If matchedFile IsNot Nothing Then
+                    genre.Image = Path.GetFileName(matchedFile)
+                    _Logger.Info(String.Format("Auto-matched genre '{0}' to image '{1}'", genre.Name, genre.Image))
+                End If
+            Next
+
+        Catch ex As Exception
+            _Logger.Error(ex, New StackFrame().GetMethod().Name)
+        End Try
+    End Sub
 #End Region 'Methods
 
 End Class
