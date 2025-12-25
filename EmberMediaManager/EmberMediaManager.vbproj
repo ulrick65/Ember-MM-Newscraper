@@ -524,7 +524,7 @@
     <None Include="docs\StatusMappingProcess.md" />
     <None Include="docs\StudioMappingProcess.md" />
     <None Include="scripts\BuildCleanup.ps1" />
-    <None Include="scripts\Update-AssemblyVersions.ps1" />
+    <None Include="scripts\UpdateAssemblyVersions.ps1" />
     <None Include="My Project\app.manifest" />
     <None Include="My Project\Application.myapp">
       <Generator>MyApplicationCodeGenerator</Generator>
