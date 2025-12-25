@@ -510,6 +510,8 @@
     <None Include="docs\BuildProcess.md" />
     <None Include="docs\CertificationMappingProcess.md" />
     <None Include="docs\CountryMappingProcess.md" />
+    <None Include="docs\NfoFileImprovements.md" />
+    <None Include="docs\NfoFileProcess .md" />
     <None Include="docs\ReleaseNotes-v1.12.0.0.md" />
     <None Include="docs\FFmpegProcess.md" />
     <None Include="docs\FileCleanUpPlan.md" />
