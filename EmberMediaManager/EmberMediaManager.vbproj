@@ -507,6 +507,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="docs\BuildCleanup.ps1" />
     <None Include="docs\BuildProcess.md" />
     <None Include="docs\CertificationMappingProcess.md" />
     <None Include="docs\CountryMappingProcess.md" />
