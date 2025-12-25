@@ -510,6 +510,7 @@
     <None Include="docs\BuildProcess.md" />
     <None Include="docs\CertificationMappingProcess.md" />
     <None Include="docs\CountryMappingProcess.md" />
+    <None Include="docs\ForkChangeLog.md" />
     <None Include="docs\NfoFileImprovements.md" />
     <None Include="docs\NfoFileProcess .md" />
     <None Include="docs\ReleaseNotes-v1.12.0.0.md" />
@@ -521,6 +522,7 @@
     <None Include="docs\SolutionCleanupAnalysis.md" />
     <None Include="docs\StatusMappingProcess.md" />
     <None Include="docs\StudioMappingProcess.md" />
+    <None Include="scripts\Update-AssemblyVersions.ps1" />
     <None Include="My Project\app.manifest" />
     <None Include="My Project\Application.myapp">
       <Generator>MyApplicationCodeGenerator</Generator>
@@ -928,6 +930,7 @@
     <None Include="Resources\hasActorThumb.png" />
     <None Include="Resources\doRating.png" />
     <Content Include="Resources\menuAdd.png" />
+    <None Include="scripts\VersionConfig.json" />
     <None Include="x64\ffmpeg.exe" />
     <None Include="x64\mediainfo-rar\mediainfo-rar.exe" />
     <None Include="x64\mediainfo-rar\MediaInfo.dll" />

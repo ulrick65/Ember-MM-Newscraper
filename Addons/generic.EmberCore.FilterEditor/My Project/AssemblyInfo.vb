@@ -1,4 +1,4 @@
-Imports System
+﻿Imports System
 Imports System.Reflection
 Imports System.Runtime.InteropServices
 
@@ -10,7 +10,7 @@ Imports System.Runtime.InteropServices
 <Assembly: AssemblyDescription("http://forum.xbmc.org/forumdisplay.php?fid=195")> 
 <Assembly: AssemblyCompany("Ember Media Manager")> 
 <Assembly: AssemblyProduct("generic.EmberCore.FilterEditor")>
-<Assembly: AssemblyCopyright("Copyright © 2021")>
+<Assembly: AssemblyCopyright("Copyright Â© 2021")>
 <Assembly: AssemblyTrademark("")> 
 <Assembly: ComVisible(False)> 
 
@@ -27,5 +27,5 @@ Imports System.Runtime.InteropServices
 ' You can specify all the values or you can default the Build and Revision Numbers
 ' by using the '*' as shown below:
 ' <Assembly: AssemblyVersion("1.0.*")>
-<Assembly: AssemblyVersion("1.10.1.0")>
-<Assembly: AssemblyFileVersion("1.10.1.0")>
+<Assembly: AssemblyVersion("1.12.0.0")>
+<Assembly: AssemblyFileVersion("1.12.0.0")>

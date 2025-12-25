@@ -1,4 +1,4 @@
-Imports System.Reflection
+﻿Imports System.Reflection
 Imports System.Runtime.InteropServices
 
 ' General Information about an assembly is controlled through the following 
@@ -11,7 +11,7 @@ Imports System.Runtime.InteropServices
 <Assembly: AssemblyDescription("http://forum.xbmc.org/forumdisplay.php?fid=195")>
 <Assembly: AssemblyCompany("Ember Media Manager")>
 <Assembly: AssemblyProduct("scraper.Data.Trakttv")>
-<Assembly: AssemblyCopyright("Copyright © 2021")>
+<Assembly: AssemblyCopyright("Copyright Â© 2021")>
 <Assembly: AssemblyTrademark("")>
 
 <Assembly: ComVisible(False)>
@@ -30,5 +30,5 @@ Imports System.Runtime.InteropServices
 ' by using the '*' as shown below:
 ' <Assembly: AssemblyVersion("1.0.*")> 
 
-<Assembly: AssemblyVersion("1.10.2.0")>
-<Assembly: AssemblyFileVersion("1.10.2.0")>
+<Assembly: AssemblyVersion("1.12.0.0")>
+<Assembly: AssemblyFileVersion("1.12.0.0")>
