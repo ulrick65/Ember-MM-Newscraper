@@ -519,6 +519,7 @@
     <None Include="docs\GenreMappingProcess.md" />
     <None Include="docs\MediaInfoMappingProcess.md" />
     <None Include="docs\PackageUpdatePlan.md" />
+    <None Include="docs\ReleaseNotes-v1.12.1.0.md" />
     <None Include="docs\SolutionCleanupAnalysis.md" />
     <None Include="docs\StatusMappingProcess.md" />
     <None Include="docs\StudioMappingProcess.md" />
