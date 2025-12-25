@@ -96,6 +96,9 @@ Public Class clsXMLGenreMapping
                 Genres = nXML.Genres
                 Mappings = nXML.Mappings
                 objStreamReader.Close()
+
+                ' Validate and clean up loaded genres
+                ValidateLoadedGenres()
             Catch ex As Exception
                 _Logger.Error(ex, New StackFrame().GetMethod().Name)
                 objStreamReader.Close()
@@ -110,6 +113,17 @@ Public Class clsXMLGenreMapping
         End If
     End Sub
 
+    ''' <summary>
+    ''' Validates genres loaded from XML and logs warnings for invalid names
+    ''' </summary>
+    Private Sub ValidateLoadedGenres()
+        For Each genre In Genres.ToList()
+            If Not IsValidGenreName(genre.Name) Then
+                _Logger.Warn(String.Format("Loaded genre '{0}' has invalid name (contains spaces or special characters). Consider renaming in Genre Mapping dialog.", genre.Name))
+            End If
+        Next
+    End Sub
+
     Public Function RunMapping(ByRef listToBeMapped As List(Of String), Optional ByVal addNewInputs As Boolean = True) As Boolean
         Dim nResult As New List(Of String)
         Dim bNewInputAdded As Boolean
@@ -119,20 +133,50 @@ Public Class clsXMLGenreMapping
                 If existingInput IsNot Nothing Then
                     nResult.AddRange(existingInput.MappedTo)
                 ElseIf addNewInputs Then
-                    'check if the tGenre is already existing in Gernes list
-                    Dim gProperty As GenreProperty = Genres.FirstOrDefault(Function(f) f.Name = aInput)
-                    If gProperty Is Nothing Then
-                        Genres.Add(New GenreProperty With {
-                                   .Name = aInput
-                                   })
+                    ' Validate and auto-fix genre name
+                    Dim genreToAdd As String = aInput
+
+                    If Not IsValidGenreName(aInput) Then
+                        ' Try to auto-fix by converting spaces to hyphens
+                        Dim suggestedName As String = SuggestValidGenreName(aInput)
+
+                        If Not String.IsNullOrEmpty(suggestedName) Then
+                            ' Successfully auto-fixed (had only spaces as invalid characters)
+                            _Logger.Warn(String.Format("Genre '{0}' contains spaces. Auto-fixed to '{1}'", aInput, suggestedName))
+                            genreToAdd = suggestedName
+
+                            ' Check if the fixed name already exists as a genre
+                            Dim existingGenre As GenreProperty = Genres.FirstOrDefault(Function(f) f.Name = suggestedName)
+                            If existingGenre Is Nothing Then
+                                ' Add the fixed genre name
+                                Genres.Add(New GenreProperty With {.Name = suggestedName})
+                            End If
+
+                            ' Create mapping from original to fixed name
+                            Mappings.Add(New GenreMapping With {
+                                         .MappedTo = New List(Of String) From {suggestedName},
+                                         .SearchString = aInput
+                                         })
+                            nResult.Add(suggestedName)
+                            bNewInputAdded = True
+                        Else
+                            ' Contains special characters - skip and let user map manually
+                            _Logger.Warn(String.Format("Genre '{0}' contains special characters. Skipping - user must create mapping manually.", aInput))
+                        End If
+                    Else
+                        ' Genre name is valid - proceed normally
+                        Dim gProperty As GenreProperty = Genres.FirstOrDefault(Function(f) f.Name = genreToAdd)
+                        If gProperty Is Nothing Then
+                            Genres.Add(New GenreProperty With {.Name = genreToAdd})
+                        End If
+
+                        Mappings.Add(New GenreMapping With {
+                                     .MappedTo = New List(Of String) From {genreToAdd},
+                                     .SearchString = aInput
+                                     })
+                        nResult.Add(genreToAdd)
+                        bNewInputAdded = True
                     End If
-                    'add a new mapping if tGenre is not in the Mappings list
-                    Mappings.Add(New GenreMapping With {
-                                 .MappedTo = New List(Of String) From {aInput},
-                                 .SearchString = aInput
-                                 })
-                    nResult.Add(aInput)
-                    bNewInputAdded = True
                 End If
             Next
         End If
@@ -224,6 +268,62 @@ Public Class clsXMLGenreMapping
             _Logger.Error(ex, New StackFrame().GetMethod().Name)
         End Try
     End Sub
+
+    ''' <summary>
+    ''' Validates that a genre name follows the naming rules:
+    ''' - Alphanumeric characters only
+    ''' - Hyphens allowed (but not at start/end)
+    ''' - No spaces or special characters
+    ''' </summary>
+    Public Shared Function IsValidGenreName(ByVal genreName As String) As Boolean
+        If String.IsNullOrWhiteSpace(genreName) Then Return False
+
+        ' Check for invalid characters (anything except letters, numbers, and hyphens)
+        For Each c As Char In genreName
+            If Not (Char.IsLetterOrDigit(c) OrElse c = "-"c) Then
+                Return False
+            End If
+        Next
+
+        ' Check that it doesn't start or end with a hyphen
+        If genreName.StartsWith("-") OrElse genreName.EndsWith("-") Then
+            Return False
+        End If
+
+        Return True
+    End Function
+
+    ''' <summary>
+    ''' Suggests a valid genre name by converting spaces to hyphens
+    ''' Returns empty string if genre contains special characters (user must map manually)
+    ''' </summary>
+    Public Shared Function SuggestValidGenreName(ByVal genreName As String) As String
+        If String.IsNullOrWhiteSpace(genreName) Then Return String.Empty
+
+        Dim trimmedName As String = genreName.Trim()
+
+        ' Check if it contains any special characters (except spaces and hyphens)
+        For Each c As Char In trimmedName
+            If Not (Char.IsLetterOrDigit(c) OrElse c = " "c OrElse c = "-"c) Then
+                ' Contains special character - cannot auto-fix
+                Return String.Empty
+            End If
+        Next
+
+        ' Only contains letters, numbers, spaces, and hyphens - safe to auto-fix
+        ' Replace spaces with hyphens
+        Dim result As String = trimmedName.Replace(" ", "-")
+
+        ' Remove any double hyphens
+        While result.Contains("--")
+            result = result.Replace("--", "-")
+        End While
+
+        ' Remove leading/trailing hyphens
+        result = result.Trim("-"c)
+
+        Return result
+    End Function
 #End Region 'Methods
 
 End Class
