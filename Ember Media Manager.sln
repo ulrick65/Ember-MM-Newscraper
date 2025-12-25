@@ -100,9 +100,8 @@ Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "scraper.Data.OMDb", "Addons
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2857EC04-8770-491A-B1AE-130BC8FAAB4A}"
 	ProjectSection(SolutionItems) = preProject
+		.github\CONTRIBUTING.md = .github\CONTRIBUTING.md
 		.github\copilot-instructions.md = .github\copilot-instructions.md
-		BuildCleanup.ps1 = BuildCleanup.ps1
-		Directory.Build.targets = Directory.Build.targets
 	EndProjectSection
 EndProject
 Global

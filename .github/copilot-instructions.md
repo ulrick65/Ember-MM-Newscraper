@@ -1,105 +1,160 @@
-﻿# Project Coding Standards - Updated 2025-09-04
+﻿# Project Coding Standards - Updated 2025-12-25
 
-## Naming Conventions
+## Project Overview
+- Target Framework: .NET Framework 4.8
+- Primary Language: Visual Basic .NET (VB.NET)
+- Application Type: Ember Media Manager - Movie/TV Show scraper and media management tool
+- Architecture: Addon-based modular system with scrapers and utilities
+
+## Naming Conventions (VB.NET)
 - Private constants: Use camelCase with 'k' prefix (e.g., kInfoPrefix)
-- Private fields: Use camelCase with underscore prefix (e.g., _httpClient)
-- Public properties: Use PascalCase (e.g., FolderPath)
-- Method parameters: Use camelCase (e.g., folderPath)
-- Local variables: Use camelCase (e.g., nfoFiles)
-- Public methods: Use PascalCase (e.g., ProcessFiles)
-- Private methods: Use PascalCase (e.g., ValidateFolder)
+- Private fields: Use underscore prefix with camelCase (e.g., _httpClient, _movieData)
+- Public properties: Use PascalCase (e.g., FolderPath, MovieTitle)
+- Method parameters: Use camelCase (e.g., folderPath, movieId)
+- Local variables: Use camelCase (e.g., nfoFiles, movieList)
+- Public methods: Use PascalCase (e.g., ProcessFiles, ScrapeMovieData)
+- Private methods: Use PascalCase (e.g., ValidateFolder, ParseXmlData)
+- Event handlers: Use descriptive names with pattern ObjectName_EventName (e.g., btnSave_Click)
 
-## .axaml File Formatting Guidelines
-- All Avalonia `.axaml` files must use explicit closing tags for every block element.
-- Do not use self-closing tags (e.g., `<TextBlock ... />`) for any controls, borders, panels, or other XAML elements.
-- Example (correct): `<TextBlock Text="Example"></TextBlock>`
-- Example (incorrect): `<TextBlock Text="Example" />`
-- This rule applies to all controls, panels, borders, images, and custom elements in `.axaml` files.
-- Always match the indentation and block style used in the rest of the project.
+## VB.NET Specific Guidelines
+- Use explicit Option Strict On and Option Explicit On in all files
+- Prefer explicit type declarations over Object when type is known
+- Use String.IsNullOrEmpty() and String.IsNullOrWhiteSpace() for string validation
+- Use Try-Catch blocks appropriately with specific exception types
+- Dispose of IDisposable objects properly using Using statements
+- Follow standard VB.NET XML documentation comments for public APIs
+- Use meaningful variable names that clearly indicate purpose
+- Keep methods focused and avoid deeply nested logic
 
-## Markdown File Generation Guidelines - Important!
-- When generating markdown files, ensure ALL content stays within the markdown code block
-- **NEVER** include method signatures or code snippets that could break the markdown code block boundary
-- Use plain text descriptions instead of formatted code blocks within markdown file generation
-- Format method signatures as: `MethodName(parameters)` or as plain text descriptions
-- Example: Write "FormatMessage(RichMessage message)" instead of using code block formatting
-- Always verify the entire markdown content is contained within a single code block when generating files
-- If including code examples in markdown files, use inline code formatting with backticks rather than code blocks
-- Ensure all markdown files are well-structured with headings, lists, and links as needed
+## CRITICAL: Markdown File Generation Rules - MUST FOLLOW!
 
-## Additional Markdown Safety Rules - Critical!
-- **BEFORE generating any markdown file**: Read and confirm understanding of markdown code block rules
-- **DURING generation**: If you need to include code examples, ALWAYS use inline backticks: `code here`
-- **NEVER use triple backticks (```) inside a markdown file generation** - this breaks the outer code block
-- **AFTER generation**: Mentally verify that no triple backticks appear in the generated content
-- **If unsure**: Use plain text descriptions instead of any code formatting
-- **For complex examples**: Break into multiple inline code segments rather than code blocks
-- **Remember**: The entire markdown file must be wrapped in a single outer code block
+### Rule 1: Code Block Boundary Protection (CRITICAL!)
+**PROBLEM:** When generating markdown file content, Copilot MUST wrap the entire file in a single outer code block. Using triple backticks (```) INSIDE this content breaks the outer block and corrupts the file generation.
 
-## Code Style Guidelines - Important!
-- Target .NET 9 framework
-- **Type Declaration Rules:**
-  - Use `var` for:
-    - Simple assignments with `new()` constructors: `var list = new List<string>();`
-    - String literals: `var name = "example";`
-    - Numeric literals: `var count = 5;`
-    - Boolean literals: `var isValid = true;`
-    - Obviously simple method calls: `var result = ToString();`
-    - LINQ expressions where type is obvious
-  - Use explicit types for:
-    - Method return values: `string result = SomeMethod();`
-    - Complex expressions: `DateTime startTime = DateTime.Now;`
-    - Interface/abstract types: `IEnumerable<string> items = GetItems();`
-    - When type isn't immediately obvious from right side
-    - Generic type parameters: `List<MovieData> movies = new();`
-    - Nullable types: `string? path = GetPath();`
-- **Property Declaration Rules:**
-  - **ALWAYS use block properties with explicit get/set bodies**
-  - **NEVER use expression-bodied properties (=>)**
-  - **NEVER use auto-properties for interface implementations**
-  - Examples:
-    ```csharp
-    // ✅ CORRECT - Block property
-    public string Name {
-        get {
-            return _name;
-        }
-        set {
-            _name = value;
-        }
-    }
-    
-    // ✅ CORRECT - Read-only block property
-    public ObservableCollection<RichMessage> MessagesCollection {
-        get {
-            return _messages;
-        }
-    }
-    
-    // ❌ WRONG - Expression-bodied property
-    public ObservableCollection<RichMessage> MessagesCollection => _messages;
-    
-    // ❌ WRONG - Auto-property in implementation
-    public string Name { get; set; }
-    ```
-- Follow existing naming conventions in the codebase
-- Provide full file paths with code suggestions when suggesting code changes
-- Whenever possible, only present code updates for existing files with the updated code
-    - Don't rewrite entire files unless absolutely necessary 
-- Match existing comment styles
-- Extract complex logic into separate methods with descriptive names
-- Keep methods focused on a single responsibility
-- Add XML documentation for public methods and properties
-- Use primary constructors for classes when appropriate according to IDE0290
-- Use static abstract members for interfaces when appropriate according to IDE0291
-    - Be careful with Avaloia controls that use static abstract members
-    - Be careful with Avalonia and the use of static abstract members when Avalonia requires public for binding.
-- Be careful with using directives:
-  - Use `System` namespace explicitly when needed
-  - Avoid unnecessary `using` directives
-  - Remove unused `using` directives automatically
+**SOLUTION - ABSOLUTE REQUIREMENTS:**
+1. **NEVER use triple backticks (```) anywhere inside generated markdown content**
+2. **ALWAYS use single backticks for inline code:** `code here`
+3. **ALWAYS use indentation (4 spaces) for code blocks instead of fenced blocks**
+4. **VERIFY before sending:** Scan entire response for triple backticks inside markdown generation
+
+### Rule 2: Method Signature Formatting (MANDATORY!)
+When documenting VB.NET code in markdown files:
+- ✅ CORRECT: Write as plain text: `ProcessMovieFiles(folderPath As String, recursive As Boolean)`
+- ✅ CORRECT: Write as description: "The ProcessMovieFiles method takes a folder path and recursion flag"
+- ❌ WRONG: Using fenced code blocks for signatures breaks the outer markdown block
+
+### Rule 3: Code Example Formatting (MANDATORY!)
+When including VB.NET examples in generated markdown:
+
+**Option A - Inline code (preferred):**
+Use single backticks: `Dim movies As New List(Of Movie)()`
+
+**Option B - Indented code block (for multi-line):**
+Indent with 4 spaces:
+
+    Dim movies As New List(Of Movie)()
+    For Each movie In movies
+        Console.WriteLine(movie.Title)
+    Next
+
+**NEVER use this (breaks generation):**
+Using triple backticks inside markdown file generation will terminate the outer code block
+
+### Rule 4: Pre-Generation Checklist (EXECUTE BEFORE EVERY MARKDOWN FILE GENERATION!)
+Before generating ANY markdown file content, Copilot MUST:
+1. ✓ Confirm: "I will NOT use triple backticks inside the markdown content"
+2. ✓ Confirm: "I will use single backticks for inline code: `code`"
+3. ✓ Confirm: "I will use 4-space indentation for multi-line code examples"
+4. ✓ Confirm: "I will format method signatures as plain text or inline code only"
+
+### Rule 5: Post-Generation Verification (EXECUTE AFTER GENERATION!)
+After generating markdown file content, Copilot MUST:
+1. ✓ Scan the entire generated content for triple backticks (``)
+2. ✓ If found: STOP, revise to use single backticks or indentation
+3. ✓ Verify all code examples use only inline backticks or 4-space indentation
+4. ✓ Confirm the markdown content is valid and complete
+
+### Rule 6: Emergency Fallback Rules
+If unsure how to format something in markdown:
+- Default to plain text description
+- Use inline code with single backticks if absolutely needed
+- Break complex examples into simple inline segments
+- NEVER risk using triple backticks "just to try it"
 
 ## Response Generation Process
-- For markdown files: Always pause and review markdown formatting rules before starting
-- For code updates: Provide only the specific changes needed, not full file rewrites
-- For documentation: Use inline code formatting exclusively within markdown generation
+
+### For Markdown Files:
+1. **PAUSE** - Review all markdown generation rules above
+2. **EXECUTE** - Pre-generation checklist (Rule 4)
+3. **GENERATE** - Content using ONLY inline backticks and indentation
+4. **VERIFY** - Post-generation verification (Rule 5)
+5. **DELIVER** - Only after confirming no triple backticks exist in content
+
+### For Code Updates:
+- Provide only the specific changes needed, not full file rewrites unless necessary
+- Include full file path with code suggestions
+- Preserve existing code structure and style
+- Match existing comment styles and indentation
+
+### For Documentation:
+- Use inline code formatting exclusively: `PropertyName`, `MethodName()`
+- Use 4-space indentation for code blocks in markdown files
+- Structure with clear headings, lists, and links
+
+## Code Style Guidelines
+
+### VB.NET Type Declaration
+- Use specific types when known: `Dim movieList As List(Of Movie)`
+- Avoid Object type unless necessary for interop or reflection
+- Use nullable types when appropriate: `Dim rating As Integer?`
+- Prefer strongly-typed collections: `List(Of T)`, `Dictionary(Of TKey, TValue)`
+
+### Property Declaration (VB.NET)
+- Use Property blocks with explicit Get/Set when logic is needed
+- Use auto-implemented properties for simple cases: `Public Property Title As String`
+- Follow existing patterns in the codebase
+
+### Error Handling
+- Use specific exception types in Catch blocks
+- Log exceptions appropriately for debugging
+- Clean up resources in Finally blocks or use Using statements
+- Provide meaningful error messages
+
+### XML Documentation
+- Document all public APIs with XML comments
+- Include parameter descriptions and return value documentation
+- Provide usage examples for complex methods
+- Keep documentation synchronized with code changes
+
+## File Organization
+- Keep related functionality together in modules or classes
+- Separate UI logic from business logic
+- Use appropriate namespaces for different addon components
+- Follow existing project structure for new addons
+
+## Dependencies and References
+- Minimize external dependencies when possible
+- Document any new NuGet packages or references required
+- Ensure compatibility with .NET Framework 4.8
+- Test addon functionality in isolation when possible
+
+## Testing Considerations
+- Test scraper addons against actual data sources when possible
+- Validate XML/NFO file parsing thoroughly
+- Test UI addons for responsiveness and error handling
+- Consider edge cases (missing data, network failures, etc.)
+
+## Comments and Documentation
+- Write clear, concise comments explaining "why" not "what"
+- Document complex algorithms or business logic
+- Keep comments synchronized with code changes
+- Use TODO comments for planned improvements: `' TODO: Implement caching`
+
+## Best Practices
+- Follow existing code patterns and conventions in the solution
+- Extract complex logic into separate methods with descriptive names
+- Keep methods focused on a single responsibility
+- Validate input parameters at method boundaries
+- Use meaningful names that indicate purpose and type
+- Avoid magic numbers and strings - use named constants
+- Keep addon interfaces clean and well-documented
