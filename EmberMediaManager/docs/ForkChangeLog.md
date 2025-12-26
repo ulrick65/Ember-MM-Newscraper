@@ -15,7 +15,7 @@ This document tracks all changes made to this fork of Ember Media Manager, start
 
 | Property | Value |
 |----------|-------|
-| **Document Version** | 1.0.2 |
+| **Document Version** | 1.0.3 |
 | **Created** | December 25, 2025 |
 | **Last Updated** | December 26, 2025 |
 | **Author** | Eric H. Anderson |
@@ -182,6 +182,9 @@ The following features are deprecated and slated for removal in a future version
 | Performance | Cached XmlSerializer instances for NFO processing | `EmberAPI\clsAPINFOSerializers.vb` (new), `EmberAPI\clsAPINFO.vb` |
 | Enhancement | Added NormalizeLineEndings helper method | `EmberAPI\clsAPINFO.vb` |
 | Enhancement | Added logging to empty catch blocks in GetIMDBFromNonConf | `EmberAPI\clsAPINFO.vb` |
+| Bug Fix | Fixed image language filtering - uncommented/added missing FilterImages calls for EpisodeFanarts, EpisodePosters, SeasonFanarts, and MainFanarts | `EmberAPI\clsAPIMediaContainers.vb` |
+| Enhancement | Added alphabetical sorting to Versions dialog (Ember Application/API pinned at top) | `EmberAPI\clsAPIModules.vb` |
+| Bug Fix | Fixed duplicate entries in Versions dialog by using HashSet for assembly tracking | `EmberAPI\clsAPIModules.vb` |
 
 **Version Updates:**
 

@@ -170,6 +170,9 @@ Public Class ModulesManager
                 addedAssemblies.Add(_externalModule.AssemblyFileName)
             End If
         Next
+
+        ' Sort alphabetically by Name, keeping Ember Application and Ember API at the top
+        VersionList = VersionList.OrderBy(Function(v) If(v.AssemblyFileName.StartsWith("*"), "0" & v.Name, "1" & v.Name)).ToList()
     End Sub
 
     Private Sub bwLoadModules_DoWork(ByVal sender As Object, ByVal e As System.ComponentModel.DoWorkEventArgs) Handles bwLoadModules.DoWork

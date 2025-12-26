@@ -4824,9 +4824,10 @@ Namespace MediaContainers
             SortImages(cSettings)
 
             'filter all List(Of Image) by preferred language/en/Blank/String.Empty/others
-            'Language preference settings aren't needed for sorting episode posters since here we only care about size of image (unlike poster/banner)
-            '_episodeposters = FilterImages(_episodeposters, cSettings)
+            EpisodeFanarts = FilterImages(EpisodeFanarts, cSettings)
+            EpisodePosters = FilterImages(EpisodePosters, cSettings)
             SeasonBanners = FilterImages(SeasonBanners, cSettings)
+            SeasonFanarts = FilterImages(SeasonFanarts, cSettings)
             SeasonLandscapes = FilterImages(SeasonLandscapes, cSettings)
             SeasonPosters = FilterImages(SeasonPosters, cSettings)
             MainBanners = FilterImages(MainBanners, cSettings)
@@ -4834,8 +4835,7 @@ Namespace MediaContainers
             MainClearArts = FilterImages(MainClearArts, cSettings)
             MainClearLogos = FilterImages(MainClearLogos, cSettings)
             MainDiscArts = FilterImages(MainDiscArts, cSettings)
-            'Language preference settings aren't needed for sorting fanarts since here we only care about size of image (unlike poster/banner)
-            ' mainfanarts = FilterImages(_mainfanarts, cSettings)
+            MainFanarts = FilterImages(MainFanarts, cSettings)
             MainKeyarts = FilterImages(MainPosters, New FilterSettings With {
                                        .ForcedLanguage = String.Empty,
                                        .ForceLanguage = True,
