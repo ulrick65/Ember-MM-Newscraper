@@ -32,6 +32,27 @@ Public Class NFO
 
 #End Region
 
+#Region "Helper Methods"
+
+    ''' <summary>
+    ''' Normalizes line endings to Windows format (CRLF).
+    ''' </summary>
+    ''' <param name="text">The text to normalize.</param>
+    ''' <returns>Text with consistent CRLF line endings.</returns>
+    ''' <remarks>
+    ''' This method first converts all line endings to LF (Unix format),
+    ''' then converts them to CRLF (Windows format) to ensure consistency
+    ''' regardless of the original line ending format (CR, LF, or CRLF).
+    ''' This is necessary because NFO files may come from different sources
+    ''' with varying line ending conventions.
+    ''' </remarks>
+    Private Shared Function NormalizeLineEndings(ByVal text As String) As String
+        If String.IsNullOrEmpty(text) Then Return text
+        Return text.Replace(vbCrLf, vbLf).Replace(vbCr, vbLf).Replace(vbLf, vbCrLf)
+    End Function
+
+#End Region
+
 #Region "Methods"
     ''' <summary>
     ''' Returns the "merged" result of each data scraper results
@@ -649,7 +670,7 @@ Public Class NFO
                 scrapedshow.TaglineSpecified AndAlso Master.eSettings.TVScraperShowTagline AndAlso Not new_Tagline Then
                 DBTV.TVShow.Tagline = scrapedshow.Tagline
                 new_Tagline = True
-            ElseIf Master.eSettings.TVScraperCleanFields AndAlso Not Master.eSettings.TVScrapershowTagline AndAlso Not Master.eSettings.TVLockshowTagline Then
+            ElseIf Master.eSettings.TVScraperCleanFields AndAlso Not Master.eSettings.TVScraperShowTagline AndAlso Not Master.eSettings.TVLockShowTagline Then
                 DBTV.TVShow.Tagline = String.Empty
             End If
 
@@ -1174,8 +1195,8 @@ Public Class NFO
 
     Public Shared Function CleanNFO_Movies(ByVal mNFO As MediaContainers.Movie) As MediaContainers.Movie
         If mNFO IsNot Nothing Then
-            mNFO.Outline = mNFO.Outline.Replace(vbCrLf, vbLf).Replace(vbLf, vbCrLf)
-            mNFO.Plot = mNFO.Plot.Replace(vbCrLf, vbLf).Replace(vbLf, vbCrLf)
+            mNFO.Outline = NormalizeLineEndings(mNFO.Outline)
+            mNFO.Plot = NormalizeLineEndings(mNFO.Plot)
             mNFO.Premiered = NumUtils.DateToISO8601Date(mNFO.Premiered)
             mNFO.Votes = NumUtils.CleanVotes(mNFO.Votes)
             If mNFO.FileInfoSpecified Then
@@ -1221,6 +1242,7 @@ Public Class NFO
     Public Shared Function CleanNFO_TVEpisodes(ByVal eNFO As MediaContainers.EpisodeDetails) As MediaContainers.EpisodeDetails
         If eNFO IsNot Nothing Then
             eNFO.Aired = NumUtils.DateToISO8601Date(eNFO.Aired)
+            eNFO.Plot = NormalizeLineEndings(eNFO.Plot)
             eNFO.Votes = NumUtils.CleanVotes(eNFO.Votes)
             If eNFO.FileInfoSpecified Then
                 If eNFO.FileInfo.StreamDetails.AudioSpecified Then
@@ -1242,7 +1264,7 @@ Public Class NFO
 
     Public Shared Function CleanNFO_TVShow(ByVal mNFO As MediaContainers.TVShow) As MediaContainers.TVShow
         If mNFO IsNot Nothing Then
-            mNFO.Plot = mNFO.Plot.Replace(vbCrLf, vbLf).Replace(vbLf, vbCrLf)
+            mNFO.Plot = NormalizeLineEndings(mNFO.Plot)
             mNFO.Premiered = NumUtils.DateToISO8601Date(mNFO.Premiered)
             mNFO.Votes = NumUtils.CleanVotes(mNFO.Votes)
 
@@ -1584,11 +1606,13 @@ Public Class NFO
         If isSingle Then
             Try
                 lFiles.AddRange(Directory.GetFiles(dirPath, "*.nfo"))
-            Catch
+            Catch ex As Exception
+                logger.Debug(ex, String.Format("Unable to search for *.nfo files in: {0}", dirPath))
             End Try
             Try
                 lFiles.AddRange(Directory.GetFiles(dirPath, "*.info"))
-            Catch
+            Catch ex As Exception
+                logger.Debug(ex, String.Format("Unable to search for *.info files in: {0}", dirPath))
             End Try
         Else
             Dim fName As String = Path.GetFileNameWithoutExtension(FileUtils.Common.RemoveStackingMarkers(sPath)).ToLower
@@ -1598,19 +1622,23 @@ Public Class NFO
 
             Try
                 lFiles.AddRange(Directory.GetFiles(dirPath, String.Concat(fName, ".nfo")))
-            Catch
+            Catch ex As Exception
+                logger.Debug(ex, String.Format("Unable to search for {0}.nfo files in: {1}", fName, dirPath))
             End Try
             Try
                 lFiles.AddRange(Directory.GetFiles(dirPath, String.Concat(oName, ".nfo")))
-            Catch
+            Catch ex As Exception
+                logger.Debug(ex, String.Format("Unable to search for {0}.nfo files in: {1}", oName, dirPath))
             End Try
             Try
                 lFiles.AddRange(Directory.GetFiles(dirPath, String.Concat(fName, ".info")))
-            Catch
+            Catch ex As Exception
+                logger.Debug(ex, String.Format("Unable to search for {0}.info files in: {1}", fName, dirPath))
             End Try
             Try
                 lFiles.AddRange(Directory.GetFiles(dirPath, String.Concat(oName, ".info")))
-            Catch
+            Catch ex As Exception
+                logger.Debug(ex, String.Format("Unable to search for {0}.info files in: {1}", oName, dirPath))
             End Try
         End If
 
@@ -1636,7 +1664,6 @@ Public Class NFO
         Next
         Return tNonConf
     End Function
-
     Public Shared Function GetNfoPath_MovieSet(ByVal DBElement As Database.DBElement) As String
         For Each a In FileUtils.GetFilenameList.MovieSet(DBElement, Enums.ModifierType.MainNFO)
             If File.Exists(a) Then
@@ -1739,30 +1766,21 @@ Public Class NFO
     End Function
 
     Public Shared Function IsConformingNFO_Movie(ByVal sPath As String) As Boolean
-        Dim testSer As XmlSerializer = Nothing
-
         Try
             If (Path.GetExtension(sPath) = ".nfo" OrElse Path.GetExtension(sPath) = ".info") AndAlso File.Exists(sPath) Then
                 Using testSR As StreamReader = New StreamReader(sPath)
-                    testSer = New XmlSerializer(GetType(MediaContainers.Movie))
-                    Dim testMovie As MediaContainers.Movie = DirectCast(testSer.Deserialize(testSR), MediaContainers.Movie)
+                    Dim testMovie As MediaContainers.Movie = DirectCast(NFOSerializers.Movie.Deserialize(testSR), MediaContainers.Movie)
                     testMovie = Nothing
-                    testSer = Nothing
                 End Using
                 Return True
             Else
                 Return False
             End If
         Catch
-            If testSer IsNot Nothing Then
-                testSer = Nothing
-            End If
             Return False
         End Try
     End Function
-
     Public Shared Function IsConformingNFO_TVEpisode(ByVal sPath As String) As Boolean
-        Dim testSer As XmlSerializer = New XmlSerializer(GetType(MediaContainers.EpisodeDetails))
         Dim testEp As New MediaContainers.EpisodeDetails
 
         Try
@@ -1772,8 +1790,7 @@ Public Class NFO
                     Dim rMatches As MatchCollection = Regex.Matches(xmlStr, "<episodedetails.*?>.*?</episodedetails>", RegexOptions.IgnoreCase Or RegexOptions.Singleline Or RegexOptions.IgnorePatternWhitespace)
                     If rMatches.Count = 1 Then
                         Using xmlRead As StringReader = New StringReader(rMatches(0).Value)
-                            testEp = DirectCast(testSer.Deserialize(xmlRead), MediaContainers.EpisodeDetails)
-                            testSer = Nothing
+                            testEp = DirectCast(NFOSerializers.EpisodeDetails.Deserialize(xmlRead), MediaContainers.EpisodeDetails)
                             testEp = Nothing
                             Return True
                         End Using
@@ -1781,14 +1798,12 @@ Public Class NFO
                         'read them all... if one fails, the entire nfo is non conforming
                         For Each xmlReg As Match In rMatches
                             Using xmlRead As StringReader = New StringReader(xmlReg.Value)
-                                testEp = DirectCast(testSer.Deserialize(xmlRead), MediaContainers.EpisodeDetails)
+                                testEp = DirectCast(NFOSerializers.EpisodeDetails.Deserialize(xmlRead), MediaContainers.EpisodeDetails)
                                 testEp = Nothing
                             End Using
                         Next
-                        testSer = Nothing
                         Return True
                     Else
-                        testSer = Nothing
                         If testEp IsNot Nothing Then
                             testEp = Nothing
                         End If
@@ -1796,55 +1811,39 @@ Public Class NFO
                     End If
                 End Using
             Else
-                testSer = Nothing
                 testEp = Nothing
                 Return False
             End If
         Catch
-            If testSer IsNot Nothing Then
-                testSer = Nothing
-            End If
             If testEp IsNot Nothing Then
                 testEp = Nothing
             End If
             Return False
         End Try
     End Function
-
     Public Shared Function IsConformingNFO_TVShow(ByVal sPath As String) As Boolean
-        Dim testSer As XmlSerializer = Nothing
-
         Try
             If (Path.GetExtension(sPath) = ".nfo" OrElse Path.GetExtension(sPath) = ".info") AndAlso File.Exists(sPath) Then
                 Using testSR As StreamReader = New StreamReader(sPath)
-                    testSer = New XmlSerializer(GetType(MediaContainers.TVShow))
-                    Dim testShow As MediaContainers.TVShow = DirectCast(testSer.Deserialize(testSR), MediaContainers.TVShow)
+                    Dim testShow As MediaContainers.TVShow = DirectCast(NFOSerializers.TVShow.Deserialize(testSR), MediaContainers.TVShow)
                     testShow = Nothing
-                    testSer = Nothing
                 End Using
                 Return True
             Else
                 Return False
             End If
         Catch
-            If testSer IsNot Nothing Then
-                testSer = Nothing
-            End If
-
             Return False
         End Try
     End Function
-
     Public Shared Function LoadFromNFO_Movie(ByVal sPath As String, ByVal isSingle As Boolean) As MediaContainers.Movie
-        Dim xmlSer As XmlSerializer = Nothing
         Dim xmlMov As New MediaContainers.Movie
 
         If Not String.IsNullOrEmpty(sPath) Then
             Try
                 If File.Exists(sPath) AndAlso Path.GetExtension(sPath).ToLower = ".nfo" Then
                     Using xmlSR As StreamReader = New StreamReader(sPath)
-                        xmlSer = New XmlSerializer(GetType(MediaContainers.Movie))
-                        xmlMov = DirectCast(xmlSer.Deserialize(xmlSR), MediaContainers.Movie)
+                        xmlMov = DirectCast(NFOSerializers.Movie.Deserialize(xmlSR), MediaContainers.Movie)
                         xmlMov = CleanNFO_Movies(xmlMov)
                     End Using
                 Else
@@ -1855,8 +1854,7 @@ Public Class NFO
                         Try
                             If Not String.IsNullOrEmpty(sReturn.Text) Then
                                 Using xmlSTR As StringReader = New StringReader(sReturn.Text)
-                                    xmlSer = New XmlSerializer(GetType(MediaContainers.Movie))
-                                    xmlMov = DirectCast(xmlSer.Deserialize(xmlSTR), MediaContainers.Movie)
+                                    xmlMov = DirectCast(NFOSerializers.Movie.Deserialize(xmlSTR), MediaContainers.Movie)
                                     xmlMov.UniqueIDs.IMDbId = sReturn.IMDBID
                                     xmlMov = CleanNFO_Movies(xmlMov)
                                 End Using
@@ -1883,8 +1881,7 @@ Public Class NFO
                     Try
                         If Not String.IsNullOrEmpty(sReturn.Text) Then
                             Using xmlSTR As StringReader = New StringReader(sReturn.Text)
-                                xmlSer = New XmlSerializer(GetType(MediaContainers.Movie))
-                                xmlMov = DirectCast(xmlSer.Deserialize(xmlSTR), MediaContainers.Movie)
+                                xmlMov = DirectCast(NFOSerializers.Movie.Deserialize(xmlSTR), MediaContainers.Movie)
                                 xmlMov.UniqueIDs.IMDbId = sReturn.IMDBID
                                 xmlMov = CleanNFO_Movies(xmlMov)
                             End Using
@@ -1893,26 +1890,19 @@ Public Class NFO
                     End Try
                 End If
             End Try
-
-            If xmlSer IsNot Nothing Then
-                xmlSer = Nothing
-            End If
         End If
 
         Return xmlMov
     End Function
-
     Public Shared Function LoadFromNFO_MovieSet(ByVal sPath As String) As MediaContainers.Movieset
-        Dim xmlSer As XmlSerializer = Nothing
         Dim xmlMovSet As New MediaContainers.Movieset
 
         If Not String.IsNullOrEmpty(sPath) Then
             Try
                 If File.Exists(sPath) AndAlso Path.GetExtension(sPath).ToLower = ".nfo" Then
                     Using xmlSR As StreamReader = New StreamReader(sPath)
-                        xmlSer = New XmlSerializer(GetType(MediaContainers.Movieset))
-                        xmlMovSet = DirectCast(xmlSer.Deserialize(xmlSR), MediaContainers.Movieset)
-                        xmlMovSet.Plot = xmlMovSet.Plot.Replace(vbCrLf, vbLf).Replace(vbLf, vbCrLf)
+                        xmlMovSet = DirectCast(NFOSerializers.Movieset.Deserialize(xmlSR), MediaContainers.Movieset)
+                        xmlMovSet.Plot = NormalizeLineEndings(xmlMovSet.Plot)
                     End Using
                 End If
 
@@ -1920,17 +1910,11 @@ Public Class NFO
                 logger.Error(ex, New StackFrame().GetMethod().Name)
                 xmlMovSet = New MediaContainers.Movieset
             End Try
-
-            If xmlSer IsNot Nothing Then
-                xmlSer = Nothing
-            End If
         End If
 
         Return xmlMovSet
     End Function
-
     Public Shared Function LoadFromNFO_TVEpisode(ByVal sPath As String, ByVal SeasonNumber As Integer, ByVal EpisodeNumber As Integer) As MediaContainers.EpisodeDetails
-        Dim xmlSer As XmlSerializer = New XmlSerializer(GetType(MediaContainers.EpisodeDetails))
         Dim xmlEp As New MediaContainers.EpisodeDetails
 
         If Not String.IsNullOrEmpty(sPath) AndAlso SeasonNumber >= -1 Then
@@ -1943,9 +1927,8 @@ Public Class NFO
                         If rMatches.Count = 1 Then
                             'only one episodedetail... assume it's the proper one
                             Using xmlRead As StringReader = New StringReader(rMatches(0).Value)
-                                xmlEp = DirectCast(xmlSer.Deserialize(xmlRead), MediaContainers.EpisodeDetails)
+                                xmlEp = DirectCast(NFOSerializers.EpisodeDetails.Deserialize(xmlRead), MediaContainers.EpisodeDetails)
                                 xmlEp = CleanNFO_TVEpisodes(xmlEp)
-                                xmlSer = Nothing
                                 If xmlEp.FileInfoSpecified Then
                                     If xmlEp.FileInfo.StreamDetails.AudioSpecified Then
                                         For Each aStream In xmlEp.FileInfo.StreamDetails.Audio.Where(Function(f) f.LanguageSpecified AndAlso Not f.LongLanguageSpecified)
@@ -1963,10 +1946,9 @@ Public Class NFO
                         ElseIf rMatches.Count > 1 Then
                             For Each xmlReg As Match In rMatches
                                 Using xmlRead As StringReader = New StringReader(xmlReg.Value)
-                                    xmlEp = DirectCast(xmlSer.Deserialize(xmlRead), MediaContainers.EpisodeDetails)
+                                    xmlEp = DirectCast(NFOSerializers.EpisodeDetails.Deserialize(xmlRead), MediaContainers.EpisodeDetails)
                                     xmlEp = CleanNFO_TVEpisodes(xmlEp)
                                     If xmlEp.Episode = EpisodeNumber AndAlso xmlEp.Season = SeasonNumber Then
-                                        xmlSer = Nothing
                                         Return xmlEp
                                     End If
                                 End Using
@@ -1993,9 +1975,7 @@ Public Class NFO
 
         Return New MediaContainers.EpisodeDetails
     End Function
-
     Public Shared Function LoadFromNFO_TVEpisode(ByVal sPath As String, ByVal SeasonNumber As Integer, ByVal Aired As String) As MediaContainers.EpisodeDetails
-        Dim xmlSer As XmlSerializer = New XmlSerializer(GetType(MediaContainers.EpisodeDetails))
         Dim xmlEp As New MediaContainers.EpisodeDetails
 
         If Not String.IsNullOrEmpty(sPath) AndAlso SeasonNumber >= -1 Then
@@ -2008,9 +1988,8 @@ Public Class NFO
                         If rMatches.Count = 1 Then
                             'only one episodedetail... assume it's the proper one
                             Using xmlRead As StringReader = New StringReader(rMatches(0).Value)
-                                xmlEp = DirectCast(xmlSer.Deserialize(xmlRead), MediaContainers.EpisodeDetails)
+                                xmlEp = DirectCast(NFOSerializers.EpisodeDetails.Deserialize(xmlRead), MediaContainers.EpisodeDetails)
                                 xmlEp = CleanNFO_TVEpisodes(xmlEp)
-                                xmlSer = Nothing
                                 If xmlEp.FileInfoSpecified Then
                                     If xmlEp.FileInfo.StreamDetails.AudioSpecified Then
                                         For Each aStream In xmlEp.FileInfo.StreamDetails.Audio.Where(Function(f) f.LanguageSpecified AndAlso Not f.LongLanguageSpecified)
@@ -2028,10 +2007,9 @@ Public Class NFO
                         ElseIf rMatches.Count > 1 Then
                             For Each xmlReg As Match In rMatches
                                 Using xmlRead As StringReader = New StringReader(xmlReg.Value)
-                                    xmlEp = DirectCast(xmlSer.Deserialize(xmlRead), MediaContainers.EpisodeDetails)
+                                    xmlEp = DirectCast(NFOSerializers.EpisodeDetails.Deserialize(xmlRead), MediaContainers.EpisodeDetails)
                                     xmlEp = CleanNFO_TVEpisodes(xmlEp)
                                     If xmlEp.Aired = Aired AndAlso xmlEp.Season = SeasonNumber Then
-                                        xmlSer = Nothing
                                         Return xmlEp
                                     End If
                                 End Using
@@ -2058,17 +2036,14 @@ Public Class NFO
 
         Return New MediaContainers.EpisodeDetails
     End Function
-
     Public Shared Function LoadFromNFO_TVShow(ByVal sPath As String) As MediaContainers.TVShow
-        Dim xmlSer As XmlSerializer = Nothing
         Dim xmlShow As New MediaContainers.TVShow
 
         If Not String.IsNullOrEmpty(sPath) Then
             Try
                 If File.Exists(sPath) AndAlso Path.GetExtension(sPath).ToLower = ".nfo" Then
                     Using xmlSR As StreamReader = New StreamReader(sPath)
-                        xmlSer = New XmlSerializer(GetType(MediaContainers.TVShow))
-                        xmlShow = DirectCast(xmlSer.Deserialize(xmlSR), MediaContainers.TVShow)
+                        xmlShow = DirectCast(NFOSerializers.TVShow.Deserialize(xmlSR), MediaContainers.TVShow)
                         xmlShow = CleanNFO_TVShow(xmlShow)
                     End Using
                 Else
@@ -2095,10 +2070,6 @@ Public Class NFO
             Catch ex As Exception
                 logger.Error(ex, New StackFrame().GetMethod().Name)
             End Try
-
-            If xmlSer IsNot Nothing Then
-                xmlSer = Nothing
-            End If
         End If
 
         Return xmlShow
@@ -2180,7 +2151,6 @@ Public Class NFO
                 'Create a clone of MediaContainer to prevent changes on database data that only needed in NFO
                 Dim tMovie As MediaContainers.Movie = CType(tDBElement.Movie.CloneDeep, MediaContainers.Movie)
 
-                Dim xmlSer As New XmlSerializer(GetType(MediaContainers.Movie))
                 Dim doesExist As Boolean = False
                 Dim fAtt As New FileAttributes
                 Dim fAttWritable As Boolean = True
@@ -2217,7 +2187,7 @@ Public Class NFO
                         End If
                         Using xmlSW As New StreamWriter(a)
                             tDBElement.NfoPath = a
-                            xmlSer.Serialize(xmlSW, tMovie)
+                            NFOSerializers.Movie.Serialize(xmlSW, tMovie)
                         End Using
                         If doesExist And fAttWritable Then File.SetAttributes(a, fAtt)
                     End If
@@ -2242,7 +2212,6 @@ Public Class NFO
             If Not String.IsNullOrEmpty(tDBElement.MovieSet.Title) Then
                 If tDBElement.MovieSet.TitleHasChanged Then DeleteNFO_MovieSet(tDBElement, False, True)
 
-                Dim xmlSer As New XmlSerializer(GetType(MediaContainers.Movieset))
                 Dim doesExist As Boolean = False
                 Dim fAtt As New FileAttributes
                 Dim fAttWritable As Boolean = True
@@ -2264,7 +2233,7 @@ Public Class NFO
                         End If
                         Using xmlSW As New StreamWriter(a)
                             tDBElement.NfoPath = a
-                            xmlSer.Serialize(xmlSW, tDBElement.MovieSet)
+                            NFOSerializers.Movieset.Serialize(xmlSW, tDBElement.MovieSet)
                         End Using
                         If doesExist And fAttWritable Then File.SetAttributes(a, fAtt)
                     End If
@@ -2275,14 +2244,11 @@ Public Class NFO
             logger.Error(ex, New StackFrame().GetMethod().Name)
         End Try
     End Sub
-
     Public Shared Sub SaveToNFO_TVEpisode(ByRef tDBElement As Database.DBElement)
         Try
             If tDBElement.FilenameSpecified Then
                 'Create a clone of MediaContainer to prevent changes on database data that only needed in NFO
                 Dim tTVEpisode As MediaContainers.EpisodeDetails = CType(tDBElement.TVEpisode.CloneDeep, MediaContainers.EpisodeDetails)
-
-                Dim xmlSer As New XmlSerializer(GetType(MediaContainers.EpisodeDetails))
 
                 Dim doesExist As Boolean = False
                 Dim fAtt As New FileAttributes
@@ -2343,7 +2309,7 @@ Public Class NFO
                                 End If
 
                                 Using xmlSW As New Utf8StringWriter
-                                    xmlSer.Serialize(xmlSW, tvEp, NS)
+                                    NFOSerializers.EpisodeDetails.Serialize(xmlSW, tvEp, NS)
                                     If sBuilder.Length > 0 Then
                                         sBuilder.Append(Environment.NewLine)
                                         xmlSW.GetStringBuilder.Remove(0, xmlSW.GetStringBuilder.ToString.IndexOf(Environment.NewLine) + 1)
@@ -2384,7 +2350,6 @@ Public Class NFO
                 'Create a clone of MediaContainer to prevent changes on database data that only needed in NFO
                 Dim tTVShow As MediaContainers.TVShow = CType(tDBElement.TVShow.CloneDeep, MediaContainers.TVShow)
 
-                Dim xmlSer As New XmlSerializer(GetType(MediaContainers.TVShow))
                 Dim doesExist As Boolean = False
                 Dim fAtt As New FileAttributes
                 Dim fAttWritable As Boolean = True
@@ -2424,7 +2389,7 @@ Public Class NFO
 
                         Using xmlSW As New StreamWriter(a)
                             tDBElement.NfoPath = a
-                            xmlSer.Serialize(xmlSW, tTVShow)
+                            NFOSerializers.TVShow.Serialize(xmlSW, tTVShow)
                         End Using
 
                         If doesExist And fAttWritable Then File.SetAttributes(a, fAtt)

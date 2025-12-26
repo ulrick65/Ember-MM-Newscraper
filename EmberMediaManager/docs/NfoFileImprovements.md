@@ -20,19 +20,19 @@ This document outlines potential improvements identified during the NFO file pro
 
 ### 1.1 Empty Catch Blocks in Directory Operations
 
-- [ ] **Status:** Not Started
+- [✓] **Status:** Completed (2025-12-26)
 
 **Current Issue:**
-In `clsAPINFO.vb` (Lines 1585-1614), directory file searches use empty catch blocks that silently swallow errors, making debugging difficult.
+In `clsAPINFO.vb`, directory file searches use empty catch blocks that silently swallow errors, making debugging difficult.
 
 **Current Code Pattern:**
 The code uses `Try` with `lFiles.AddRange(Directory.GetFiles(dirPath, "*.nfo"))` followed by an empty `Catch` and `End Try` block.
 
-**Proposed Solution:**
-Add proper logging for exceptions while maintaining the fail-safe behavior. Log at Debug or Info level to avoid cluttering logs during normal operation.
+**Implemented Solution:**
+Added proper logging for exceptions using `logger.Debug()` with descriptive messages including the directory path and search pattern. Maintains fail-safe behavior while providing debugging visibility.
 
 **Affected Files:**
-- `EmberAPI\clsAPINFO.vb`
+- `EmberAPI\clsAPINFO.vb` - `GetIMDBFromNonConf` method
 
 **Complexity:** Low
 
@@ -40,9 +40,6 @@ Add proper logging for exceptions while maintaining the fail-safe behavior. Log 
 - Improved debugging capability
 - Better visibility into file system issues
 - Maintains current fail-safe behavior
-
-**Risks:**
-- Minimal - logging only, no behavior change
 
 ---
 
@@ -54,10 +51,10 @@ Add proper logging for exceptions while maintaining the fail-safe behavior. Log 
 The `LoadFromNFO_*` methods catch generic `Exception` types. More specific exception handling would improve error diagnosis.
 
 **Affected Methods:**
-- `LoadFromNFO_Movie` (Lines 1838-1902)
-- `LoadFromNFO_MovieSet` (Lines 1905-1929)
-- `LoadFromNFO_TVEpisode` (Lines 1932-1994)
-- `LoadFromNFO_TVShow` (Lines 2062-2104)
+- `LoadFromNFO_Movie`
+- `LoadFromNFO_MovieSet`
+- `LoadFromNFO_TVEpisode`
+- `LoadFromNFO_TVShow`
 
 **Proposed Solution:**
 Catch specific exceptions (`XmlException`, `IOException`, `UnauthorizedAccessException`) with appropriate handling for each.
@@ -81,23 +78,21 @@ Catch specific exceptions (`XmlException`, `IOException`, `UnauthorizedAccessExc
 
 ### 2.1 Cache XmlSerializer Instances
 
-- [ ] **Status:** Not Started
+- [✓] **Status:** Completed (2025-12-26)
 
 **Current Issue:**
 Each NFO load/save operation creates a new `XmlSerializer` instance. XmlSerializer construction is expensive as it generates and compiles code at runtime.
 
-**Current Code Pattern:**
-Each method creates a new serializer with `Dim xmlSer As XmlSerializer = New XmlSerializer(GetType(MediaContainers.Movie))` pattern.
+**Implemented Solution:**
+Created a new helper class `NFOSerializers` with static, thread-safe cached XmlSerializer instances for each media type using `Lazy(Of T)` initialization.
 
-**Proposed Solution:**
-Create static, cached XmlSerializer instances for each media type. Use a dedicated helper class or Lazy initialization.
+**New File Created:**
+- `EmberAPI\clsAPINFOSerializers.vb`
 
-**Implementation Approach:**
-Create a new helper class `NFOSerializers` with static lazy-initialized serializers for each type: Movie, Movieset, TVShow, EpisodeDetails.
-
-**Affected Files:**
-- `EmberAPI\clsAPINFO.vb`
-- New file: `EmberAPI\clsAPINFOSerializers.vb` (optional, could be nested class)
+**Updated Methods in `EmberAPI\clsAPINFO.vb`:**
+- `IsConformingNFO_Movie`, `IsConformingNFO_TVEpisode`, `IsConformingNFO_TVShow`
+- `LoadFromNFO_Movie`, `LoadFromNFO_MovieSet`, `LoadFromNFO_TVEpisode` (2 overloads), `LoadFromNFO_TVShow`
+- `SaveToNFO_Movie`, `SaveToNFO_MovieSet`, `SaveToNFO_TVEpisode`, `SaveToNFO_TVShow`
 
 **Complexity:** Medium
 
@@ -105,16 +100,13 @@ Create a new helper class `NFOSerializers` with static lazy-initialized serializ
 - Significant performance improvement for large libraries
 - Reduced memory allocations
 - Faster scanning operations
-
-**Risks:**
-- Thread safety considerations (XmlSerializer is thread-safe for Serialize/Deserialize)
-- Need to handle assembly load context issues
+- Thread-safe implementation
 
 ---
 
 ### 2.2 Lightweight NFO Validation
 
-- [ ] **Status:** Not Started
+- [~] **Status:** Declined (2025-12-26)
 
 **Current Issue:**
 The `IsConformingNFO_*` methods perform full deserialization just to check if an NFO is valid. This is expensive for large libraries.
@@ -141,6 +133,8 @@ Create a method that uses XmlReader to verify the root element matches expected 
 **Risks:**
 - May miss some edge cases that full deserialization would catch
 - Need comprehensive testing
+
+**Decision:** Declined - Full deserialization is necessary to properly validate NFO conformance. Lightweight validation would miss data type errors, encoding issues, and structural problems that full deserialization catches. With cached XmlSerializers (Item 2.1), performance is already significantly improved. Future serializer optimizations will further reduce any scanning overhead.
 
 ---
 
@@ -192,7 +186,7 @@ The regex pattern used to extract multiple episode details from a single NFO fil
 **Current Pattern:**
 The pattern `<episodedetails.*?>.*?</episodedetails>` is used with RegexOptions for case insensitivity and singleline matching.
 
-**Location:** `LoadFromNFO_TVEpisode` (Line 1942)
+**Location:** `LoadFromNFO_TVEpisode`
 
 **Proposed Solution:**
 Use XmlReader with fragment parsing capability, or pre-process the file to properly split at episode boundaries. Consider using XDocument with proper XML parsing.
@@ -293,29 +287,36 @@ Extract these concerns into separate methods or classes:
 
 ### 5.1 Improve Line Ending Normalization
 
-- [ ] **Status:** Not Started
+- [✓] **Status:** Completed (2025-12-26)
 
 **Current Issue:**
-The `CleanNFO_*` methods normalize line endings with a double replace pattern: `Replace(vbCrLf, vbLf).Replace(vbLf, vbCrLf)`. This works but is not intuitive.
+The `CleanNFO_*` methods normalize line endings with a double replace pattern: `Replace(vbCrLf, vbLf).Replace(vbLf, vbCrLf)`. This works but is not intuitive and doesn't handle standalone CR characters.
 
-**Current Pattern:**
-Used in `CleanNFO_Movies`, `CleanNFO_TVShow`, and `CleanNFO_TVEpisodes` for Plot and Outline fields.
+**Implemented Solution:**
+Created a dedicated `NormalizeLineEndings` helper method with clear XML documentation explaining the purpose. The method handles all line ending formats (CR, LF, CRLF) and normalizes to Windows format (CRLF).
 
-**Proposed Solution:**
-Create a dedicated `NormalizeLineEndings` helper method with clear documentation explaining the purpose. Consider using `Environment.NewLine` for consistency.
+**Implementation Details:**
+- Added `NormalizeLineEndings(text As String)` private shared function
+- Handles null/empty input gracefully
+- Converts CR → LF → CRLF to ensure consistent output
+- Applied to Plot and Outline fields in all CleanNFO methods
+- Also applied to `LoadFromNFO_MovieSet` for Plot field
 
 **Affected Files:**
 - `EmberAPI\clsAPINFO.vb`
+  - New helper method: `NormalizeLineEndings`
+  - Updated: `CleanNFO_Movies` (Outline, Plot)
+  - Updated: `CleanNFO_TVEpisodes` (Plot)
+  - Updated: `CleanNFO_TVShow` (Plot)
+  - Updated: `LoadFromNFO_MovieSet` (Plot)
 
 **Complexity:** Low
 
 **Benefits:**
-- Clearer code intent
+- Clearer code intent with descriptive method name
 - Centralized line ending handling
-- Easier to maintain
-
-**Risks:**
-- Minimal - simple refactoring
+- Handles all line ending formats (CR, LF, CRLF)
+- Easier to maintain and modify
 
 ---
 
@@ -353,12 +354,12 @@ Add explicit validation and logging for date parsing failures. Consider preservi
 Based on impact and effort, here is a suggested implementation order:
 
 ### Quick Wins (Low effort, Good value)
-1. **1.1** - Empty Catch Blocks (adds debugging without behavior change)
-2. **5.1** - Line Ending Normalization (simple cleanup)
-3. **2.1** - Cache XmlSerializer (good performance gain)
+1. ~~**1.1** - Empty Catch Blocks (adds debugging without behavior change)~~ ✓ COMPLETED
+2. ~~**5.1** - Line Ending Normalization (simple cleanup)~~ ✓ COMPLETED
+3. ~~**2.1** - Cache XmlSerializer (good performance gain)~~ ✓ COMPLETED
 
 ### Medium Priority (Moderate effort, High value)
-4. **2.2** - Lightweight NFO Validation (performance improvement)
+4. ~~**2.2** - Lightweight NFO Validation (performance improvement)~~ **DECLINED**
 5. **1.2** - Specific Exception Handling (better error diagnosis)
 6. **3.2** - Multi-Episode Regex (robustness improvement)
 
@@ -377,7 +378,8 @@ Use this section to document decisions and discussions about each improvement it
 
 | Date | Participants | Items Discussed | Decisions |
 |------|--------------|-----------------|-----------|
-| | | | |
+| 2025-12-26 | Developer | Quick Wins (1.1, 2.1, 5.1) | Approved and implemented all three quick win items |
+| 2.2 | ~ Declined | - | - | 2025-12-26 |
 
 ### Additional Considerations
 
@@ -392,13 +394,13 @@ Use this section to document decisions and discussions about each improvement it
 
 | Item | Status | Assigned To | Target Date | Completed Date |
 |------|--------|-------------|-------------|----------------|
-| 1.1 | Not Started | | | |
+| 1.1 | ✓ Completed | - | - | 2025-12-26 |
 | 1.2 | Not Started | | | |
-| 2.1 | Not Started | | | |
-| 2.2 | Not Started | | | |
+| 2.1 | ✓ Completed | - | - | 2025-12-26 |
+| 2.2 | ~ Declined | - | - | 2025-12-26 |
 | 3.1 | Not Started | | | |
 | 3.2 | Not Started | | | |
 | 4.1 | Not Started | | | |
 | 4.2 | Not Started | | | |
-| 5.1 | Not Started | | | |
+| 5.1 | ✓ Completed | - | - | 2025-12-26 |
 | 5.2 | Not Started | | | |

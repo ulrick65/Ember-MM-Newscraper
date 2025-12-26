@@ -179,6 +179,9 @@ The following features are deprecated and slated for removal in a future version
 | Cleanup | Removed unused YouTube code | `EmberAPI\clsAPIYouTube.vb` |
 | Cleanup | Reorganized 29 media container classes with consistent region-based structure (~5,000 lines) | `EmberAPI\clsAPIMediaContainers.vb` |
 | Bug Fix | Fixed typo in property name: `ValueNormalizedSpezified` → `ValueNormalizedSpecified` | `EmberAPI\clsAPIMediaContainers.vb`, `Addons\generic.Interface.Kodi\clsAPIKodi.vb` |
+| Performance | Cached XmlSerializer instances for NFO processing | `EmberAPI\clsAPINFOSerializers.vb` (new), `EmberAPI\clsAPINFO.vb` |
+| Enhancement | Added NormalizeLineEndings helper method | `EmberAPI\clsAPINFO.vb` |
+| Enhancement | Added logging to empty catch blocks in GetIMDBFromNonConf | `EmberAPI\clsAPINFO.vb` |
 
 **Version Updates:**
 
