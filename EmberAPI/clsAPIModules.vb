@@ -86,55 +86,89 @@ Public Class ModulesManager
         VersionList.Clear()
         VersionList.Add(New VersionItem With {.AssemblyFileName = "*EmberAPP", .Name = "Ember Application", .Version = My.Application.Info.Version.ToString()})
         VersionList.Add(New VersionItem With {.AssemblyFileName = "*EmberAPI", .Name = "Ember API", .Version = Functions.EmberAPIVersion()})
+
+        ' Use a HashSet to track which assemblies we've already added
+        Dim addedAssemblies As New HashSet(Of String)(StringComparer.OrdinalIgnoreCase)
+
         For Each _externalScraperModule As _externalScraperModuleClass_Data_Movie In externalScrapersModules_Data_Movie
-            VersionList.Add(New VersionItem With {.Name = _externalScraperModule.ProcessorModule.ModuleName,
-              .AssemblyFileName = _externalScraperModule.AssemblyFileName,
-              .Version = _externalScraperModule.ProcessorModule.ModuleVersion})
+            If Not addedAssemblies.Contains(_externalScraperModule.AssemblyFileName) Then
+                VersionList.Add(New VersionItem With {.Name = _externalScraperModule.ProcessorModule.ModuleName,
+                  .AssemblyFileName = _externalScraperModule.AssemblyFileName,
+                  .Version = _externalScraperModule.ProcessorModule.ModuleVersion})
+                addedAssemblies.Add(_externalScraperModule.AssemblyFileName)
+            End If
         Next
         For Each _externalScraperModule As _externalScraperModuleClass_Data_MovieSet In externalScrapersModules_Data_MovieSet
-            VersionList.Add(New VersionItem With {.Name = _externalScraperModule.ProcessorModule.ModuleName,
-              .AssemblyFileName = _externalScraperModule.AssemblyFileName,
-              .Version = _externalScraperModule.ProcessorModule.ModuleVersion})
+            If Not addedAssemblies.Contains(_externalScraperModule.AssemblyFileName) Then
+                VersionList.Add(New VersionItem With {.Name = _externalScraperModule.ProcessorModule.ModuleName,
+                  .AssemblyFileName = _externalScraperModule.AssemblyFileName,
+                  .Version = _externalScraperModule.ProcessorModule.ModuleVersion})
+                addedAssemblies.Add(_externalScraperModule.AssemblyFileName)
+            End If
         Next
         For Each _externalScraperModule As _externalScraperModuleClass_Data_TV In externalScrapersModules_Data_TV
-            VersionList.Add(New VersionItem With {.Name = _externalScraperModule.ProcessorModule.ModuleName,
-              .AssemblyFileName = _externalScraperModule.AssemblyFileName,
-              .Version = _externalScraperModule.ProcessorModule.ModuleVersion})
+            If Not addedAssemblies.Contains(_externalScraperModule.AssemblyFileName) Then
+                VersionList.Add(New VersionItem With {.Name = _externalScraperModule.ProcessorModule.ModuleName,
+                  .AssemblyFileName = _externalScraperModule.AssemblyFileName,
+                  .Version = _externalScraperModule.ProcessorModule.ModuleVersion})
+                addedAssemblies.Add(_externalScraperModule.AssemblyFileName)
+            End If
         Next
         For Each _externalScraperModule As _externalScraperModuleClass_Image_Movie In externalScrapersModules_Image_Movie
-            VersionList.Add(New VersionItem With {.Name = _externalScraperModule.ProcessorModule.ModuleName,
-              .AssemblyFileName = _externalScraperModule.AssemblyFileName,
-              .Version = _externalScraperModule.ProcessorModule.ModuleVersion})
+            If Not addedAssemblies.Contains(_externalScraperModule.AssemblyFileName) Then
+                VersionList.Add(New VersionItem With {.Name = _externalScraperModule.ProcessorModule.ModuleName,
+                  .AssemblyFileName = _externalScraperModule.AssemblyFileName,
+                  .Version = _externalScraperModule.ProcessorModule.ModuleVersion})
+                addedAssemblies.Add(_externalScraperModule.AssemblyFileName)
+            End If
         Next
         For Each _externalScraperModule As _externalScraperModuleClass_Image_MovieSet In externalScrapersModules_Image_MovieSet
-            VersionList.Add(New VersionItem With {.Name = _externalScraperModule.ProcessorModule.ModuleName,
-              .AssemblyFileName = _externalScraperModule.AssemblyFileName,
-              .Version = _externalScraperModule.ProcessorModule.ModuleVersion})
+            If Not addedAssemblies.Contains(_externalScraperModule.AssemblyFileName) Then
+                VersionList.Add(New VersionItem With {.Name = _externalScraperModule.ProcessorModule.ModuleName,
+                  .AssemblyFileName = _externalScraperModule.AssemblyFileName,
+                  .Version = _externalScraperModule.ProcessorModule.ModuleVersion})
+                addedAssemblies.Add(_externalScraperModule.AssemblyFileName)
+            End If
         Next
         For Each _externalScraperModule As _externalScraperModuleClass_Image_TV In externalScrapersModules_Image_TV
-            VersionList.Add(New VersionItem With {.Name = _externalScraperModule.ProcessorModule.ModuleName,
-              .AssemblyFileName = _externalScraperModule.AssemblyFileName,
-              .Version = _externalScraperModule.ProcessorModule.ModuleVersion})
+            If Not addedAssemblies.Contains(_externalScraperModule.AssemblyFileName) Then
+                VersionList.Add(New VersionItem With {.Name = _externalScraperModule.ProcessorModule.ModuleName,
+                  .AssemblyFileName = _externalScraperModule.AssemblyFileName,
+                  .Version = _externalScraperModule.ProcessorModule.ModuleVersion})
+                addedAssemblies.Add(_externalScraperModule.AssemblyFileName)
+            End If
         Next
         For Each _externalScraperModule As _externalScraperModuleClass_Theme_Movie In externalScrapersModules_Theme_Movie
-            VersionList.Add(New VersionItem With {.Name = _externalScraperModule.ProcessorModule.ModuleName,
-              .AssemblyFileName = _externalScraperModule.AssemblyFileName,
-              .Version = _externalScraperModule.ProcessorModule.ModuleVersion})
+            If Not addedAssemblies.Contains(_externalScraperModule.AssemblyFileName) Then
+                VersionList.Add(New VersionItem With {.Name = _externalScraperModule.ProcessorModule.ModuleName,
+                  .AssemblyFileName = _externalScraperModule.AssemblyFileName,
+                  .Version = _externalScraperModule.ProcessorModule.ModuleVersion})
+                addedAssemblies.Add(_externalScraperModule.AssemblyFileName)
+            End If
         Next
         For Each _externalTVThemeScraperModule As _externalScraperModuleClass_Theme_TV In externalScrapersModules_Theme_TV
-            VersionList.Add(New VersionItem With {.Name = _externalTVThemeScraperModule.ProcessorModule.ModuleName,
-                    .AssemblyFileName = _externalTVThemeScraperModule.AssemblyFileName,
-                    .Version = _externalTVThemeScraperModule.ProcessorModule.ModuleVersion})
+            If Not addedAssemblies.Contains(_externalTVThemeScraperModule.AssemblyFileName) Then
+                VersionList.Add(New VersionItem With {.Name = _externalTVThemeScraperModule.ProcessorModule.ModuleName,
+                        .AssemblyFileName = _externalTVThemeScraperModule.AssemblyFileName,
+                        .Version = _externalTVThemeScraperModule.ProcessorModule.ModuleVersion})
+                addedAssemblies.Add(_externalTVThemeScraperModule.AssemblyFileName)
+            End If
         Next
         For Each _externalScraperModule As _externalScraperModuleClass_Trailer_Movie In externalScrapersModules_Trailer_Movie
-            VersionList.Add(New VersionItem With {.Name = _externalScraperModule.ProcessorModule.ModuleName,
-              .AssemblyFileName = _externalScraperModule.AssemblyFileName,
-              .Version = _externalScraperModule.ProcessorModule.ModuleVersion})
+            If Not addedAssemblies.Contains(_externalScraperModule.AssemblyFileName) Then
+                VersionList.Add(New VersionItem With {.Name = _externalScraperModule.ProcessorModule.ModuleName,
+                  .AssemblyFileName = _externalScraperModule.AssemblyFileName,
+                  .Version = _externalScraperModule.ProcessorModule.ModuleVersion})
+                addedAssemblies.Add(_externalScraperModule.AssemblyFileName)
+            End If
         Next
         For Each _externalModule As _externalGenericModuleClass In externalGenericModules
-            VersionList.Add(New VersionItem With {.Name = _externalModule.ProcessorModule.ModuleName,
-              .AssemblyFileName = _externalModule.AssemblyFileName,
-              .Version = _externalModule.ProcessorModule.ModuleVersion})
+            If Not addedAssemblies.Contains(_externalModule.AssemblyFileName) Then
+                VersionList.Add(New VersionItem With {.Name = _externalModule.ProcessorModule.ModuleName,
+                  .AssemblyFileName = _externalModule.AssemblyFileName,
+                  .Version = _externalModule.ProcessorModule.ModuleVersion})
+                addedAssemblies.Add(_externalModule.AssemblyFileName)
+            End If
         Next
     End Sub
 
