@@ -1,6 +1,6 @@
 {
     "description": "Assembly version configuration for Ember Media Manager",
-    "lastUpdated": "2025-12-25",
+    "lastUpdated": "2025-12-26",
     "defaultVersion": "1.12.0.0",
     "projects": {
         "core": [
@@ -15,7 +15,7 @@
             {
                 "name": "EmberAPI",
                 "path": "EmberAPI\\My Project\\AssemblyInfo.vb",
-                "version": "1.12.1.0",
+                "version": "1.12.1.1",
                 "type": "vb",
                 "status": "active",
                 "notes": "Core API library"

@@ -1281,7 +1281,7 @@ Namespace Kodi
 
                     'Ratings
                     Dim mRatings As New Dictionary(Of String, Video.Rating)
-                    For Each nRating In mDBElement.Movie.Ratings.Items.Where(Function(f) f.ValueNormalizedSpezified)
+                    For Each nRating In mDBElement.Movie.Ratings.Items.Where(Function(f) f.ValueNormalizedSpecified)
                         mRatings.Add(nRating.Type, New Video.Rating With {
                                      .[default] = nRating.IsDefault,
                                      .rating = nRating.ValueNormalized,
@@ -1563,7 +1563,7 @@ Namespace Kodi
 
                     'Ratings
                     Dim mRatings As New Dictionary(Of String, Video.Rating)
-                    For Each nRating In mDBElement.TVEpisode.Ratings.Items.Where(Function(f) f.ValueNormalizedSpezified)
+                    For Each nRating In mDBElement.TVEpisode.Ratings.Items.Where(Function(f) f.ValueNormalizedSpecified)
                         mRatings.Add(nRating.Type, New Video.Rating With {
                                      .[default] = nRating.IsDefault,
                                      .rating = nRating.ValueNormalized,
@@ -1859,7 +1859,7 @@ Namespace Kodi
 
                     'Ratings
                     Dim mRatings As New Dictionary(Of String, Video.Rating)
-                    For Each nRating In mDBElement.TVShow.Ratings.Items.Where(Function(f) f.ValueNormalizedSpezified)
+                    For Each nRating In mDBElement.TVShow.Ratings.Items.Where(Function(f) f.ValueNormalizedSpecified)
                         mRatings.Add(nRating.Type, New Video.Rating With {
                                      .[default] = nRating.IsDefault,
                                      .rating = nRating.ValueNormalized,

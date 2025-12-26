@@ -15,9 +15,9 @@ This document tracks all changes made to this fork of Ember Media Manager, start
 
 | Property | Value |
 |----------|-------|
-| **Document Version** | 1.0.1 |
+| **Document Version** | 1.0.2 |
 | **Created** | December 25, 2025 |
-| **Last Updated** | December 25, 2025 |
+| **Last Updated** | December 26, 2025 |
 | **Author** | Eric H. Anderson |
 ---
 
@@ -26,7 +26,7 @@ This document tracks all changes made to this fork of Ember Media Manager, start
 | Property | Value |
 |----------|-------|
 | **Upstream Repository** | [nagten/Ember-MM-Newscraper](https://github.com/nagten/Ember-MM-Newscraper) |
-| **Fork Repository** | [ulrick65/Ember-MM-Newscraper](https://github.com/ulrick65/Ember-MM-Newscraper) |
+| **Fork Repository** | [ulrick65/Ember-MM-Newscraper](https://github.com/ulrick65/Ember-MM-Newsscraper) |
 | **Fork Date** | December 21, 2025 |
 | **Upstream Version at Fork** | 1.11.1.0 |
 | **Current Fork Version** | 1.12.1.0 |
@@ -41,7 +41,7 @@ This document tracks all changes made to this fork of Ember Media Manager, start
 | 1.11.1.0 | Pre-fork | Upstream nagten version at time of fork |
 | 1.11.1.7 | Dec 21, 2025 | Upstream patch pulled (IMDB writer comparison fix) |
 | 1.12.0.0 | Dec 22, 2025 | Framework upgrade to .NET 4.8, package updates, all addons versioned |
-| 1.12.1.0 | Dec 23-25, 2025 | Bug fixes, cleanup, genre mapping fix, documentation |
+| 1.12.1.0 | Dec 23-26, 2025 | Bug fixes, cleanup, genre mapping fix, documentation, code organization |
 
 ---
 
@@ -63,7 +63,7 @@ This section tracks the current version of every project in the solution. Versio
 | Project | Assembly Name | Current Version | Upstream Version | Change Type |
 |---------|---------------|-----------------|------------------|-------------|
 | EmberMediaManager | Ember Media Manager.exe | 1.12.1.0 | 1.11.1.0 | Code Modified |
-| EmberAPI | EmberAPI.dll | 1.12.1.0 | 1.11.1.0 | Code Modified |
+| EmberAPI | EmberAPI.dll | 1.12.1.1 | 1.11.1.0 | Code Modified |
 | KodiAPI | KodiAPI.dll | 1.10.1.0 | 1.10.0 | Framework Updated |
 
 ### Generic Addons
@@ -165,7 +165,7 @@ The following features are deprecated and slated for removal in a future version
 
 ## Detailed Change History
 
-### Version 1.12.1.0 (December 23-25, 2025)
+### Version 1.12.1.0 (December 23-26, 2025)
 
 **Summary:** Bug fixes, code cleanup, version standardization, and documentation improvements.
 
@@ -177,6 +177,8 @@ The following features are deprecated and slated for removal in a future version
 | Bug Fix | Fixed database genre handling | `EmberAPI\clsAPIDatabase.vb` |
 | Enhancement | XML processing improvements | `EmberAPI\clsAPIXML.vb` |
 | Cleanup | Removed unused YouTube code | `EmberAPI\clsAPIYouTube.vb` |
+| Cleanup | Reorganized 29 media container classes with consistent region-based structure (~5,000 lines) | `EmberAPI\clsAPIMediaContainers.vb` |
+| Bug Fix | Fixed typo in property name: `ValueNormalizedSpezified` → `ValueNormalizedSpecified` | `EmberAPI\clsAPIMediaContainers.vb`, `Addons\generic.Interface.Kodi\clsAPIKodi.vb` |
 
 **Version Updates:**
 
@@ -184,6 +186,7 @@ The following features are deprecated and slated for removal in a future version
 |----------|--------|----------------|
 | Version | Standardized all addon versions to 1.12.0.0 | 27 AssemblyInfo files |
 | Version | Updated KodiAPI to 1.10.1.0 | `KodiAPI\Properties\AssemblyInfo.cs` |
+| Version | Updated EmberAPI to 1.12.1.1 for media container reorganization | `EmberAPI\My Project\AssemblyInfo.vb` |
 
 **Documentation:**
 
