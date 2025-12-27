@@ -2,11 +2,11 @@
 
 | Document Info | |
 |---------------|---|
-| **Version** | 1.1 |
+| **Version** | 1.2 |
 | **Created** | December 27, 2025 |
 | **Updated** | December 27, 2025 |
 | **Author** | Eric H. Anderson |
-| **Status** | Planning |
+| **Status** | In Progress |
 | **Reference** | [PerformanceAnalysis.md](PerformanceAnalysis.md) |
 
 ---
@@ -17,6 +17,7 @@
 |---------|------|--------|---------|
 | 1.0 | 2025-12-27 | Eric H. Anderson | Initial plan creation |
 | 1.1 | 2025-12-27 | Eric H. Anderson | Added Item 0: Performance Metrics Tracking as prerequisite |
+| 1.2 | 2025-12-27 | Eric H. Anderson | Updated progress: Item 0 steps 0.1-0.3 complete, step 0.4 partial (TMDB instrumented) |
 
 ---
 
@@ -35,7 +36,7 @@ This plan covers the 4 high-priority performance improvements identified in the 
 
 | # | Item | Status | Assigned | Completed |
 |---|------|--------|----------|-----------|
-| 0 | Performance Metrics Tracking | ⬜ Not Started | | |
+| 0 | Performance Metrics Tracking | 🔄 In Progress | | |
 | 1 | Shared HttpClient | ⬜ Not Started | | |
 | 2 | Database Indices | ⬜ Not Started | | |
 | 3 | TMDB append_to_response | ⬜ Not Started | | |
@@ -53,23 +54,23 @@ This plan covers the 4 high-priority performance improvements identified in the 
 Create a reusable performance tracking utility to measure and log operation timings, enabling baseline capture and improvement validation.
 
 ### Files to Create/Modify
-- `EmberAPI\clsAPIPerformanceTracker.vb` - New file for tracking utility
-- `EmberAPI\EmberAPI.vbproj` - Add new file reference
+- `EmberAPI\clsAPIPerformanceTracker.vb` - New file for tracking utility ✅
+- `EmberAPI\EmberAPI.vbproj` - Add new file reference ✅
 
 ### Implementation Steps
 
-- [ ] **0.1** Create `PerformanceTracker` class in `EmberAPI`
+- [x] **0.1** Create `PerformanceTracker` class in `EmberAPI`
     - Thread-safe metric collection using `ConcurrentDictionary`
     - Track operation name, duration, timestamp
     - Support for nested/hierarchical operations
     - Automatic min/max/avg calculation
 
-- [ ] **0.2** Implement core tracking methods
+- [x] **0.2** Implement core tracking methods
     - `StartOperation(name As String) As OperationScope` - Returns disposable scope
     - `Track(Of T)(name As String, action As Func(Of T)) As T` - Inline tracking
     - `TrackAsync(Of T)(name As String, action As Func(Of Task(Of T))) As Task(Of T)` - Async support
 
-- [ ] **0.3** Implement reporting methods
+- [x] **0.3** Implement reporting methods
     - `GetMetrics() As Dictionary(Of String, MetricSummary)` - Get all metrics
     - `GetMetric(name As String) As MetricSummary` - Get specific metric
     - `LogAllMetrics()` - Write summary to NLog
@@ -77,15 +78,22 @@ Create a reusable performance tracking utility to measure and log operation timi
     - `Reset()` - Clear all metrics
 
 - [ ] **0.4** Add instrumentation points for baseline capture
-    - TMDB movie scrape operation
-    - IMDB movie scrape operation
-    - Image download operation
-    - Database actor lookup
-    - Database movie save
+    - [x] TMDB movie scrape operation (`GetInfo_Movie`)
+    - [x] TMDB TV show scrape operation (`GetInfo_TVShow`)
+    - [ ] IMDB movie scrape operation
+    - [ ] Image download operation
+    - [ ] Database actor lookup
+    - [ ] Database movie save
 
 - [ ] **0.5** Create baseline capture utility/test
     - Scrape 20 movies and log metrics
     - Document baseline values in Testing Plan section below
+
+### Next Steps (Resume Here)
+1. Add performance tracking to IMDB scraper (`clsScrapeIMDB.vb`)
+2. Add performance tracking to image download operations
+3. Add performance tracking to database operations in `clsAPIDatabase.vb`
+4. Create baseline capture test and document initial values
 
 ### Class Design
 
@@ -135,12 +143,12 @@ Create a reusable performance tracking utility to measure and log operation timi
     PerformanceTracker.ExportToCsv("C:\Temp\perf-baseline.csv")
 
 ### Acceptance Criteria
-- [ ] Tracker compiles and integrates with EmberAPI
+- [x] Tracker compiles and integrates with EmberAPI
 - [ ] Minimal performance overhead (<1ms per tracked operation)
-- [ ] Thread-safe for concurrent scraping operations
-- [ ] Metrics persist across multiple operations until Reset called
-- [ ] CSV export produces valid, analyzable data
-- [ ] NLog integration shows metrics in standard log output
+- [x] Thread-safe for concurrent scraping operations
+- [x] Metrics persist across multiple operations until Reset called
+- [x] CSV export produces valid, analyzable data
+- [x] NLog integration shows metrics in standard log output
 
 ---
 

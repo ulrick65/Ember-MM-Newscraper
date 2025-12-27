@@ -24,7 +24,7 @@ Option Explicit On
 Imports System.Collections.Concurrent
 Imports System.IO
 Imports System.Text
-Imports System.Threading
+Imports System.Threading.Tasks
 Imports NLog
 
 ''' <summary>
@@ -38,8 +38,8 @@ Public Class PerformanceTracker
 
 #Region "Fields"
 
-    Private Shared ReadOnly _logger As Logger = LogManager.GetCurrentClassLogger()
-    Private Shared ReadOnly _metrics As New ConcurrentDictionary(Of String, MetricData)
+    Private Shared ReadOnly Logger As Logger = LogManager.GetCurrentClassLogger()
+    Private Shared ReadOnly Metrics As New ConcurrentDictionary(Of String, MetricData)
     Private Shared _isEnabled As Boolean = True
 
 #End Region 'Fields
@@ -64,7 +64,7 @@ Public Class PerformanceTracker
     ''' </summary>
     Public Shared ReadOnly Property MetricCount As Integer
         Get
-            Return _metrics.Count
+            Return Metrics.Count
         End Get
     End Property
 
@@ -176,7 +176,7 @@ Public Class PerformanceTracker
     Public Shared Sub RecordMetric(operationName As String, elapsedMs As Double)
         If Not _isEnabled Then Return
 
-        _metrics.AddOrUpdate(
+        Metrics.AddOrUpdate(
             operationName,
             Function(key) New MetricData(operationName, elapsedMs),
             Function(key, existing)
@@ -190,7 +190,7 @@ Public Class PerformanceTracker
     ''' </summary>
     ''' <returns>Dictionary of metric name to metric data</returns>
     Public Shared Function GetMetrics() As Dictionary(Of String, MetricData)
-        Return _metrics.ToDictionary(Function(kvp) kvp.Key, Function(kvp) kvp.Value.Clone())
+        Return Metrics.ToDictionary(Function(kvp) kvp.Key, Function(kvp) kvp.Value.Clone())
     End Function
 
     ''' <summary>
@@ -200,7 +200,7 @@ Public Class PerformanceTracker
     ''' <returns>MetricData if found, Nothing otherwise</returns>
     Public Shared Function GetMetric(operationName As String) As MetricData
         Dim metric As MetricData = Nothing
-        If _metrics.TryGetValue(operationName, metric) Then
+        If Metrics.TryGetValue(operationName, metric) Then
             Return metric.Clone()
         End If
         Return Nothing
@@ -210,19 +210,19 @@ Public Class PerformanceTracker
     ''' Logs all metrics to NLog at Info level.
     ''' </summary>
     Public Shared Sub LogAllMetrics()
-        If _metrics.IsEmpty Then
-            _logger.Info("[PerformanceTracker] No metrics recorded")
+        If Metrics.IsEmpty Then
+            Logger.Info("[PerformanceTracker] No metrics recorded")
             Return
         End If
 
-        _logger.Info("[PerformanceTracker] ===== Performance Metrics Summary =====")
-        _logger.Info("[PerformanceTracker] {0,-40} {1,8} {2,10} {3,10} {4,10} {5,12}",
+        Logger.Info("[PerformanceTracker] ===== Performance Metrics Summary =====")
+        Logger.Info("[PerformanceTracker] {0,-40} {1,8} {2,10} {3,10} {4,10} {5,12}",
                      "Operation", "Count", "Min(ms)", "Avg(ms)", "Max(ms)", "Total(ms)")
-        _logger.Info("[PerformanceTracker] {0}", New String("-"c, 95))
+        Logger.Info("[PerformanceTracker] {0}", New String("-"c, 95))
 
-        For Each kvp In _metrics.OrderBy(Function(m) m.Key)
+        For Each kvp In Metrics.OrderBy(Function(m) m.Key)
             Dim m = kvp.Value
-            _logger.Info("[PerformanceTracker] {0,-40} {1,8} {2,10:F2} {3,10:F2} {4,10:F2} {5,12:F2}",
+            Logger.Info("[PerformanceTracker] {0,-40} {1,8} {2,10:F2} {3,10:F2} {4,10:F2} {5,12:F2}",
                          m.Name.Substring(0, Math.Min(40, m.Name.Length)),
                          m.Count,
                          m.MinMs,
@@ -231,7 +231,7 @@ Public Class PerformanceTracker
                          m.TotalMs)
         Next
 
-        _logger.Info("[PerformanceTracker] ========================================")
+        Logger.Info("[PerformanceTracker] ========================================")
     End Sub
 
     ''' <summary>
@@ -241,15 +241,15 @@ Public Class PerformanceTracker
     Public Shared Sub ExportToCsv(filePath As String)
         Try
             Dim directory = Path.GetDirectoryName(filePath)
-            If Not String.IsNullOrEmpty(directory) AndAlso Not System.IO.Directory.Exists(directory) Then
-                System.IO.Directory.CreateDirectory(directory)
+            If Not String.IsNullOrEmpty(directory) AndAlso Not IO.Directory.Exists(directory) Then
+                IO.Directory.CreateDirectory(directory)
             End If
 
             Dim sb As New StringBuilder()
             sb.AppendLine("Operation,Count,MinMs,AvgMs,MaxMs,TotalMs,ExportTime")
 
             Dim exportTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
-            For Each kvp In _metrics.OrderBy(Function(m) m.Key)
+            For Each kvp In Metrics.OrderBy(Function(m) m.Key)
                 Dim m = kvp.Value
                 sb.AppendLine(String.Format("""{0}"",{1},{2:F2},{3:F2},{4:F2},{5:F2},""{6}""",
                                            m.Name.Replace("""", """"""),
@@ -262,10 +262,10 @@ Public Class PerformanceTracker
             Next
 
             File.WriteAllText(filePath, sb.ToString(), Encoding.UTF8)
-            _logger.Info("[PerformanceTracker] Metrics exported to: {0}", filePath)
+            Logger.Info("[PerformanceTracker] Metrics exported to: {0}", filePath)
 
         Catch ex As Exception
-            _logger.Error(ex, "[PerformanceTracker] Failed to export metrics to CSV")
+            Logger.Error(ex, "[PerformanceTracker] Failed to export metrics to CSV")
         End Try
     End Sub
 
@@ -273,8 +273,8 @@ Public Class PerformanceTracker
     ''' Clears all recorded metrics.
     ''' </summary>
     Public Shared Sub Reset()
-        _metrics.Clear()
-        _logger.Debug("[PerformanceTracker] All metrics cleared")
+        Metrics.Clear()
+        Logger.Debug("[PerformanceTracker] All metrics cleared")
     End Sub
 
     ''' <summary>
@@ -282,7 +282,7 @@ Public Class PerformanceTracker
     ''' </summary>
     ''' <returns>Multi-line summary string</returns>
     Public Shared Function GetSummaryString() As String
-        If _metrics.IsEmpty Then
+        If Metrics.IsEmpty Then
             Return "No metrics recorded"
         End If
 
@@ -290,7 +290,7 @@ Public Class PerformanceTracker
         sb.AppendLine("Performance Metrics Summary")
         sb.AppendLine(New String("-"c, 50))
 
-        For Each kvp In _metrics.OrderBy(Function(m) m.Key)
+        For Each kvp In Metrics.OrderBy(Function(m) m.Key)
             Dim m = kvp.Value
             sb.AppendLine(String.Format("{0}: Count={1}, Avg={2:F2}ms, Min={3:F2}ms, Max={4:F2}ms",
                                        m.Name, m.Count, m.AvgMs, m.MinMs, m.MaxMs))
@@ -429,11 +429,11 @@ Public Class MetricData
     Public Function Clone() As MetricData
         SyncLock _lock
             Return New MetricData() With {
-                .Name = Me.Name,
-                ._count = Me._count,
-                ._totalMs = Me._totalMs,
-                ._minMs = Me._minMs,
-                ._maxMs = Me._maxMs
+                .Name = Name,
+                ._count = _count,
+                ._totalMs = _totalMs,
+                ._minMs = _minMs,
+                ._maxMs = _maxMs
             }
         End SyncLock
     End Function
@@ -452,7 +452,7 @@ Public Class OperationScope
 #Region "Fields"
 
     Private ReadOnly _operationName As String
-    Private ReadOnly _stopwatch As Diagnostics.Stopwatch
+    Private ReadOnly _stopwatch As Stopwatch
     Private ReadOnly _isEnabled As Boolean
     Private _disposed As Boolean
 
@@ -469,7 +469,7 @@ Public Class OperationScope
         _operationName = operationName
         _isEnabled = isEnabled
         If _isEnabled Then
-            _stopwatch = Diagnostics.Stopwatch.StartNew()
+            _stopwatch = Stopwatch.StartNew()
         End If
     End Sub
 
