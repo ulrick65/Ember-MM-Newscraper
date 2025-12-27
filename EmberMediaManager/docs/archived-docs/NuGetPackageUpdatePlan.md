@@ -3,7 +3,7 @@
 **Solution:** Ember Media Manager  
 **Target Framework:** .NET Framework 4.8  
 **Plan Created:** December 26, 2025  
-**Current Status:** ✅ All Phases Complete (except SQLite - Deferred)
+**Status:** ✅ ARCHIVED - All Phases Complete (SQLite - Attempted/Rolled Back)
 
 ---
 
@@ -19,8 +19,8 @@ This document outlines the phased approach to updating 21 NuGet packages in the 
 
 ### Final Results
 - **19 packages** successfully updated or removed
-- **5 SQLite packages** intentionally deferred (stable, no security issues)
-- **0 breaking changes** encountered
+- **5 SQLite packages** remain at 1.0.119 (update attempted, rolled back due to native DLL incompatibility)
+- **0 breaking changes** in successful updates
 - **All 31 projects** build successfully
 
 ---
@@ -33,7 +33,7 @@ This document outlines the phased approach to updating 21 NuGet packages in the 
 | Phase 2 | 4 packages | Medium | ✅ Complete | 1 day |
 | Phase 3C | 2 packages | Low | ✅ Complete (Removed) | 1 hour |
 | Phase 3B | 1 package | Medium | ✅ Complete | 1 hour |
-| Phase 3A | 5 packages | High | ⏸️ Deferred | TBD |
+| Phase 3A | 2 packages | High | ❌ Rolled Back | 1 hour |
 
 ---
 
@@ -120,7 +120,7 @@ This document outlines the phased approach to updating 21 NuGet packages in the 
 
 ### Issues Encountered
 
-**Date:** December 26, 2024  
+**Date:** December 26, 2025  
 **Issue:** Build failed with "Type 'X' is not defined" errors for EmberAPI types (Interfaces, MediaContainers, Structures, etc.) in scraper.Data.TMDB and other addon projects.  
 **Resolution:** Root cause was a prior "Code cleanup" commit (442d7516) that removed required `Imports EmberAPI` statements from addon files. Fixed by running `git revert 442d7516 --no-commit` to restore the imports while preserving NuGet updates.  
 **Notes:** Lesson learned - always build and test after running Code Cleanup tools before committing. Code analyzers may incorrectly identify project reference imports as "unused".
@@ -203,7 +203,7 @@ This document outlines the phased approach to updating 21 NuGet packages in the 
 
 ### Issues Encountered
 
-**Date:** December 27, 2024  
+**Date:** December 27, 2025  
 **Issue:** None - Phase 2 completed without issues  
 **Resolution:** N/A  
 **Notes:** All four packages updated successfully. Application runs correctly with no errors or performance degradation.
@@ -273,7 +273,7 @@ These packages are typically transitive dependencies for .NET Standard compatibi
 
 ### Issues Encountered
 
-**Date:** December 27, 2024  
+**Date:** December 27, 2025  
 **Issue:** None - packages removed successfully  
 **Resolution:** N/A  
 **Notes:** Both packages were legacy transitive dependencies with targetFramework="net45". Not needed for .NET Framework 4.8 projects. Build succeeded with 31 projects, 0 errors after removal.
@@ -340,70 +340,107 @@ These packages are typically transitive dependencies for .NET Standard compatibi
 
 ### Issues Encountered
 
-**Date:** December 27, 2024  
+**Date:** December 27, 2025  
 **Issue:** None - update completed without issues  
 **Resolution:** N/A  
 **Notes:** Despite major version jump from 2.0.1 to 4.0.3, no breaking API changes affected the scraper.Data.OMDb project. Build succeeded with 0 errors, application runs correctly.
 
 ---
 
-## Phase 3A: SQLite Database Packages (High Risk) - DEFERRED
+## Phase 3A: SQLite Database Packages (High Risk) - ❌ ATTEMPTED / ROLLED BACK
 
-### Packages to Update
+### Packages Analyzed
 
-| Package Name | Current | Target | Projects Affected |
-|-------------|---------|--------|-------------------|
-| System.Data.SQLite | 1.0.119 | 2.0.2 | All projects using database |
-| System.Data.SQLite.Core | 1.0.119 | 2.0.2 | All projects using database |
-| System.Data.SQLite.EF6 | 1.0.119 | 2.0.2 | All projects using Entity Framework |
-| System.Data.SQLite.Linq | 1.0.119 | 2.0.2 | All projects using LINQ to SQL |
-| Stub.System.Data.SQLite.Core.NetFramework | 1.0.119 | 2.0.2 | Framework compatibility |
+| Package Name | Current | Target | Latest Available | Action |
+|-------------|---------|--------|------------------|--------|
+| System.Data.SQLite | 1.0.119 | 2.0.2 | 2.0.2 (Sep 2025) | ❌ Rolled back |
+| System.Data.SQLite.EF6 | 1.0.119 | 2.0.2 | 2.0.2 (Sep 2025) | ❌ Rolled back |
+| System.Data.SQLite.Core | 1.0.119 | N/A | 1.0.119 (Sep 2024) | Already latest |
+| System.Data.SQLite.Linq | 1.0.119 | N/A | 1.0.119 (Sep 2024) | Already latest |
+| Stub.System.Data.SQLite.Core.NetFramework | 1.0.119 | N/A | 1.0.119 (Sep 2024) | Already latest |
 
-### RECOMMENDATION: CONTINUE TO DEFER
+### Pre-Update Research
 
-#### Reasons to Skip
-1. Current version 1.0.119 is stable and working
-2. No known security vulnerabilities
-3. No compelling features needed from 2.0.x
-4. Major version change = high risk of breaking changes
-5. Requires extensive database migration testing
-6. Potential Entity Framework compatibility issues
-7. Database layer is critical - highest risk component
+#### Version Analysis (December 27, 2025)
+Investigation revealed that only 2 of 5 SQLite packages have updates available:
+- `System.Data.SQLite` and `System.Data.SQLite.EF6` → 2.0.2 (published September 2025)
+- `System.Data.SQLite.Core`, `Linq`, and `Stub` remain at 1.0.119 (published September 2024)
 
-#### If Update Becomes Necessary in Future
+#### Initial Hypothesis
+The SQLite team appeared to have designed 2.0.2 to work with existing 1.0.119 core packages, since they intentionally did not update the core/Linq/Stub packages.
 
-##### Prerequisites
-- [ ] Research SQLite 2.0.x breaking changes
-- [ ] Review release notes and migration guide
-- [ ] Backup production database
-- [ ] Create full database test suite
-- [ ] Plan rollback strategy
+### Update Attempt
 
-##### Implementation Steps
-- [ ] Create isolated test branch: nuget-updates-phase3a-sqlite
-- [ ] Update all SQLite packages simultaneously
-- [ ] Run comprehensive database tests
-- [ ] Test EF6 migrations
-- [ ] Test LINQ queries
-- [ ] Performance test with production-sized database
-- [ ] Test all CRUD operations across all addons
+#### Step 1: Preparation
+- [x] Create branch: nuget-updates-phase3a-sqlite
+- [x] Switch to new branch
 
-##### Testing Requirements
-- [ ] Database connection and initialization
-- [ ] Movie CRUD operations
-- [ ] TV show CRUD operations
-- [ ] Bulk import operations
-- [ ] Database cleanup operations
-- [ ] Entity Framework migrations
-- [ ] LINQ query execution
-- [ ] Database performance under load
+#### Step 2: Update Packages
+- [x] Update System.Data.SQLite to 2.0.2
+- [x] Update System.Data.SQLite.EF6 to 2.0.2
+
+#### Step 3: Build Validation
+- [x] Clean solution
+- [x] Rebuild solution
+- **Result:** ✅ Build succeeded - 31 projects, 0 errors
+
+#### Step 4: Runtime Testing
+- [x] Start application
+- **Result:** ❌ FAILED - Application crashed on database connection
+
+### Error Encountered
+
+    EXCEPTION OCCURRED: System.DllNotFoundException: Unable to load DLL 'e_sqlite3': 
+    The specified module could not be found. (Exception from HRESULT: 0x8007007E)
+
+    Connect_MyVideos: Unable to open media database connection.
+    Connect_MyVideos: Error creating database
+
+### Root Cause Analysis
+
+SQLite 2.0.x uses a **different native interop DLL** than version 1.0.119:
+- **Version 1.0.119:** Uses `SQLite.Interop.dll` (x86/x64 platform-specific)
+- **Version 2.0.x:** Expects `e_sqlite3.dll` (different packaging strategy)
+
+This is a **native dependency change** that:
+- Is not detectable at compile time (managed API is compatible)
+- Causes runtime failure when loading the native SQLite engine
+- Requires additional native DLL deployment that the 1.0.119 packages don't provide
+
+### Resolution
+
+Rolled back all changes:
+
+    git checkout -- .
+
+Then verified clean working directory:
+
+    git status
+    # On branch master - nothing to commit, working tree clean
+
+### RECOMMENDATION: DO NOT UPDATE SQLite Packages
+
+#### Confirmed Reasons to Keep 1.0.119
+1. ✅ Current version is stable and working
+2. ✅ No known security vulnerabilities in 1.0.119
+3. ❌ Native interop DLL incompatibility with 2.0.x
+4. ❌ Build succeeds but runtime fails - high risk
+5. ✅ Database layer is critical - cannot risk production issues
+6. ❌ Would require significant investigation to resolve native dependencies
 
 ### Issues Encountered
 
-**Date:** December 27, 2024  
-**Issue:** N/A - Phase intentionally deferred  
-**Resolution:** N/A  
-**Notes:** Decision to defer SQLite updates remains appropriate. Current version is stable, no security vulnerabilities, and major version update poses significant risk to critical database layer.
+**Date:** December 27, 2025  
+**Issue:** Runtime error - `Unable to load DLL 'e_sqlite3'` after updating System.Data.SQLite and System.Data.SQLite.EF6 to 2.0.2. Build succeeded (31 projects, 0 errors) but application failed to start due to missing native DLL.  
+**Resolution:** Rolled back changes using `git checkout -- .`  
+**Notes:** SQLite 2.0.x has breaking native interop changes. The managed API compiles successfully but the native SQLite engine DLL has been renamed/restructured from `SQLite.Interop.dll` to `e_sqlite3.dll`. Update is not viable without significant additional work to resolve native dependencies.
+
+### Lessons Learned
+
+1. **Build success ≠ Runtime success** - Always test database operations after package updates, not just compilation
+2. **Native dependencies are hidden risks** - NuGet packages with native components require extra scrutiny beyond managed code compatibility
+3. **Original deferral decision was correct** - High-risk assessment was validated by this attempt
+4. **Version fragmentation is a warning sign** - When only some packages in a family have updates, investigate why before proceeding
 
 ---
 
@@ -415,17 +452,17 @@ These packages are typically transitive dependencies for .NET Standard compatibi
     Phase 2:  [##########] 100% Complete ✅
     Phase 3C: [##########] 100% Complete ✅ (Packages Removed)
     Phase 3B: [##########] 100% Complete ✅
-    Phase 3A: [          ] Deferred ⏸️
+    Phase 3A: [XXXXXXXXXX] Attempted / Rolled Back ❌
 
 ### Timeline
 
 | Phase | Start Date | Completion Date | Duration | Status |
 |-------|-----------|----------------|----------|--------|
-| Phase 1 | 12/26/2024 | 12/26/2024 | 1 day | ✅ Complete |
-| Phase 2 | 12/27/2024 | 12/27/2024 | 1 day | ✅ Complete |
-| Phase 3C | 12/27/2024 | 12/27/2024 | 1 hour | ✅ Complete |
-| Phase 3B | 12/27/2024 | 12/27/2024 | 1 hour | ✅ Complete |
-| Phase 3A | _____ | _____ | _____ | ⏸️ Deferred |
+| Phase 1 | 12/26/2025 | 12/26/2025 | 1 day | ✅ Complete |
+| Phase 2 | 12/27/2025 | 12/27/2025 | 1 day | ✅ Complete |
+| Phase 3C | 12/27/2025 | 12/27/2025 | 1 hour | ✅ Complete |
+| Phase 3B | 12/27/2025 | 12/27/2025 | 1 hour | ✅ Complete |
+| Phase 3A | 12/27/2025 | 12/27/2025 | 1 hour | ❌ Rolled Back |
 
 ---
 
@@ -436,7 +473,7 @@ These packages are typically transitive dependencies for .NET Standard compatibi
 - Phase 2: nuget-updates-phase2
 - Phase 3C: nuget-updates-phase3c
 - Phase 3B: nuget-updates-phase3b-omdb
-- Phase 3A: nuget-updates-phase3a-sqlite (if needed)
+- Phase 3A: nuget-updates-phase3a-sqlite (attempted, not merged)
 
 ### Merge Strategy
 1. Complete phase on feature branch
@@ -450,10 +487,11 @@ These packages are typically transitive dependencies for .NET Standard compatibi
 
 | Branch | Created | Merged | Status |
 |--------|---------|--------|--------|
-| nuget-updates-phase1 | 12/26/2024 | 12/26/2024 | ✅ Merged & Deleted |
-| nuget-updates-phase2 | 12/27/2024 | 12/27/2024 | ✅ Merged & Deleted |
-| nuget-updates-phase3c | 12/27/2024 | 12/27/2024 | ✅ Merged |
-| nuget-updates-phase3b-omdb | 12/27/2024 | 12/27/2024 | ✅ Merged |
+| nuget-updates-phase1 | 12/26/2025 | 12/26/2025 | ✅ Merged & Deleted |
+| nuget-updates-phase2 | 12/27/2025 | 12/27/2025 | ✅ Merged & Deleted |
+| nuget-updates-phase3c | 12/27/2025 | 12/27/2025 | ✅ Merged |
+| nuget-updates-phase3b-omdb | 12/27/2025 | 12/27/2025 | ✅ Merged |
+| nuget-updates-phase3a-sqlite | 12/27/2025 | N/A | ❌ Not merged (rolled back) |
 
 ---
 
@@ -474,23 +512,33 @@ Before starting any phase:
 
 ### If Phase Fails
 
-#### Option 1: Git Reset (Preferred)
+#### Option 1: Git Restore (Preferred for uncommitted changes)
+
+    git checkout -- .
+
+#### Option 2: Git Reset (For branch cleanup)
 
     git checkout master
     git branch -D nuget-updates-phaseX
 
-#### Option 2: Manual Revert
+#### Option 3: Manual Revert
 1. Close Visual Studio
 2. Restore packages.config files from backup
 3. Delete packages folder in solution root
-4. Restore NuGet packages using command: nuget restore "Ember Media Manager.sln"
+4. Restore NuGet packages using command: `nuget restore "Ember Media Manager.sln"`
 5. Rebuild solution
 
-#### Option 3: Package Downgrade
+#### Option 4: Package Downgrade
 1. Use NuGet Package Manager
 2. Uninstall updated packages
 3. Install specific older versions
 4. Rebuild solution
+
+### Important Rollback Lesson (Phase 3A)
+When rolling back uncommitted changes:
+1. Switching branches does NOT discard uncommitted changes
+2. Must explicitly run `git checkout -- .` to restore files
+3. Always verify `git status` shows "working tree clean" after rollback
 
 ---
 
@@ -499,10 +547,13 @@ Before starting any phase:
 Each phase is considered successful when:
 - All projects build without errors
 - No new warnings introduced
-- All functional tests pass
+- All functional tests pass (including runtime/database tests)
 - Performance is same or better
 - No exceptions in application logs
 - Key user scenarios work correctly
+
+**Updated criteria after Phase 3A:**
+- **Build success is necessary but not sufficient** - runtime testing is required for packages with native dependencies
 
 ---
 
@@ -527,20 +578,23 @@ Each phase is considered successful when:
 
 ### General Notes
 
-**Date:** December 26, 2024  
+**Date:** December 26, 2025  
 **Note:** Phase 1 completed successfully. Encountered build errors due to a prior code cleanup commit that removed `Imports EmberAPI` statements. Resolved by reverting that specific commit while preserving NuGet updates. Key takeaway: always test builds after code cleanup operations before committing.
 
-**Date:** December 27, 2024  
+**Date:** December 27, 2025  
 **Note:** Phase 2 completed successfully. All four Microsoft stack packages (Microsoft.Bcl.AsyncInterfaces, System.IO.Pipelines, System.Text.Encodings.Web, System.Text.Json) updated from v9.0.1 to v10.0.1 without issues. Application runs correctly with no errors or performance degradation observed.
 
-**Date:** December 27, 2024  
-**Note:** Revised Phase 3 execution order. Phase 3C (.NET Standard/Core packages) moved first as lowest risk. Phase 3B (OMDb) second as isolated addon. Phase 3A (SQLite) remains deferred due to high risk to database layer.
+**Date:** December 27, 2025  
+**Note:** Revised Phase 3 execution order. Phase 3C (.NET Standard/Core packages) moved first as lowest risk. Phase 3B (OMDb) second as isolated addon. Phase 3A (SQLite) attempted last due to high risk.
 
-**Date:** December 27, 2024  
+**Date:** December 27, 2025  
 **Note:** Phase 3C completed - successfully removed NETStandard.Library and Microsoft.NETCore.Platforms packages. These were legacy transitive dependencies not needed for .NET Framework 4.8.
 
-**Date:** December 27, 2024  
-**Note:** Phase 3B completed - MovieCollection.OpenMovieDatabase updated from 2.0.1 to 4.0.3 with no breaking changes. All phases complete except SQLite (intentionally deferred).
+**Date:** December 27, 2025  
+**Note:** Phase 3B completed - MovieCollection.OpenMovieDatabase updated from 2.0.1 to 4.0.3 with no breaking changes.
+
+**Date:** December 27, 2025  
+**Note:** Phase 3A attempted - SQLite packages (System.Data.SQLite and System.Data.SQLite.EF6) updated from 1.0.119 to 2.0.2. Build succeeded but runtime failed with `Unable to load DLL 'e_sqlite3'` error. Root cause: SQLite 2.0.x uses different native interop DLL than 1.0.119. Changes rolled back. SQLite packages will remain at 1.0.119.
 
 ---
 
@@ -573,14 +627,14 @@ Each phase is considered successful when:
 | NETStandard.Library | 1.6.1 | Not needed for .NET Framework 4.8 |
 | Microsoft.NETCore.Platforms | 1.1.0 | Not needed for .NET Framework 4.8 |
 
-### Packages Deferred (5 total)
+### Packages Not Updated (5 total) - SQLite
 | Package | Version | Reason |
 |---------|---------|--------|
-| System.Data.SQLite | 1.0.119 | Stable, high risk to update |
-| System.Data.SQLite.Core | 1.0.119 | Stable, high risk to update |
-| System.Data.SQLite.EF6 | 1.0.119 | Stable, high risk to update |
-| System.Data.SQLite.Linq | 1.0.119 | Stable, high risk to update |
-| Stub.System.Data.SQLite.Core.NetFramework | 1.0.119 | Stable, high risk to update |
+| System.Data.SQLite | 1.0.119 | Update attempted, rolled back - native DLL incompatibility |
+| System.Data.SQLite.EF6 | 1.0.119 | Update attempted, rolled back - native DLL incompatibility |
+| System.Data.SQLite.Core | 1.0.119 | Already at latest version |
+| System.Data.SQLite.Linq | 1.0.119 | Already at latest version |
+| Stub.System.Data.SQLite.Core.NetFramework | 1.0.119 | Already at latest version |
 
 ---
 
@@ -588,14 +642,14 @@ Each phase is considered successful when:
 
 | Phase | Approved By | Date | Notes |
 |-------|------------|------|-------|
-| Phase 1 | ulrick65 | 12/26/2024 | Build successful, app runs correctly |
-| Phase 2 | ulrick65 | 12/27/2024 | Build successful, app runs correctly |
-| Phase 3C | ulrick65 | 12/27/2024 | Packages removed, build successful |
-| Phase 3B | ulrick65 | 12/27/2024 | Build successful, app runs correctly |
-| Phase 3A | N/A | N/A | Intentionally deferred |
+| Phase 1 | ulrick65 | 12/26/2025 | Build successful, app runs correctly |
+| Phase 2 | ulrick65 | 12/27/2025 | Build successful, app runs correctly |
+| Phase 3C | ulrick65 | 12/27/2025 | Packages removed, build successful |
+| Phase 3B | ulrick65 | 12/27/2025 | Build successful, app runs correctly |
+| Phase 3A | ulrick65 | 12/27/2025 | Attempted, rolled back - native DLL issue |
 
 ---
 
-**Project Complete: December 27, 2024**
+**Project Complete: December 27, 2025**
 
 **End of Document**

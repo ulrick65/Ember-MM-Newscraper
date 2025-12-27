@@ -15,9 +15,9 @@ This document tracks all changes made to this fork of Ember Media Manager, start
 
 | Property | Value |
 |----------|-------|
-| **Document Version** | 1.0.3 |
+| **Document Version** | 1.0.4 |
 | **Created** | December 25, 2025 |
-| **Last Updated** | December 26, 2025 |
+| **Last Updated** | December 27, 2025 |
 | **Author** | Eric H. Anderson |
 ---
 
@@ -41,7 +41,7 @@ This document tracks all changes made to this fork of Ember Media Manager, start
 | 1.11.1.0 | Pre-fork | Upstream nagten version at time of fork |
 | 1.11.1.7 | Dec 21, 2025 | Upstream patch pulled (IMDB writer comparison fix) |
 | 1.12.0.0 | Dec 22, 2025 | Framework upgrade to .NET 4.8, package updates, all addons versioned |
-| 1.12.1.0 | Dec 23-26, 2025 | Bug fixes, cleanup, genre mapping fix, documentation, code organization |
+| 1.12.1.0 | Dec 23-27, 2025 | Bug fixes, cleanup, genre mapping fix, documentation, code organization, additional package updates |
 
 ---
 
@@ -165,9 +165,9 @@ The following features are deprecated and slated for removal in a future version
 
 ## Detailed Change History
 
-### Version 1.12.1.0 (December 23-26, 2025)
+### Version 1.12.1.0 (December 23-27, 2025)
 
-**Summary:** Bug fixes, code cleanup, version standardization, and documentation improvements.
+**Summary:** Bug fixes, code cleanup, version standardization, documentation improvements, and additional package updates.
 
 **Code Changes:**
 
@@ -194,6 +194,44 @@ The following features are deprecated and slated for removal in a future version
 | Version | Updated KodiAPI to 1.10.1.0 | `KodiAPI\Properties\AssemblyInfo.cs` |
 | Version | Updated EmberAPI to 1.12.1.1 for media container reorganization | `EmberAPI\My Project\AssemblyInfo.vb` |
 
+**Package Updates (December 26-27, 2025):**
+
+| Package | From | To | Projects |
+|---------|------|-----|----------|
+| System.Buffers | 4.5.1 | 4.6.1 | EmberAPI |
+| System.Memory | 4.5.5 | 4.6.3 | EmberAPI |
+| System.Numerics.Vectors | 4.5.0 | 4.6.1 | EmberAPI |
+| System.ValueTuple | 4.5.0 | 4.6.1 | EmberAPI |
+| System.Threading.Tasks.Extensions | 4.5.4 | 4.6.3 | EmberAPI |
+| System.Runtime.CompilerServices.Unsafe | 6.0.0 | 6.1.2 | EmberAPI |
+| System.Security.Cryptography.Algorithms | 4.3.0 | 4.3.1 | EmberAPI, EmberMediaManager, scraper.TMDB.Data |
+| System.Security.Cryptography.X509Certificates | 4.3.0 | 4.3.2 | scraper.TMDB.Data |
+| System.Runtime | 4.3.0 | 4.3.1 | EmberAPI, EmberMediaManager |
+| System.Runtime.Extensions | 4.3.0 | 4.3.1 | EmberAPI, EmberMediaManager |
+| System.Net.Primitives | 4.3.0 | 4.3.1 | EmberAPI, EmberMediaManager |
+| System.Xml.ReaderWriter | 4.3.0 | 4.3.1 | EmberAPI, EmberMediaManager |
+| Microsoft.Bcl.AsyncInterfaces | 9.0.1 | 10.0.1 | EmberAPI |
+| System.IO.Pipelines | 9.0.1 | 10.0.1 | EmberAPI |
+| System.Text.Encodings.Web | 9.0.1 | 10.0.1 | EmberAPI |
+| System.Text.Json | 9.0.1 | 10.0.1 | EmberAPI |
+| MovieCollection.OpenMovieDatabase | 2.0.1 | 4.0.3 | scraper.Data.OMDb |
+
+**Packages Removed:**
+
+| Package | Version | Reason |
+|---------|---------|--------|
+| NETStandard.Library | 1.6.1 | Not needed for .NET Framework 4.8 |
+| Microsoft.NETCore.Platforms | 1.1.0 | Not needed for .NET Framework 4.8 |
+
+**SQLite Update Attempt (Rolled Back):**
+
+| Package | Attempted | Result |
+|---------|-----------|--------|
+| System.Data.SQLite | 1.0.119 → 2.0.2 | ❌ Rolled back - native DLL incompatibility |
+| System.Data.SQLite.EF6 | 1.0.119 → 2.0.2 | ❌ Rolled back - native DLL incompatibility |
+
+⚠️ **WARNING:** Do NOT update SQLite packages beyond 1.0.119. Version 2.0.x uses different native interop DLL (`e_sqlite3.dll` vs `SQLite.Interop.dll`). Build succeeds but runtime fails.
+
 **Documentation:**
 
 | Category | Change | Files Affected |
@@ -201,6 +239,7 @@ The following features are deprecated and slated for removal in a future version
 | Documentation | Created BuildProcess.md | `EmberMediaManager\docs\BuildProcess.md` |
 | Documentation | Created FileCleanUpPlan.md | `EmberMediaManager\docs\FileCleanUpPlan.md` |
 | Documentation | Created PackageUpdatePlan.md | `EmberMediaManager\docs\PackageUpdatePlan.md` |
+| Documentation | Created NuGetPackageUpdatePlan.md | `EmberMediaManager\docs\NuGetPackageUpdatePlan.md` |
 | Documentation | Created NfoFileProcess.md | `EmberMediaManager\docs\NfoFileProcess.md` |
 | Documentation | Created NfoFileImprovements.md | `EmberMediaManager\docs\NfoFileImprovements.md` |
 | Documentation | Created ReleaseNotes-v1.12.0.0.md | `EmberMediaManager\docs\ReleaseNotes-v1.12.0.0.md` |
@@ -308,7 +347,7 @@ Based on `git diff --stat upstream/master..HEAD`:
 | Category | Files Changed | Lines Added | Lines Removed |
 |----------|---------------|-------------|---------------|
 | Total | 377 files | ~10,631 | ~39,500 |
-| Documentation | 13 files | ~6,000 | 0 |
+| Documentation | 14 files | ~7,000 | 0 |
 | Project Removals | ~60 files | 0 | ~25,000 |
 | Framework/Package | ~200 files | ~2,000 | ~2,000 |
 | Code Changes | ~10 files | ~500 | ~300 |
@@ -323,7 +362,8 @@ The following documents provide detailed information about specific initiatives:
 
 | Document | Description |
 |----------|-------------|
-| [PackageUpdatePlan.md](PackageUpdatePlan.md) | Detailed NuGet package update tracking |
+| [PackageUpdatePlan.md](PackageUpdatePlan.md) | Core NuGet package update tracking (Dec 22-23) |
+| [NuGetPackageUpdatePlan.md](NuGetPackageUpdatePlan.md) | System.* and Microsoft stack package updates (Dec 26-27) |
 | [FileCleanUpPlan.md](FileCleanUpPlan.md) | Solution cleanup and file removal tracking |
 | [BuildProcess.md](BuildProcess.md) | Build configuration and output documentation |
 | [NfoFileProcess.md](NfoFileProcess.md) | NFO file processing analysis |

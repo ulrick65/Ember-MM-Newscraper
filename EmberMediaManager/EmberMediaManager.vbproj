@@ -522,7 +522,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="docs\NuGetPackageUpdatePlan-2024.md" />
+    <None Include="docs\archived-docs\NuGetPackageUpdatePlan.md" />
     <None Include="docs\process-docs\BuildProcess.md" />
     <None Include="docs\process-docs\CertificationMappingProcess.md" />
     <None Include="docs\process-docs\CountryMappingProcess.md" />
@@ -534,7 +534,7 @@
     <None Include="docs\archived-docs\FileCleanUpPlan.md" />
     <None Include="docs\process-docs\GenreMappingProcess.md" />
     <None Include="docs\process-docs\MediaInfoMappingProcess.md" />
-    <None Include="docs\PackageUpdatePlan.md" />
+    <None Include="docs\archived-docs\PackageUpdatePlan.md" />
     <None Include="docs\release-notes\ReleaseNotes-v1.12.1.0.md" />
     <None Include="docs\archived-docs\SolutionCleanupAnalysis.md" />
     <None Include="docs\process-docs\StatusMappingProcess.md" />
