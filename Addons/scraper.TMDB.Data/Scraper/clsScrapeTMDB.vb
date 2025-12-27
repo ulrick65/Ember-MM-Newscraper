@@ -314,251 +314,260 @@ Public Class Scraper
     ''' <param name="GetPoster">Scrape posters for the movie?</param>
     ''' <returns>True: success, false: no success</returns>
     Public Function GetInfo_Movie(ByVal tmdbIdOrImdbId As String, ByVal FilteredOptions As Structures.ScrapeOptions, ByVal GetPoster As Boolean) As MediaContainers.Movie
-        _Fallback_Movie = Nothing
-        If String.IsNullOrEmpty(tmdbIdOrImdbId) Then Return Nothing
+        Using scopeTotal = EmberAPI.PerformanceTracker.StartOperation("TMDB.GetInfo_Movie")
+            _Fallback_Movie = Nothing
+            If String.IsNullOrEmpty(tmdbIdOrImdbId) Then Return Nothing
 
-        Dim APIResult As Task(Of TMDbLib.Objects.Movies.Movie)
-        Dim intTMDBID As Integer = -1
+            Dim APIResult As Task(Of TMDbLib.Objects.Movies.Movie)
+            Dim intTMDBID As Integer = -1
 
-        If tmdbIdOrImdbId.ToLower.StartsWith("tt") Then
-            'search movie by IMDB ID
-            APIResult = Task.Run(Function() _client.GetMovieAsync(tmdbIdOrImdbId, TMDbLib.Objects.Movies.MovieMethods.Credits Or TMDbLib.Objects.Movies.MovieMethods.Releases Or TMDbLib.Objects.Movies.MovieMethods.Videos))
-        ElseIf Integer.TryParse(tmdbIdOrImdbId, intTMDBID) Then
-            'search movie by TMDB ID
-            APIResult = Task.Run(Function() _client.GetMovieAsync(intTMDBID, TMDbLib.Objects.Movies.MovieMethods.Credits Or TMDbLib.Objects.Movies.MovieMethods.Releases Or TMDbLib.Objects.Movies.MovieMethods.Videos))
-        Else
-            _Logger.Error(String.Format("Can't scrape or movie not found: [0]", tmdbIdOrImdbId))
-            Return Nothing
-        End If
+            Using scopeApi = EmberAPI.PerformanceTracker.StartOperation("TMDB.GetInfo_Movie.APICall")
+                If tmdbIdOrImdbId.ToLower.StartsWith("tt") Then
+                    'search movie by IMDB ID
+                    APIResult = Task.Run(Function() _client.GetMovieAsync(tmdbIdOrImdbId, TMDbLib.Objects.Movies.MovieMethods.Credits Or TMDbLib.Objects.Movies.MovieMethods.Releases Or TMDbLib.Objects.Movies.MovieMethods.Videos))
+                ElseIf Integer.TryParse(tmdbIdOrImdbId, intTMDBID) Then
+                    'search movie by TMDB ID
+                    APIResult = Task.Run(Function() _client.GetMovieAsync(intTMDBID, TMDbLib.Objects.Movies.MovieMethods.Credits Or TMDbLib.Objects.Movies.MovieMethods.Releases Or TMDbLib.Objects.Movies.MovieMethods.Videos))
+                Else
+                    _Logger.Error(String.Format("Can't scrape or movie not found: [0]", tmdbIdOrImdbId))
+                    Return Nothing
+                End If
 
-        If APIResult Is Nothing OrElse APIResult.Result Is Nothing OrElse Not APIResult.Result.Id > 0 OrElse APIResult.Exception IsNot Nothing Then
-            _Logger.Error(String.Format("Can't scrape or movie not found: [0]", tmdbIdOrImdbId))
-            Return Nothing
-        End If
+                ' Wait for result within the timing scope
+                If APIResult IsNot Nothing Then
+                    APIResult.Wait()
+                End If
+            End Using
 
-        Dim Result As TMDbLib.Objects.Movies.Movie = APIResult.Result
-        Dim nMovie As New MediaContainers.Movie With {.Scrapersource = "TMDB"}
-
-        'IDs
-        nMovie.UniqueIDs.TMDbId = Result.Id
-        If Result.ImdbId IsNot Nothing Then nMovie.UniqueIDs.IMDbId = Result.ImdbId
-
-        If bwTMDB.CancellationPending Or Result Is Nothing Then Return Nothing
-
-        'Cast (Actors)
-        If FilteredOptions.bMainActors Then
-            If Result.Credits IsNot Nothing AndAlso Result.Credits.Cast IsNot Nothing Then
-                For Each aCast As TMDbLib.Objects.Movies.Cast In Result.Credits.Cast
-                    nMovie.Actors.Add(New MediaContainers.Person With {
-                                      .Name = aCast.Name,
-                                      .Role = aCast.Character,
-                                      .URLOriginal = If(Not String.IsNullOrEmpty(aCast.ProfilePath), String.Concat(_client.Config.Images.BaseUrl, "original", aCast.ProfilePath), String.Empty),
-                                      .TMDB = CStr(aCast.Id)
-                                      })
-                Next
+            If APIResult Is Nothing OrElse APIResult.Result Is Nothing OrElse Not APIResult.Result.Id > 0 OrElse APIResult.Exception IsNot Nothing Then
+                _Logger.Error(String.Format("Can't scrape or movie not found: [0]", tmdbIdOrImdbId))
+                Return Nothing
             End If
-        End If
 
-        If bwTMDB.CancellationPending Then Return Nothing
+            Dim Result As TMDbLib.Objects.Movies.Movie = APIResult.Result
+            Dim nMovie As New MediaContainers.Movie With {.Scrapersource = "TMDB"}
 
-        'Certifications
-        If FilteredOptions.bMainCertifications Then
-            If Result.Releases IsNot Nothing AndAlso Result.Releases.Countries IsNot Nothing AndAlso Result.Releases.Countries.Count > 0 Then
-                For Each cCountry In Result.Releases.Countries
-                    If Not String.IsNullOrEmpty(cCountry.Certification) Then
-                        Dim CertificationLanguage = APIXML.CertificationLanguages.Languages.FirstOrDefault(Function(l) l.Abbreviation = cCountry.Iso_3166_1.ToLower)
-                        If CertificationLanguage IsNot Nothing AndAlso CertificationLanguage.Name IsNot Nothing AndAlso Not String.IsNullOrEmpty(CertificationLanguage.Name) Then
-                            nMovie.Certifications.Add(String.Concat(CertificationLanguage.Name, ":", cCountry.Certification))
-                        Else
-                            _Logger.Warn("Unhandled certification language encountered: {0}", cCountry.Iso_3166_1.ToLower)
+            'IDs
+            nMovie.UniqueIDs.TMDbId = Result.Id
+            If Result.ImdbId IsNot Nothing Then nMovie.UniqueIDs.IMDbId = Result.ImdbId
+
+            If bwTMDB.CancellationPending Or Result Is Nothing Then Return Nothing
+
+            'Cast (Actors)
+            If FilteredOptions.bMainActors Then
+                If Result.Credits IsNot Nothing AndAlso Result.Credits.Cast IsNot Nothing Then
+                    For Each aCast As TMDbLib.Objects.Movies.Cast In Result.Credits.Cast
+                        nMovie.Actors.Add(New MediaContainers.Person With {
+                                          .Name = aCast.Name,
+                                          .Role = aCast.Character,
+                                          .URLOriginal = If(Not String.IsNullOrEmpty(aCast.ProfilePath), String.Concat(_client.Config.Images.BaseUrl, "original", aCast.ProfilePath), String.Empty),
+                                          .TMDB = CStr(aCast.Id)
+                                          })
+                    Next
+                End If
+            End If
+
+            If bwTMDB.CancellationPending Then Return Nothing
+
+            'Certifications
+            If FilteredOptions.bMainCertifications Then
+                If Result.Releases IsNot Nothing AndAlso Result.Releases.Countries IsNot Nothing AndAlso Result.Releases.Countries.Count > 0 Then
+                    For Each cCountry In Result.Releases.Countries
+                        If Not String.IsNullOrEmpty(cCountry.Certification) Then
+                            Dim CertificationLanguage = APIXML.CertificationLanguages.Languages.FirstOrDefault(Function(l) l.Abbreviation = cCountry.Iso_3166_1.ToLower)
+                            If CertificationLanguage IsNot Nothing AndAlso CertificationLanguage.Name IsNot Nothing AndAlso Not String.IsNullOrEmpty(CertificationLanguage.Name) Then
+                                nMovie.Certifications.Add(String.Concat(CertificationLanguage.Name, ":", cCountry.Certification))
+                            Else
+                                _Logger.Warn("Unhandled certification language encountered: {0}", cCountry.Iso_3166_1.ToLower)
+                            End If
                         End If
-                    End If
-                Next
-            End If
-        End If
-
-        If bwTMDB.CancellationPending Then Return Nothing
-
-        'Collection ID
-        If FilteredOptions.bMainCollectionID Then
-            If Result.BelongsToCollection IsNot Nothing Then
-                Dim nFullMovieSetInfo = GetInfo_Movieset(Result.BelongsToCollection.Id,
-                                                         New Structures.ScrapeOptions With {.bMainPlot = True, .bMainTitle = True},
-                                                         False)
-                If nFullMovieSetInfo IsNot Nothing Then
-                    nMovie.AddSet(New MediaContainers.SetDetails With {
-                                  .ID = -1,
-                                  .Order = -1,
-                                  .Plot = nFullMovieSetInfo.Plot,
-                                  .Title = nFullMovieSetInfo.Title,
-                                  .UniqueIDs = nFullMovieSetInfo.UniqueIDs
-                                  })
-                    nMovie.UniqueIDs.TMDbCollectionId = nFullMovieSetInfo.UniqueIDs.TMDbId
+                    Next
                 End If
             End If
-        End If
 
-        If bwTMDB.CancellationPending Then Return Nothing
+            If bwTMDB.CancellationPending Then Return Nothing
 
-        'Countries
-        If FilteredOptions.bMainCountries Then
-            If Result.ProductionCountries IsNot Nothing AndAlso Result.ProductionCountries.Count > 0 Then
-                For Each aContry As TMDbLib.Objects.General.ProductionCountry In Result.ProductionCountries
-                    nMovie.Countries.Add(aContry.Name)
-                Next
-            End If
-        End If
-
-        If bwTMDB.CancellationPending Then Return Nothing
-
-        'Director / Writer
-        If FilteredOptions.bMainDirectors OrElse FilteredOptions.bMainWriters Then
-            If Result.Credits IsNot Nothing AndAlso Result.Credits.Crew IsNot Nothing Then
-                For Each aCrew As TMDbLib.Objects.General.Crew In Result.Credits.Crew
-                    If FilteredOptions.bMainDirectors AndAlso aCrew.Department = "Directing" AndAlso aCrew.Job = "Director" Then
-                        nMovie.Directors.Add(aCrew.Name)
+            'Collection ID
+            If FilteredOptions.bMainCollectionID Then
+                If Result.BelongsToCollection IsNot Nothing Then
+                    Dim nFullMovieSetInfo = GetInfo_Movieset(Result.BelongsToCollection.Id,
+                                                             New Structures.ScrapeOptions With {.bMainPlot = True, .bMainTitle = True},
+                                                             False)
+                    If nFullMovieSetInfo IsNot Nothing Then
+                        nMovie.AddSet(New MediaContainers.SetDetails With {
+                                      .ID = -1,
+                                      .Order = -1,
+                                      .Plot = nFullMovieSetInfo.Plot,
+                                      .Title = nFullMovieSetInfo.Title,
+                                      .UniqueIDs = nFullMovieSetInfo.UniqueIDs
+                                      })
+                        nMovie.UniqueIDs.TMDbCollectionId = nFullMovieSetInfo.UniqueIDs.TMDbId
                     End If
-                    If FilteredOptions.bMainWriters AndAlso aCrew.Department = "Writing" AndAlso (aCrew.Job = "Author" OrElse aCrew.Job = "Screenplay" OrElse aCrew.Job = "Writer") Then
-                        nMovie.Credits.Add(aCrew.Name)
-                    End If
-                Next
-            End If
-        End If
-
-        If bwTMDB.CancellationPending Then Return Nothing
-
-        'Genres
-        If FilteredOptions.bMainGenres Then
-            If Result.Genres.Count > 0 Then
-                nMovie.Genres.AddRange(Result.Genres.Select(Function(f) f.Name))
-            ElseIf RunFallback_Movie(Result.Id) AndAlso _Fallback_Movie.Genres.Count > 0 Then
-                nMovie.Genres.AddRange(_Fallback_Movie.Genres.Select(Function(f) f.Name))
-            End If
-        End If
-
-        If bwTMDB.CancellationPending Then Return Nothing
-
-        'OriginalTitle
-        If FilteredOptions.bMainOriginalTitle Then
-            nMovie.OriginalTitle = Result.OriginalTitle
-        End If
-
-        If bwTMDB.CancellationPending Then Return Nothing
-
-        'Plot
-        If FilteredOptions.bMainPlot Then
-            If Result.Overview IsNot Nothing AndAlso Not String.IsNullOrEmpty(Result.Overview) Then
-                nMovie.Plot = Result.Overview
-            ElseIf RunFallback_Movie(Result.Id) AndAlso _Fallback_Movie.Overview IsNot Nothing AndAlso Not String.IsNullOrEmpty(_Fallback_Movie.Overview) Then
-                nMovie.Plot = _Fallback_Movie.Overview
-            End If
-        End If
-
-        If bwTMDB.CancellationPending Then Return Nothing
-
-        'Posters (only for SearchResult dialog, auto fallback to "en" by TMDB)
-        If GetPoster Then
-            If Result.PosterPath IsNot Nothing AndAlso Not String.IsNullOrEmpty(Result.PosterPath) Then
-                _sPoster = String.Concat(_client.Config.Images.BaseUrl, "w92", Result.PosterPath)
-            Else
-                _sPoster = String.Empty
-            End If
-        End If
-
-        If bwTMDB.CancellationPending Then Return Nothing
-
-        'Premiered
-        If FilteredOptions.bMainPremiered Then
-            Dim nDate As Date? = Nothing
-            If Result.ReleaseDate.HasValue Then
-                nDate = Result.ReleaseDate.Value
-            ElseIf RunFallback_Movie(Result.Id) AndAlso _Fallback_Movie.ReleaseDate.HasValue Then
-                nDate = _Fallback_Movie.ReleaseDate.Value
-            End If
-            If nDate.HasValue Then
-                'always save date in same date format not depending on users language setting!
-                nMovie.Premiered = nDate.Value.ToString("yyyy-MM-dd")
-            End If
-        End If
-
-        If bwTMDB.CancellationPending Then Return Nothing
-
-        'Rating
-        If FilteredOptions.bMainRating Then
-            nMovie.Ratings.Add(New MediaContainers.RatingDetails With {
-                               .Max = 10,
-                               .Type = "themoviedb",
-                               .Value = Result.VoteAverage,
-                               .Votes = Result.VoteCount
-                               })
-        End If
-
-        If bwTMDB.CancellationPending Then Return Nothing
-
-        'Runtime
-        If FilteredOptions.bMainRuntime Then
-            If Result.Runtime IsNot Nothing Then
-                nMovie.Runtime = CStr(Result.Runtime)
-            ElseIf RunFallback_Movie(Result.Id) AndAlso _Fallback_Movie.Runtime IsNot Nothing Then
-                nMovie.Runtime = CStr(_Fallback_Movie.Runtime)
-            End If
-        End If
-
-        If bwTMDB.CancellationPending Then Return Nothing
-
-        'Studios
-        If FilteredOptions.bMainStudios Then
-            If Result.ProductionCompanies.Count > 0 Then
-                nMovie.Studios.AddRange(Result.ProductionCompanies.Select(Function(f) f.Name))
-            End If
-        End If
-
-        If bwTMDB.CancellationPending Then Return Nothing
-
-        'Tagline
-        If FilteredOptions.bMainTagline Then
-            If Result.Tagline IsNot Nothing AndAlso Not String.IsNullOrEmpty(Result.Tagline) Then
-                nMovie.Tagline = Result.Tagline
-            ElseIf RunFallback_Movie(Result.Id) AndAlso _Fallback_Movie.Tagline IsNot Nothing AndAlso Not String.IsNullOrEmpty(_Fallback_Movie.Tagline) Then
-                nMovie.Tagline = _Fallback_Movie.Tagline
-            End If
-        End If
-
-        If bwTMDB.CancellationPending Then Return Nothing
-
-        'Title
-        If FilteredOptions.bMainTitle Then
-            If Not String.IsNullOrEmpty(Result.Title) Then
-                nMovie.Title = Result.Title
-            ElseIf RunFallback_Movie(Result.Id) AndAlso Not String.IsNullOrEmpty(_Fallback_Movie.Title) Then
-                nMovie.Title = _Fallback_Movie.Title
-            End If
-        End If
-
-        If bwTMDB.CancellationPending Then Return Nothing
-
-        'Trailer
-        If FilteredOptions.bMainTrailer Then
-            Dim nTrailers As New List(Of TMDbLib.Objects.General.Video)
-            If Result.Videos IsNot Nothing AndAlso Result.Videos.Results.Count > 0 Then
-                nTrailers = Result.Videos.Results
-            ElseIf RunFallback_Movie(Result.Id) AndAlso _Fallback_Movie.Videos Is Nothing AndAlso _Fallback_Movie.Videos.Results.Count > 0 Then
-                nTrailers = _Fallback_Movie.Videos.Results
-            End If
-
-            For Each aTrailer In nTrailers
-                Dim nTrailer = YouTube.Scraper.GetVideoDetails(aTrailer.Key)
-                If nTrailer IsNot Nothing Then
-                    nMovie.Trailer = nTrailer.UrlForNfo
-                    Exit For
                 End If
-            Next
-        End If
+            End If
 
-        If bwTMDB.CancellationPending Then Return Nothing
+            If bwTMDB.CancellationPending Then Return Nothing
 
-        _Fallback_Movie = Nothing
-        Return nMovie
+            'Countries
+            If FilteredOptions.bMainCountries Then
+                If Result.ProductionCountries IsNot Nothing AndAlso Result.ProductionCountries.Count > 0 Then
+                    For Each aContry As TMDbLib.Objects.General.ProductionCountry In Result.ProductionCountries
+                        nMovie.Countries.Add(aContry.Name)
+                    Next
+                End If
+            End If
+
+            If bwTMDB.CancellationPending Then Return Nothing
+
+            'Director / Writer
+            If FilteredOptions.bMainDirectors OrElse FilteredOptions.bMainWriters Then
+                If Result.Credits IsNot Nothing AndAlso Result.Credits.Crew IsNot Nothing Then
+                    For Each aCrew As TMDbLib.Objects.General.Crew In Result.Credits.Crew
+                        If FilteredOptions.bMainDirectors AndAlso aCrew.Department = "Directing" AndAlso aCrew.Job = "Director" Then
+                            nMovie.Directors.Add(aCrew.Name)
+                        End If
+                        If FilteredOptions.bMainWriters AndAlso aCrew.Department = "Writing" AndAlso (aCrew.Job = "Author" OrElse aCrew.Job = "Screenplay" OrElse aCrew.Job = "Writer") Then
+                            nMovie.Credits.Add(aCrew.Name)
+                        End If
+                    Next
+                End If
+            End If
+
+            If bwTMDB.CancellationPending Then Return Nothing
+
+            'Genres
+            If FilteredOptions.bMainGenres Then
+                If Result.Genres.Count > 0 Then
+                    nMovie.Genres.AddRange(Result.Genres.Select(Function(f) f.Name))
+                ElseIf RunFallback_Movie(Result.Id) AndAlso _Fallback_Movie.Genres.Count > 0 Then
+                    nMovie.Genres.AddRange(_Fallback_Movie.Genres.Select(Function(f) f.Name))
+                End If
+            End If
+
+            If bwTMDB.CancellationPending Then Return Nothing
+
+            'OriginalTitle
+            If FilteredOptions.bMainOriginalTitle Then
+                nMovie.OriginalTitle = Result.OriginalTitle
+            End If
+
+            If bwTMDB.CancellationPending Then Return Nothing
+
+            'Plot
+            If FilteredOptions.bMainPlot Then
+                If Result.Overview IsNot Nothing AndAlso Not String.IsNullOrEmpty(Result.Overview) Then
+                    nMovie.Plot = Result.Overview
+                ElseIf RunFallback_Movie(Result.Id) AndAlso _Fallback_Movie.Overview IsNot Nothing AndAlso Not String.IsNullOrEmpty(_Fallback_Movie.Overview) Then
+                    nMovie.Plot = _Fallback_Movie.Overview
+                End If
+            End If
+
+            If bwTMDB.CancellationPending Then Return Nothing
+
+            'Posters (only for SearchResult dialog, auto fallback to "en" by TMDB)
+            If GetPoster Then
+                If Result.PosterPath IsNot Nothing AndAlso Not String.IsNullOrEmpty(Result.PosterPath) Then
+                    _sPoster = String.Concat(_client.Config.Images.BaseUrl, "w92", Result.PosterPath)
+                Else
+                    _sPoster = String.Empty
+                End If
+            End If
+
+            If bwTMDB.CancellationPending Then Return Nothing
+
+            'Premiered
+            If FilteredOptions.bMainPremiered Then
+                Dim nDate As Date? = Nothing
+                If Result.ReleaseDate.HasValue Then
+                    nDate = Result.ReleaseDate.Value
+                ElseIf RunFallback_Movie(Result.Id) AndAlso _Fallback_Movie.ReleaseDate.HasValue Then
+                    nDate = _Fallback_Movie.ReleaseDate.Value
+                End If
+                If nDate.HasValue Then
+                    'always save date in same date format not depending on users language setting!
+                    nMovie.Premiered = nDate.Value.ToString("yyyy-MM-dd")
+                End If
+            End If
+
+            If bwTMDB.CancellationPending Then Return Nothing
+
+            'Rating
+            If FilteredOptions.bMainRating Then
+                nMovie.Ratings.Add(New MediaContainers.RatingDetails With {
+                                   .Max = 10,
+                                   .Type = "themoviedb",
+                                   .Value = Result.VoteAverage,
+                                   .Votes = Result.VoteCount
+                                   })
+            End If
+
+            If bwTMDB.CancellationPending Then Return Nothing
+
+            'Runtime
+            If FilteredOptions.bMainRuntime Then
+                If Result.Runtime IsNot Nothing Then
+                    nMovie.Runtime = CStr(Result.Runtime)
+                ElseIf RunFallback_Movie(Result.Id) AndAlso _Fallback_Movie.Runtime IsNot Nothing Then
+                    nMovie.Runtime = CStr(_Fallback_Movie.Runtime)
+                End If
+            End If
+
+            If bwTMDB.CancellationPending Then Return Nothing
+
+            'Studios
+            If FilteredOptions.bMainStudios Then
+                If Result.ProductionCompanies.Count > 0 Then
+                    nMovie.Studios.AddRange(Result.ProductionCompanies.Select(Function(f) f.Name))
+                End If
+            End If
+
+            If bwTMDB.CancellationPending Then Return Nothing
+
+            'Tagline
+            If FilteredOptions.bMainTagline Then
+                If Result.Tagline IsNot Nothing AndAlso Not String.IsNullOrEmpty(Result.Tagline) Then
+                    nMovie.Tagline = Result.Tagline
+                ElseIf RunFallback_Movie(Result.Id) AndAlso _Fallback_Movie.Tagline IsNot Nothing AndAlso Not String.IsNullOrEmpty(_Fallback_Movie.Tagline) Then
+                    nMovie.Tagline = _Fallback_Movie.Tagline
+                End If
+            End If
+
+            If bwTMDB.CancellationPending Then Return Nothing
+
+            'Title
+            If FilteredOptions.bMainTitle Then
+                If Not String.IsNullOrEmpty(Result.Title) Then
+                    nMovie.Title = Result.Title
+                ElseIf RunFallback_Movie(Result.Id) AndAlso Not String.IsNullOrEmpty(_Fallback_Movie.Title) Then
+                    nMovie.Title = _Fallback_Movie.Title
+                End If
+            End If
+
+            If bwTMDB.CancellationPending Then Return Nothing
+
+            'Trailer
+            If FilteredOptions.bMainTrailer Then
+                Dim nTrailers As New List(Of TMDbLib.Objects.General.Video)
+                If Result.Videos IsNot Nothing AndAlso Result.Videos.Results.Count > 0 Then
+                    nTrailers = Result.Videos.Results
+                ElseIf RunFallback_Movie(Result.Id) AndAlso _Fallback_Movie.Videos IsNot Nothing AndAlso _Fallback_Movie.Videos.Results.Count > 0 Then
+                    nTrailers = _Fallback_Movie.Videos.Results
+                End If
+
+                For Each aTrailer In nTrailers
+                    Dim nTrailer = YouTube.Scraper.GetVideoDetails(aTrailer.Key)
+                    If nTrailer IsNot Nothing Then
+                        nMovie.Trailer = nTrailer.UrlForNfo
+                        Exit For
+                    End If
+                Next
+            End If
+
+            If bwTMDB.CancellationPending Then Return Nothing
+
+            _Fallback_Movie = Nothing
+            Return nMovie
+        End Using
     End Function
 
     Public Function GetInfo_Movieset(ByVal tmdbId As Integer, ByVal filteredOptions As Structures.ScrapeOptions, ByVal getPoster As Boolean) As MediaContainers.Movieset
@@ -615,7 +624,6 @@ Public Class Scraper
     End Function
 
     Public Function GetInfo_TVEpisode(ByVal showId As Integer, ByVal aired As String, ByRef filteredOptions As Structures.ScrapeOptions) As MediaContainers.EpisodeDetails
-        Dim nTVEpisode As New MediaContainers.EpisodeDetails
         Dim ShowInfo As TMDbLib.Objects.TvShows.TvShow
 
         Dim showAPIResult As Task(Of TMDbLib.Objects.TvShows.TvShow) = Task.Run(Function() _client.GetTvShowAsync(showId))
