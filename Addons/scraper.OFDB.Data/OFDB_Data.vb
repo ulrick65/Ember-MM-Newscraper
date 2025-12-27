@@ -19,7 +19,6 @@
 ' ################################################################################
 
 Imports NLog
-Imports EmberAPI
 
 Public Class OFDB_Data
     Implements Interfaces.ScraperModule_Data_Movie

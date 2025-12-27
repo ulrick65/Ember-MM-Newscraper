@@ -18,10 +18,10 @@
 ' # along with Ember Media Manager.  If not, see <http://www.gnu.org/licenses/>. #
 ' ################################################################################
 
-Imports EmberAPI
-Imports NLog
 Imports System.Drawing
 Imports System.Windows.Forms
+Imports EmberAPI
+Imports NLog
 
 Public Class genericMapping
     Implements Interfaces.GenericModule

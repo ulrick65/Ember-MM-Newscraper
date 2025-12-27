@@ -18,8 +18,8 @@
 ' # along with Ember Media Manager.  If not, see <http://www.gnu.org/licenses/>. #
 ' ################################################################################
 
-Imports EmberAPI
 Imports System.IO
+Imports EmberAPI
 
 Public Class dlgSortFiles
 

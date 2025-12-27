@@ -6,12 +6,12 @@ namespace XBMCRPC
     {
         public string Host;
         public int Port;
-		public int TcpPort=9090;
+        public int TcpPort = 9090;
         public string UserName;
         public string Password;
         public Uri JsonInterfaceAddress;
         public Uri BaseAddress;
-        
+
 
         public ConnectionSettings(string host, int port, string userName, string password)
         {

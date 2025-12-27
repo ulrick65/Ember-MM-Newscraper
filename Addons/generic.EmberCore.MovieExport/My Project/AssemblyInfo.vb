@@ -1,5 +1,4 @@
-﻿Imports System
-Imports System.Reflection
+﻿Imports System.Reflection
 Imports System.Runtime.InteropServices
 
 ' General Information about an assembly is controlled through the following 
@@ -8,12 +7,12 @@ Imports System.Runtime.InteropServices
 
 ' Review the values of the assembly attributes
 
-<Assembly: AssemblyTitle("generic.EmberCore.MovieExporter")> 
-<Assembly: AssemblyDescription("http://forum.xbmc.org/forumdisplay.php?fid=195")> 
-<Assembly: AssemblyCompany("Ember Media Manager")> 
+<Assembly: AssemblyTitle("generic.EmberCore.MovieExporter")>
+<Assembly: AssemblyDescription("http://forum.xbmc.org/forumdisplay.php?fid=195")>
+<Assembly: AssemblyCompany("Ember Media Manager")>
 <Assembly: AssemblyProduct("generic.EmberCore.MovieExporter")>
 <Assembly: AssemblyCopyright("Copyright Â© 2021")>
-<Assembly: AssemblyTrademark("")> 
+<Assembly: AssemblyTrademark("")>
 
 <Assembly: ComVisible(False)>
 

@@ -18,9 +18,9 @@
 ' # along with Ember Media Manager.  If not, see <http://www.gnu.org/licenses/>. #
 ' ################################################################################
 
-Imports NLog
 Imports System.IO
 Imports System.Xml.Serialization
+Imports NLog
 
 <Serializable()>
 <XmlRoot("core.genres")>

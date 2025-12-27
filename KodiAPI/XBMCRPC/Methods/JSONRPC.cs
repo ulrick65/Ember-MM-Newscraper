@@ -1,5 +1,5 @@
-using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
+using System.Threading.Tasks;
 namespace XBMCRPC.Methods
 {
     public partial class JSONRPC

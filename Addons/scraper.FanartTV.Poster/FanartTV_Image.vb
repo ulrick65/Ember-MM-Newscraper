@@ -18,11 +18,8 @@
 ' # along with Ember Media Manager.  If not, see <http://www.gnu.org/licenses/>. #
 ' ################################################################################
 
-Imports System.IO
-Imports EmberAPI
-Imports ScraperModule.FanartTVs
 Imports NLog
-Imports System.Diagnostics
+Imports ScraperModule.FanartTVs
 
 Public Class FanartTV_Image
     Implements Interfaces.ScraperModule_Image_Movie

@@ -20,9 +20,7 @@
 
 Imports System.IO
 Imports System.Runtime.InteropServices
-Imports System.Text
 Imports System.Text.RegularExpressions
-Imports System.Xml.Serialization
 Imports NLog
 
 <Serializable()> _

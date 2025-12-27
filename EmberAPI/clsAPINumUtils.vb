@@ -19,8 +19,8 @@
 ' ################################################################################
 
 Imports System.Globalization
-Imports NLog
 Imports System.Text.RegularExpressions
+Imports NLog
 
 Public Class NumUtils
 

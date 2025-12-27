@@ -18,10 +18,9 @@
 ' # along with Ember Media Manager.  If not, see <http://www.gnu.org/licenses/>. #
 ' ################################################################################
 
-Imports EmberAPI
+Imports System.Threading.Tasks
 Imports NLog
 Imports TraktApiSharp
-Imports System.Threading.Tasks
 
 Public Class clsAPITrakt
 

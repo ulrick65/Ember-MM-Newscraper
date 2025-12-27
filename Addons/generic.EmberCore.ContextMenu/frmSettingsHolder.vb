@@ -18,9 +18,8 @@
 ' # along with Ember Media Manager.  If not, see <http://www.gnu.org/licenses/>. #
 ' ################################################################################
 
-Imports EmberAPI
-Imports NLog
 Imports Microsoft.Win32
+Imports NLog
 
 Public Class frmSettingsHolder
 

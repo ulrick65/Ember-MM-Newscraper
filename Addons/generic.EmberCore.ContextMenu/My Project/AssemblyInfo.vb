@@ -1,5 +1,4 @@
-﻿Imports System
-Imports System.Reflection
+﻿Imports System.Reflection
 Imports System.Runtime.InteropServices
 
 ' Allgemeine Informationen Ã¼ber eine Assembly werden Ã¼ber die folgenden 
@@ -8,12 +7,12 @@ Imports System.Runtime.InteropServices
 
 ' Die Werte der Assemblyattribute Ã¼berprÃ¼fen
 
-<Assembly: AssemblyTitle("generic.EmberCore.ContextMenu")> 
-<Assembly: AssemblyDescription("http://forum.xbmc.org/forumdisplay.php?fid=195")> 
-<Assembly: AssemblyCompany("Ember Media Manager")> 
+<Assembly: AssemblyTitle("generic.EmberCore.ContextMenu")>
+<Assembly: AssemblyDescription("http://forum.xbmc.org/forumdisplay.php?fid=195")>
+<Assembly: AssemblyCompany("Ember Media Manager")>
 <Assembly: AssemblyProduct("generic.EmberCore.ContextMenu")>
 <Assembly: AssemblyCopyright("Copyright Â© 2021")>
-<Assembly: AssemblyTrademark("")> 
+<Assembly: AssemblyTrademark("")>
 
 <Assembly: ComVisible(False)>
 

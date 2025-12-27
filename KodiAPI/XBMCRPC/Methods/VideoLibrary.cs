@@ -1,5 +1,5 @@
-using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
+using System.Threading.Tasks;
 
 namespace XBMCRPC.Methods
 {
@@ -1301,7 +1301,7 @@ namespace XBMCRPC.Methods
                     jArgs.Add(new JProperty("uniqueid", jpropuniqueid));
                 }
             }
-                return await _client.GetData<string>("VideoLibrary.SetTVShowDetails", jArgs);
+            return await _client.GetData<string>("VideoLibrary.SetTVShowDetails", jArgs);
         }
 
         public delegate void OnCleanFinishedDelegate(string sender = null, object data = null);

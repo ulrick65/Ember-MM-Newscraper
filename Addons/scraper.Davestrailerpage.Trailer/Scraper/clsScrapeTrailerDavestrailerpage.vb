@@ -18,10 +18,9 @@
 ' # along with Ember Media Manager.  If not, see <http://www.gnu.org/licenses/>. #
 ' ################################################################################
 
-Imports EmberAPI
-Imports NLog
-Imports HtmlAgilityPack
 Imports System.Text.RegularExpressions
+Imports HtmlAgilityPack
+Imports NLog
 
 Public Class Scraper
 

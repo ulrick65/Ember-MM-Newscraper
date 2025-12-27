@@ -18,11 +18,10 @@
 ' # along with Ember Media Manager.  If not, see <http://www.gnu.org/licenses/>. #
 ' ################################################################################
 
-Imports EmberAPI
-Imports NLog
 Imports System.Drawing
 Imports System.IO
 Imports System.Xml.Serialization
+Imports NLog
 Imports TraktApiSharp
 
 Public Class Addon
