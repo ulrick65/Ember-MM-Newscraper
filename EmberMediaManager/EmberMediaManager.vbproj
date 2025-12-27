@@ -523,6 +523,8 @@
   <ItemGroup>
     <None Include="App.config" />
     <None Include="docs\archived-docs\NuGetPackageUpdatePlan.md" />
+    <None Include="docs\PerformanceAnalysis.md" />
+    <None Include="docs\PerformanceImprovements-Phase1.md" />
     <None Include="docs\process-docs\BuildProcess.md" />
     <None Include="docs\process-docs\CertificationMappingProcess.md" />
     <None Include="docs\process-docs\CountryMappingProcess.md" />
