@@ -228,6 +228,7 @@
     <Compile Include="clsAPIFFmpeg.vb" />
     <Compile Include="clsAPIFormsUtils.vb" />
     <Compile Include="clsAPINFOSerializers.vb" />
+    <Compile Include="clsAPIPerformanceTracker.vb" />
     <Compile Include="clsAPIProfiles.vb" />
     <Compile Include="clsAPITaskManager.vb" />
     <Compile Include="clsAPICommon.vb" />
