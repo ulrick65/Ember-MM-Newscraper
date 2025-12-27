@@ -18,9 +18,10 @@
 ' # along with Ember Media Manager.  If not, see <http://www.gnu.org/licenses/>. #
 ' ################################################################################
 
+Imports EmberAPI
 Imports System.IO
-Imports System.Xml.Serialization
 Imports NLog
+Imports System.Xml.Serialization
 
 
 Public Class KodiInterface

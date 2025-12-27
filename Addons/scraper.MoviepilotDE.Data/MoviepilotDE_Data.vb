@@ -19,6 +19,7 @@
 ' ################################################################################
 
 Imports NLog
+Imports EmberAPI
 
 Public Class MoviepilotDE_Data
     Implements Interfaces.ScraperModule_Data_Movie

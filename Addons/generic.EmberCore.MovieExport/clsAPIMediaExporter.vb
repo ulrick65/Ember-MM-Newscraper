@@ -18,11 +18,12 @@
 ' # along with Ember Media Manager.  If not, see <http://www.gnu.org/licenses/>. #
 ' ################################################################################
 
+Imports EmberAPI
+Imports NLog
 Imports System.IO
 Imports System.Text
 Imports System.Text.RegularExpressions
 Imports System.Xml.Serialization
-Imports NLog
 
 Public Class MediaExporter
 

@@ -21,10 +21,10 @@
 ' # Dialog size: 1400;1000
 ' # Move the panels (pnl*) from 0;1000 to 0;0 to edit. Move it back after editing.
 
-Imports System.IO
-Imports System.Net
 Imports EmberAPI
 Imports NLog
+Imports System.IO
+Imports System.Net
 
 Public Class dlgSettings
 

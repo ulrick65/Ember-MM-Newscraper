@@ -622,7 +622,7 @@ Public Class DVD
 
 #End Region 'Methods
 
-#Region "Nested Types"
+    #Region "Nested Types"
 
     ''' <summary>
     ''' Program time information
@@ -630,14 +630,14 @@ Public Class DVD
     ''' <remarks></remarks>
     Private Structure DVD_Time_Type
 
-#Region "Fields"
+        #Region "Fields"
 
         Dim frame As Byte
         Dim hours As Byte
         Dim minutes As Byte
         Dim seconds As Byte
 
-#End Region 'Fields
+        #End Region 'Fields
 
     End Structure
 
@@ -647,11 +647,11 @@ Public Class DVD
     ''' <remarks></remarks>
     Private Structure PGC_Cell_Info_Type
 
-#Region "Fields"
+        #Region "Fields"
 
         Dim CellPlayBackTime As DVD_Time_Type
 
-#End Region 'Fields
+        #End Region 'Fields
 
     End Structure
 
@@ -661,13 +661,13 @@ Public Class DVD
     ''' <remarks></remarks>
     Private Structure struct_AudioAttributes_VTSM_VTS
 
-#Region "Fields"
+        #Region "Fields"
 
         Dim CodingMode As Byte
         Dim LanguageCode As String
         Dim NumberOfChannels As Byte
 
-#End Region 'Fields
+        #End Region 'Fields
 
     End Structure
 
@@ -677,7 +677,7 @@ Public Class DVD
     ''' <remarks></remarks>
     Private Structure struct_IFO_VST_Parse
 
-#Region "Fields"
+        #Region "Fields"
 
         Dim AudioAtt_VTSM_VOBS() As struct_AudioAttributes_VTSM_VTS
         Dim AudioAtt_VTS_VOBS() As struct_AudioAttributes_VTSM_VTS
@@ -709,7 +709,7 @@ Public Class DVD
         Dim VideoAtt_VTS_VOBS As struct_VideoAttributes_VTS_VOBS
         Dim VSTCategory As Long
 
-#End Region 'Fields
+        #End Region 'Fields
 
     End Structure
 
@@ -719,19 +719,19 @@ Public Class DVD
     ''' <remarks></remarks>
     Private Structure struct_Program_Chain_Type
 
-#Region "Fields"
+        #Region "Fields"
 
         Dim NumberOfCells As Byte
         Dim NumberOfPrograms As Byte
         Dim PlayBackTime As DVD_Time_Type
 
-#End Region 'Fields
+        #End Region 'Fields
 
-#Region "Other"
+        #Region "Other"
 
         'Currently only implamenting basic useful information
 
-#End Region 'Other
+        #End Region 'Other
 
     End Structure
     ''' <summary>
@@ -740,14 +740,14 @@ Public Class DVD
     ''' <remarks></remarks>
     Private Structure struct_SRPT
 
-#Region "Fields"
+        #Region "Fields"
 
         Dim Aspect_Ratio As Byte
         Dim Coding_Mode As Byte
         Dim LetterBoxed As Boolean
         Dim Resolution As Byte
 
-#End Region 'Fields
+        #End Region 'Fields
 
     End Structure
     ''' <summary>
@@ -756,7 +756,7 @@ Public Class DVD
     ''' <remarks></remarks>
     Private Structure struct_VideoAttributes_VTS_VOBS
 
-#Region "Fields"
+        #Region "Fields"
 
         Dim Aspect_Ratio As Byte
         Dim Coding_Mode As Byte
@@ -764,7 +764,7 @@ Public Class DVD
         Dim Resolution As Byte
         Dim Video_Standard As Byte
 
-#End Region 'Fields
+        #End Region 'Fields
 
     End Structure
 
@@ -774,13 +774,13 @@ Public Class DVD
     ''' <remarks></remarks>
     Private Structure SubPictureAtt_VTSM_VTS_Type
 
-#Region "Fields"
+        #Region "Fields"
 
         Dim CodeExtention As Byte
         Dim CodingMode As Byte
         Dim LanguageCode As String
 
-#End Region 'Fields
+        #End Region 'Fields
 
     End Structure
 
@@ -790,17 +790,17 @@ Public Class DVD
     ''' <remarks></remarks>
     Private Structure VTS_PTT_SRPT
 
-#Region "Fields"
+        #Region "Fields"
 
         Dim EndAddress_VST_PTT As Integer
         Dim NumberOfTitles As Integer
         Dim OffsetTo_PPT As Integer
         Dim PackedString As String
 
-#End Region 'Fields
+        #End Region 'Fields
 
     End Structure
 
-#End Region 'Nested Types
+    #End Region 'Nested Types
 
 End Class

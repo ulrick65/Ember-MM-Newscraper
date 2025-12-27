@@ -18,8 +18,9 @@
 ' # along with Ember Media Manager.  If not, see <http://www.gnu.org/licenses/>. #
 ' ################################################################################
 
-Imports System.Threading.Tasks
+Imports EmberAPI
 Imports NLog
+Imports System.Threading.Tasks
 
 Public Class Addon
     Implements Interfaces.ScraperModule_Data_Movie

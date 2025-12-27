@@ -18,8 +18,9 @@
 ' # along with Ember Media Manager.  If not, see <http://www.gnu.org/licenses/>. #
 ' ################################################################################
 
-Imports System.Diagnostics
+Imports EmberAPI
 Imports NLog
+Imports System.Diagnostics
 
 Public Class clsAPITMDB
 

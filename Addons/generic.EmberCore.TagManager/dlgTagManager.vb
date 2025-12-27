@@ -18,8 +18,12 @@
 ' # along with Ember Media Manager.  If not, see <http://www.gnu.org/licenses/>. #
 ' ################################################################################
 
-Imports System.Windows.Forms
+Imports EmberAPI
 Imports NLog
+Imports System.Diagnostics
+Imports System.IO
+Imports System.Text.RegularExpressions
+Imports System.Windows.Forms
 
 Public Class dlgTagManager
 

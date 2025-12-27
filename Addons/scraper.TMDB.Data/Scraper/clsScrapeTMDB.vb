@@ -18,77 +18,78 @@
 ' # along with Ember Media Manager.  If not, see <http://www.gnu.org/licenses/>. #
 ' ################################################################################
 
-Imports System.Diagnostics
+Imports EmberAPI
 Imports NLog
+Imports System.Diagnostics
 
 Public Class SearchResults_Movie
 
 #Region "Fields"
 
-    Private _Matches As New List(Of MediaContainers.Movie)
+        Private _Matches As New List(Of MediaContainers.Movie)
 
 #End Region 'Fields
 
 #Region "Properties"
 
-    Public Property Matches() As List(Of MediaContainers.Movie)
-        Get
-            Return _Matches
-        End Get
-        Set(ByVal value As List(Of MediaContainers.Movie))
-            _Matches = value
-        End Set
-    End Property
+        Public Property Matches() As List(Of MediaContainers.Movie)
+            Get
+                Return _Matches
+            End Get
+            Set(ByVal value As List(Of MediaContainers.Movie))
+                _Matches = value
+            End Set
+        End Property
 
 #End Region 'Properties
 
-End Class
+    End Class
 
-Public Class SearchResults_MovieSet
+    Public Class SearchResults_MovieSet
 
 #Region "Fields"
 
-    Private _Matches As New List(Of MediaContainers.Movieset)
+        Private _Matches As New List(Of MediaContainers.Movieset)
 
 #End Region 'Fields
 
 #Region "Properties"
 
-    Public Property Matches() As List(Of MediaContainers.Movieset)
-        Get
-            Return _Matches
-        End Get
-        Set(ByVal value As List(Of MediaContainers.Movieset))
-            _Matches = value
-        End Set
-    End Property
+        Public Property Matches() As List(Of MediaContainers.Movieset)
+            Get
+                Return _Matches
+            End Get
+            Set(ByVal value As List(Of MediaContainers.Movieset))
+                _Matches = value
+            End Set
+        End Property
 
 #End Region 'Properties
 
-End Class
+    End Class
 
-Public Class SearchResults_TVShow
+    Public Class SearchResults_TVShow
 
 #Region "Fields"
 
-    Private _Matches As New List(Of MediaContainers.TVShow)
+        Private _Matches As New List(Of MediaContainers.TVShow)
 
 #End Region 'Fields
 
 #Region "Properties"
 
-    Public Property Matches() As List(Of MediaContainers.TVShow)
-        Get
-            Return _Matches
-        End Get
-        Set(ByVal value As List(Of MediaContainers.TVShow))
-            _Matches = value
-        End Set
-    End Property
+        Public Property Matches() As List(Of MediaContainers.TVShow)
+            Get
+                Return _Matches
+            End Get
+            Set(ByVal value As List(Of MediaContainers.TVShow))
+                _Matches = value
+            End Set
+        End Property
 
 #End Region 'Properties
 
-End Class
+    End Class
 
 Public Class Scraper
 

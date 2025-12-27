@@ -18,12 +18,12 @@
 ' # along with Ember Media Manager.  If not, see <http://www.gnu.org/licenses/>. #
 ' ################################################################################
 
-Imports System.Data.SQLite
-Imports System.IO
-Imports System.Text.RegularExpressions
 Imports System.Windows.Forms
+Imports System.IO
 Imports System.Xml.Serialization
+Imports System.Data.SQLite
 Imports NLog
+Imports System.Text.RegularExpressions
 
 ''' <summary>
 ''' Class defining and implementing the interface to the database

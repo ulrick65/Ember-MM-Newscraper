@@ -18,12 +18,12 @@
 ' # along with Ember Media Manager.  If not, see <http://www.gnu.org/licenses/>. #
 ' ################################################################################
 
+Imports NLog
 Imports System.Drawing
 Imports System.Runtime.CompilerServices
 Imports System.Windows.Forms
-Imports NLog
 
-<Assembly: InternalsVisibleTo("EmberAPI_Test")>
+<Assembly: InternalsVisibleTo("EmberAPI_Test")> 
 
 Public Class ImageUtils
 

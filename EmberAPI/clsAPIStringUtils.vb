@@ -18,12 +18,12 @@
 ' # along with Ember Media Manager.  If not, see <http://www.gnu.org/licenses/>. #
 ' ################################################################################
 
-Imports System.Drawing
 Imports System.Globalization
 Imports System.IO
-Imports System.Runtime.CompilerServices
 Imports System.Text
 Imports System.Text.RegularExpressions
+Imports System.Drawing
+Imports System.Runtime.CompilerServices
 Imports NLog
 
 'The InternalsVisibleTo is required for unit testing the friend methods

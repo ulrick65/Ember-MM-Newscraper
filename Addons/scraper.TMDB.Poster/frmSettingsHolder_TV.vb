@@ -18,6 +18,10 @@
 ' # along with Ember Media Manager.  If not, see <http://www.gnu.org/licenses/>. #
 ' ################################################################################
 
+Imports System.IO
+Imports EmberAPI
+Imports System.Diagnostics
+
 Public Class frmSettingsHolder_TV
 
 #Region "Events"

@@ -1,28 +1,28 @@
-using Newtonsoft.Json;
 using System;
 using System.Linq;
+using Newtonsoft.Json;
 
 namespace XBMCRPC.List.Filter
 {
     [JsonConverter(typeof(OperatorEnumConverter))]
     public enum Operators
-    {
-        contains,
-        doesnotcontain,
-        Is,
-        isnot,
-        startswith,
-        endswith,
-        greaterthan,
-        lessthan,
-        after,
-        before,
-        inthelast,
-        notinthelast,
-        True,
-        False,
-        between,
-    }
+   {
+       contains,
+       doesnotcontain,
+       Is,
+       isnot,
+       startswith,
+       endswith,
+       greaterthan,
+       lessthan,
+       after,
+       before,
+       inthelast,
+       notinthelast,
+       True,
+       False,
+       between,
+   }
 }
 
 public class OperatorEnumConverter : JsonConverter

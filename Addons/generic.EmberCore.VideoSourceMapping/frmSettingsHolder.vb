@@ -19,6 +19,7 @@
 ' ################################################################################
 
 Imports System.Windows.Forms
+Imports EmberAPI
 
 Public Class frmSettingsHolder
 

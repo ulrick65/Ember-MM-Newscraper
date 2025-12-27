@@ -18,8 +18,10 @@
 ' # along with Ember Media Manager.  If not, see <http://www.gnu.org/licenses/>. #
 ' ################################################################################
 
-Imports System.Web.Script.Serialization
+Imports EmberAPI
 Imports NLog
+Imports System.Text.RegularExpressions
+Imports System.Web.Script.Serialization
 
 Public Class Scraper
 

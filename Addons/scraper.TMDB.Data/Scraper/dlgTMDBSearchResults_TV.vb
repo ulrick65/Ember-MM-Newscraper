@@ -19,6 +19,7 @@
 ' ################################################################################
 
 Imports System.IO
+Imports EmberAPI
 Imports NLog
 
 Public Class dlgTMDBSearchResults_TV

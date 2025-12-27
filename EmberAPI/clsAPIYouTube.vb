@@ -18,12 +18,12 @@
 ' # along with Ember Media Manager.  If not, see <http://www.gnu.org/licenses/>. #
 ' ################################################################################
 
-Imports System.Runtime.CompilerServices
-Imports System.Text.RegularExpressions
-Imports System.Threading.Tasks
-Imports System.Web
 Imports NLog
 Imports VideoLibrary
+Imports System.Runtime.CompilerServices
+Imports System.Text.RegularExpressions
+Imports System.Web
+Imports System.Threading.Tasks
 
 'The InternalsVisibleTo is required for unit testing the friend methods
 <Assembly: InternalsVisibleTo("EmberAPI_Test")>

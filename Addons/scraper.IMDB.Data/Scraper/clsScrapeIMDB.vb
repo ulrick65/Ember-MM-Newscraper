@@ -18,11 +18,12 @@
 ' # along with Ember Media Manager.  If not, see <http://www.gnu.org/licenses/>. #
 ' ################################################################################
 
+Imports EmberAPI
+Imports HtmlAgilityPack
+Imports NLog
 Imports System.IO
 Imports System.Text.RegularExpressions
-Imports HtmlAgilityPack
 Imports Newtonsoft.Json
-Imports NLog
 
 Public Class SearchResults_Movie
 
@@ -417,8 +418,8 @@ Public Class Scraper
                 End If
 
                 Return nMovie
-            Else
-                Return Nothing
+                Else
+                    Return Nothing
             End If
 
         Catch ex As Exception
@@ -464,85 +465,85 @@ Public Class Scraper
 
                 'Original Title
                 If filteredoptions.bEpisodeOriginalTitle Then
-                    nTVEpisode.OriginalTitle = json_IMBD_next_data.props.PageProps.MainColumnData.OriginalTitleText.Text
-                End If
-
-                'Title
-                If filteredoptions.bEpisodeTitle Then
-                    If Not String.IsNullOrEmpty(_SpecialSettings.ForceTitleLanguage) Then
-                        'Translated English title
-                        nTVEpisode.Title = json_IMBD_next_data.props.PageProps.MainColumnData.TitleText.Text
-                    Else
-                        nTVEpisode.Title = json_IMBD_next_data.props.PageProps.MainColumnData.OriginalTitleText.Text
+                        nTVEpisode.OriginalTitle = json_IMBD_next_data.props.PageProps.MainColumnData.OriginalTitleText.Text
                     End If
-                End If
 
-                'Actors
-                If filteredoptions.bEpisodeActors Then
-                    Dim lstActors = ParseActors(json_IMBD_next_data)
-                    If lstActors IsNot Nothing Then
-                        nTVEpisode.Actors = lstActors
-                    Else
-                        logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] can't parse Actors", id))
+                    'Title
+                    If filteredoptions.bEpisodeTitle Then
+                        If Not String.IsNullOrEmpty(_SpecialSettings.ForceTitleLanguage) Then
+                            'Translated English title
+                            nTVEpisode.Title = json_IMBD_next_data.props.PageProps.MainColumnData.TitleText.Text
+                        Else
+                            nTVEpisode.Title = json_IMBD_next_data.props.PageProps.MainColumnData.OriginalTitleText.Text
+                        End If
                     End If
-                End If
 
-                'AiredDate
-                If filteredoptions.bEpisodeAired Then
-                    If json_IMBD_next_data.props.PageProps.MainColumnData.ReleaseDate IsNot Nothing Then
-                        nTVEpisode.Aired = json_IMBD_next_data.props.PageProps.MainColumnData.ReleaseDate.GetFullReleaseDate()
+                    'Actors
+                    If filteredoptions.bEpisodeActors Then
+                        Dim lstActors = ParseActors(json_IMBD_next_data)
+                        If lstActors IsNot Nothing Then
+                            nTVEpisode.Actors = lstActors
+                        Else
+                            logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] can't parse Actors", id))
+                        End If
                     End If
-                End If
 
-                'Credits (writers)
-                If filteredoptions.bEpisodeCredits Then
-                    Dim lstCredits = ParseCredits(json_IMBD_next_data)
-                    If lstCredits IsNot Nothing Then
-                        nTVEpisode.Credits = lstCredits
-                    Else
-                        logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] can't parse Credits (Writers)", id))
+                    'AiredDate
+                    If filteredoptions.bEpisodeAired Then
+                        If json_IMBD_next_data.props.PageProps.MainColumnData.ReleaseDate IsNot Nothing Then
+                            nTVEpisode.Aired = json_IMBD_next_data.props.PageProps.MainColumnData.ReleaseDate.GetFullReleaseDate()
+                        End If
                     End If
-                End If
 
-                'Directors
-                If filteredoptions.bEpisodeDirectors Then
-                    Dim lstDirectors = ParseDirectors(json_IMBD_next_data)
-                    If lstDirectors IsNot Nothing Then
-                        nTVEpisode.Directors = lstDirectors
-                    Else
-                        logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] can't parse Directors", id))
+                    'Credits (writers)
+                    If filteredoptions.bEpisodeCredits Then
+                        Dim lstCredits = ParseCredits(json_IMBD_next_data)
+                        If lstCredits IsNot Nothing Then
+                            nTVEpisode.Credits = lstCredits
+                        Else
+                            logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] can't parse Credits (Writers)", id))
+                        End If
                     End If
-                End If
 
-                'Plot
-                If filteredoptions.bEpisodePlot AndAlso bIsScraperLanguage Then
-                    Dim strPlot = ParsePlot(json_IMBD_next_data)
+                    'Directors
+                    If filteredoptions.bEpisodeDirectors Then
+                        Dim lstDirectors = ParseDirectors(json_IMBD_next_data)
+                        If lstDirectors IsNot Nothing Then
+                            nTVEpisode.Directors = lstDirectors
+                        Else
+                            logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] can't parse Directors", id))
+                        End If
+                    End If
 
-                    If Not String.IsNullOrEmpty(strPlot) Then
-                        nTVEpisode.Plot = strPlot
-                    Else
-                        strPlot = ParseOutline(json_IMBD_next_data)
+                    'Plot
+                    If filteredoptions.bEpisodePlot AndAlso bIsScraperLanguage Then
+                        Dim strPlot = ParsePlot(json_IMBD_next_data)
+
                         If Not String.IsNullOrEmpty(strPlot) Then
                             nTVEpisode.Plot = strPlot
                         Else
-                            logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] no result from ""plotsummary"" page for Plot", id))
+                            strPlot = ParseOutline(json_IMBD_next_data)
+                            If Not String.IsNullOrEmpty(strPlot) Then
+                                nTVEpisode.Plot = strPlot
+                            Else
+                                logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] no result from ""plotsummary"" page for Plot", id))
+                            End If
                         End If
                     End If
-                End If
 
-                'Rating
-                If filteredoptions.bEpisodeRating Then
-                    Dim nRating = ParseRating(json_IMBD_next_data)
-                    If nRating IsNot Nothing Then
-                        nTVEpisode.Ratings.Add(nRating)
-                    Else
-                        logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] can't parse Rating", id))
+                    'Rating
+                    If filteredoptions.bEpisodeRating Then
+                        Dim nRating = ParseRating(json_IMBD_next_data)
+                        If nRating IsNot Nothing Then
+                            nTVEpisode.Ratings.Add(nRating)
+                        Else
+                            logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] can't parse Rating", id))
+                        End If
                     End If
-                End If
 
-                Return nTVEpisode
-            Else
-                Return Nothing
+                    Return nTVEpisode
+                Else
+                    Return Nothing
             End If
         Catch ex As Exception
             logger.Error(ex, New StackFrame().GetMethod().Name)

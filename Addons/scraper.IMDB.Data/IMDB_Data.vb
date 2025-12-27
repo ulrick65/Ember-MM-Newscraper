@@ -19,6 +19,7 @@
 ' ################################################################################
 
 
+Imports EmberAPI
 Imports NLog
 
 Public Class IMDB_Data

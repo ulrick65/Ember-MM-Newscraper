@@ -18,12 +18,12 @@
 ' # along with Ember Media Manager.  If not, see <http://www.gnu.org/licenses/>. #
 ' ################################################################################
 
+Imports NLog
+Imports Newtonsoft.Json
 Imports System.Globalization
 Imports System.IO
 Imports System.Text
 Imports System.Text.RegularExpressions
-Imports Newtonsoft.Json
-Imports NLog
 
 Namespace FFmpeg
 

@@ -1,4 +1,5 @@
-﻿Imports System.IO
+﻿Imports EmberAPI
+Imports System.IO
 
 ' ################################################################################
 ' #                             EMBER MEDIA MANAGER                              #

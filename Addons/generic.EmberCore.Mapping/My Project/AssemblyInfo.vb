@@ -1,4 +1,5 @@
-﻿Imports System.Reflection
+﻿Imports System
+Imports System.Reflection
 Imports System.Runtime.InteropServices
 
 ' General Information about an assembly is controlled through the following
@@ -6,12 +7,12 @@ Imports System.Runtime.InteropServices
 ' associated with an assembly.
 ' Review the values of the assembly attributes
 <Assembly: AssemblyTitle("generic.EmberCore.Mapping")>
-<Assembly: AssemblyDescription("http://forum.xbmc.org/forumdisplay.php?fid=195")>
+<Assembly: AssemblyDescription("http://forum.xbmc.org/forumdisplay.php?fid=195")> 
 <Assembly: AssemblyCompany("Ember Media Manager")>
 <Assembly: AssemblyProduct("generic.EmberCore.Mapping")>
 <Assembly: AssemblyCopyright("Copyright Â© 2021")>
-<Assembly: AssemblyTrademark("")>
-<Assembly: ComVisible(False)>
+<Assembly: AssemblyTrademark("")> 
+<Assembly: ComVisible(False)> 
 
 'The following GUID is for the ID of the typelib if this project is exposed to COM
 <Assembly: Guid("08EA9602-E9F1-483D-BF4E-6E0ECC9C5C51")>

@@ -1,13 +1,14 @@
-﻿Imports System.Reflection
+﻿Imports System
+Imports System.Reflection
 Imports System.Runtime.InteropServices
 
 ' General Information about an assembly is controlled through the following
 ' set of attributes. Change these attribute values to modify the information
 ' associated with an assembly.
 ' Review the values of the assembly attributes
-<Assembly: AssemblyTitle("generic.EmberCore.TagManager")>
-<Assembly: AssemblyDescription("http://forum.xbmc.org/forumdisplay.php?fid=195")>
-<Assembly: AssemblyCompany("Ember Media Manager")>
+<Assembly: AssemblyTitle("generic.EmberCore.TagManager")> 
+<Assembly: AssemblyDescription("http://forum.xbmc.org/forumdisplay.php?fid=195")> 
+<Assembly: AssemblyCompany("Ember Media Manager")> 
 <Assembly: AssemblyProduct("generic.EmberCore.TagManager")>
 <Assembly: AssemblyCopyright("Copyright Â© 2021")>
 <Assembly: AssemblyTrademark("")>

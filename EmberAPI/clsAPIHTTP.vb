@@ -18,10 +18,10 @@
 ' # along with Ember Media Manager.  If not, see <http://www.gnu.org/licenses/>. #
 ' ################################################################################
 
-Imports System.Drawing
 Imports System.IO
 Imports System.IO.Compression
 Imports System.Net
+Imports System.Drawing
 Imports NLog
 
 ''' <summary>

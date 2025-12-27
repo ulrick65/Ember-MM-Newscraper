@@ -32,8 +32,9 @@
 ' # 4) Landscape.png - to be added at a later stage, today is not possible to save
 ' # language is in image properties
 
-Imports System.Diagnostics
+Imports EmberAPI
 Imports NLog
+Imports System.Diagnostics
 
 Namespace FanartTVs
 
