@@ -3,7 +3,7 @@
 **Solution:** Ember Media Manager  
 **Target Framework:** .NET Framework 4.8  
 **Plan Created:** December 26, 2025  
-**Current Status:** Phase 2 Complete
+**Current Status:** Phase 2 Complete - Ready for Phase 3
 
 ---
 
@@ -25,9 +25,9 @@ This document outlines the phased approach to updating 21 NuGet packages in the 
 |-------|--------------|------------|--------|-------------------|
 | Phase 1 | 12 packages | Low | ✅ Complete | 1 day |
 | Phase 2 | 4 packages | Medium | ✅ Complete | 1 day |
+| Phase 3C | 2 packages | Low | Ready | 1 hour |
+| Phase 3B | 1 package | Medium | Ready | 1-2 hours |
 | Phase 3A | 5 packages | High | Deferred | TBD |
-| Phase 3B | 1 package | Medium-High | Deferred | TBD |
-| Phase 3C | 2 packages | Remove | Evaluate | 1 day |
 
 ---
 
@@ -204,6 +204,151 @@ This document outlines the phased approach to updating 21 NuGet packages in the 
 
 ---
 
+## Phase 3C: .NET Standard/Core Compatibility Packages (Low Risk) - DO FIRST
+
+### Strategy: Try Removal First, Update if Required
+
+These packages are typically transitive dependencies for .NET Standard compatibility. For a pure .NET Framework 4.8 project, they may not be needed.
+
+### Packages to Evaluate
+
+| Package Name | Current | Available Update | Strategy |
+|-------------|---------|------------------|----------|
+| NETStandard.Library | 1.6.1 | 2.0.3 | Try remove first |
+| Microsoft.NETCore.Platforms | 1.1.0 | 7.0.4 | Try remove first |
+
+### Implementation Steps
+
+#### Step 1: Preparation
+- [ ] Verify master branch is up to date
+- [ ] Create branch: nuget-updates-phase3c
+- [ ] Switch to new branch
+
+#### Step 2: Identify Package Locations
+- [ ] Search all packages.config files for NETStandard.Library
+- [ ] Search all packages.config files for Microsoft.NETCore.Platforms
+- [ ] Document which projects reference these packages
+
+#### Step 3: Attempt Package Removal
+- [ ] Remove NETStandard.Library entries from packages.config files
+- [ ] Remove Microsoft.NETCore.Platforms entries from packages.config files
+- [ ] Clean solution
+- [ ] Rebuild solution
+
+#### Step 4: Evaluate Results
+
+**If build succeeds:**
+- [ ] Packages were transitive dependencies - removal is safe
+- [ ] Run application and test basic functionality
+- [ ] Commit removal: "Phase 3C: Remove unnecessary .NET Standard/Core packages"
+
+**If build fails:**
+- [ ] Document the specific errors
+- [ ] Restore packages.config files
+- [ ] Update packages instead of removing:
+    - NETStandard.Library: 1.6.1 → 2.0.3
+    - Microsoft.NETCore.Platforms: 1.1.0 → 7.0.4
+- [ ] Rebuild and test
+- [ ] Commit update: "Phase 3C: Update .NET Standard/Core compatibility packages"
+
+#### Step 5: Validation
+- [ ] Application starts without errors
+- [ ] Basic scraping operations work
+- [ ] No new warnings or errors in build output
+
+#### Step 6: Complete
+- [ ] Push branch to remote
+- [ ] Merge to master
+- [ ] Document results below
+
+### Results
+
+**NETStandard.Library:**
+- [ ] Attempted removal
+- [ ] Result: _____
+- [ ] Final action: Removed / Updated to 2.0.3
+
+**Microsoft.NETCore.Platforms:**
+- [ ] Attempted removal
+- [ ] Result: _____
+- [ ] Final action: Removed / Updated to 7.0.4
+
+### Issues Encountered
+
+**Date:** _____  
+**Issue:** _____  
+**Resolution:** _____  
+**Notes:** _____
+
+---
+
+## Phase 3B: MovieCollection.OpenMovieDatabase (Medium Risk) - DO SECOND
+
+### Package to Update
+
+| Package Name | Current | Target | Projects Affected |
+|-------------|---------|--------|-------------------|
+| MovieCollection.OpenMovieDatabase | 2.0.1 | 4.0.3 | scraper.Data.OMDb |
+
+### Risk Assessment
+- **Isolated Impact:** Only affects the OMDb scraper addon
+- **Major Version Jump:** 2.x to 4.x likely has API changes
+- **Third-Party Package:** Not Microsoft maintained
+- **Rollback Safe:** Easy to revert if issues arise
+
+### Implementation Steps
+
+#### Step 1: Preparation
+- [ ] Verify Phase 3C is completed
+- [ ] Create branch: nuget-updates-phase3b-omdb
+- [ ] Switch to new branch
+
+#### Step 2: Research Breaking Changes
+- [ ] Check NuGet page for release notes
+- [ ] Review any migration documentation
+- [ ] Identify expected code changes in scraper.Data.OMDb
+
+#### Step 3: Update Package
+- [ ] Open NuGet Package Manager
+- [ ] Update MovieCollection.OpenMovieDatabase to 4.0.3
+- [ ] Save packages.config
+
+#### Step 4: Fix Compilation Errors
+- [ ] Build solution
+- [ ] Document any compilation errors in scraper.Data.OMDb
+- [ ] Fix API changes (likely namespace, method signatures, or class names)
+- [ ] Rebuild until 0 errors
+
+#### Step 5: Functional Testing
+- [ ] Test OMDb scraper - search by movie title
+- [ ] Test OMDb scraper - search by IMDb ID
+- [ ] Verify metadata fields populate correctly
+- [ ] Test error handling for invalid searches
+- [ ] Test API rate limiting behavior
+
+#### Step 6: Commit and Complete
+- [ ] Stage all changed files
+- [ ] Commit with message: "Phase 3B: Update MovieCollection.OpenMovieDatabase to 4.0.3"
+- [ ] Push branch to remote
+- [ ] Merge to master
+
+### Testing Checklist
+- [ ] OMDb API authentication works
+- [ ] Movie search by title returns results
+- [ ] Movie search by IMDb ID returns results
+- [ ] All metadata fields populated correctly (title, year, plot, rating, etc.)
+- [ ] Error handling for API failures works
+- [ ] Application handles missing OMDb API key gracefully
+
+### Issues Encountered
+
+**Date:** _____  
+**Issue:** _____  
+**Resolution:** _____  
+**Notes:** _____
+
+---
+
 ## Phase 3A: SQLite Database Packages (High Risk) - DEFERRED
 
 ### Packages to Update
@@ -216,7 +361,7 @@ This document outlines the phased approach to updating 21 NuGet packages in the 
 | System.Data.SQLite.Linq | 1.0.119 | 2.0.2 | All projects using LINQ to SQL |
 | Stub.System.Data.SQLite.Core.NetFramework | 1.0.119 | 2.0.2 | Framework compatibility |
 
-### RECOMMENDATION: SKIP THIS PHASE
+### RECOMMENDATION: CONTINUE TO DEFER
 
 #### Reasons to Skip
 1. Current version 1.0.119 is stable and working
@@ -225,8 +370,9 @@ This document outlines the phased approach to updating 21 NuGet packages in the 
 4. Major version change = high risk of breaking changes
 5. Requires extensive database migration testing
 6. Potential Entity Framework compatibility issues
+7. Database layer is critical - highest risk component
 
-#### If Update Becomes Necessary
+#### If Update Becomes Necessary in Future
 
 ##### Prerequisites
 - [ ] Research SQLite 2.0.x breaking changes
@@ -263,122 +409,15 @@ This document outlines the phased approach to updating 21 NuGet packages in the 
 
 ---
 
-## Phase 3B: MovieCollection.OpenMovieDatabase (Medium-High Risk) - DEFERRED
-
-### Package to Update
-
-| Package Name | Current | Target | Projects Affected |
-|-------------|---------|--------|-------------------|
-| MovieCollection.OpenMovieDatabase | 2.0.1 | 4.0.3 | scraper.Data.OMDb |
-
-### Considerations
-- Major version jump (2.x to 4.x)
-- Likely API breaking changes
-- Only affects OMDb scraper addon
-- Third-party package (not Microsoft maintained)
-
-### Decision Criteria
-
-Update if:
-- [ ] OMDb scraper is actively used by users
-- [ ] New version provides critical features
-- [ ] Current version has known bugs affecting users
-- [ ] API changes are well-documented and manageable
-
-Skip if:
-- [ ] OMDb scraper is rarely used
-- [ ] Current version works fine
-- [ ] Breaking changes require significant rework
-- [ ] No compelling reason to update
-
-### Implementation Steps (If Proceeding)
-
-#### Step 1: Research
-- [ ] Check package GitHub/release notes for breaking changes
-- [ ] Review API migration guide
-- [ ] Assess code changes required in scraper.Data.OMDb
-
-#### Step 2: Update and Test
-- [ ] Create branch: nuget-updates-phase3b-omdb
-- [ ] Update package
-- [ ] Fix any compilation errors in scraper.Data.OMDb
-- [ ] Test OMDb scraper thoroughly
-- [ ] Verify movie metadata retrieval
-- [ ] Test error handling
-
-#### Step 3: Validation
-- [ ] Compare results with previous version
-- [ ] Verify no data loss or corruption
-- [ ] Test edge cases and error scenarios
-
-### Testing Checklist
-- [ ] OMDb API authentication works
-- [ ] Movie search by title works
-- [ ] Movie search by IMDb ID works
-- [ ] Metadata fields populated correctly
-- [ ] Error handling for API failures
-- [ ] Rate limiting respected
-
-### Issues Encountered
-
-**Date:** _____  
-**Issue:** _____  
-**Resolution:** _____  
-**Notes:** _____
-
----
-
-## Phase 3C: Remove Unnecessary Packages - EVALUATE
-
-### Packages to Consider Removing
-
-| Package Name | Current | Why Consider Removal |
-|-------------|---------|---------------------|
-| NETStandard.Library | 1.6.1 | Not needed for .NET Framework 4.8 projects |
-| Microsoft.NETCore.Platforms | 1.1.0 | Transitive dependency, likely not required |
-
-### Evaluation Steps
-
-#### Step 1: Research
-- [ ] Identify which projects reference these packages
-- [ ] Check if any code directly uses APIs from these packages
-- [ ] Review if they're transitive dependencies
-
-#### Step 2: Test Removal
-- [ ] Create branch: nuget-updates-phase3c-cleanup
-- [ ] Remove NETStandard.Library from packages.config
-- [ ] Remove Microsoft.NETCore.Platforms from packages.config
-- [ ] Clean solution
-- [ ] Rebuild solution
-
-#### Step 3: Validation
-- [ ] If build succeeds: packages were not needed, commit removal
-- [ ] If build fails: analyze error, determine if packages are required
-- [ ] Document findings below
-
-### Results
-
-**NETStandard.Library Removal:**
-- [ ] Attempted
-- [ ] Result: _____
-- [ ] Action: _____
-
-**Microsoft.NETCore.Platforms Removal:**
-- [ ] Attempted
-- [ ] Result: _____
-- [ ] Action: _____
-
----
-
 ## Progress Tracking
 
 ### Overall Progress
 
-    Phase 1: [##########] 100% Complete ✅
-    Phase 2: [##########] 100% Complete ✅
+    Phase 1:  [##########] 100% Complete ✅
+    Phase 2:  [##########] 100% Complete ✅
+    Phase 3C: [          ] 0% - Ready to Start
+    Phase 3B: [          ] 0% - After 3C
     Phase 3A: [          ] Deferred
-    Phase 3B: [          ] Deferred
-    Phase 3C: [          ] Not Started
 
 ### Timeline
 
@@ -386,9 +425,9 @@ Skip if:
 |-------|-----------|----------------|----------|--------|
 | Phase 1 | 12/26/2024 | 12/26/2024 | 1 day | ✅ Complete |
 | Phase 2 | 12/27/2024 | 12/27/2024 | 1 day | ✅ Complete |
+| Phase 3C | _____ | _____ | _____ | Ready |
+| Phase 3B | _____ | _____ | _____ | After 3C |
 | Phase 3A | _____ | _____ | _____ | Deferred |
-| Phase 3B | _____ | _____ | _____ | Deferred |
-| Phase 3C | _____ | _____ | _____ | Not Started |
 
 ---
 
@@ -397,9 +436,9 @@ Skip if:
 ### Branch Naming Convention
 - Phase 1: nuget-updates-phase1
 - Phase 2: nuget-updates-phase2
+- Phase 3C: nuget-updates-phase3c
+- Phase 3B: nuget-updates-phase3b-omdb
 - Phase 3A: nuget-updates-phase3a-sqlite (if needed)
-- Phase 3B: nuget-updates-phase3b-omdb (if needed)
-- Phase 3C: nuget-updates-phase3c-cleanup
 
 ### Merge Strategy
 1. Complete phase on feature branch
@@ -413,8 +452,8 @@ Skip if:
 
 | Branch | Created | Merged | Status |
 |--------|---------|--------|--------|
-| nuget-updates-phase1 | 12/26/2024 | 12/26/2024 | ✅ Merged |
-| nuget-updates-phase2 | 12/27/2024 | Pending | Ready for merge |
+| nuget-updates-phase1 | 12/26/2024 | 12/26/2024 | ✅ Merged & Deleted |
+| nuget-updates-phase2 | 12/27/2024 | 12/27/2024 | ✅ Merged & Deleted |
 
 ---
 
@@ -476,6 +515,7 @@ Each phase is considered successful when:
 ### Package-Specific Resources
 - System.Data.SQLite: https://system.data.sqlite.org/
 - System.Text.Json: https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/overview
+- MovieCollection.OpenMovieDatabase: https://www.nuget.org/packages/MovieCollection.OpenMovieDatabase
 
 ### Tools
 - NuGet CLI: https://www.nuget.org/downloads
@@ -493,6 +533,9 @@ Each phase is considered successful when:
 **Date:** December 27, 2024  
 **Note:** Phase 2 completed successfully. All four Microsoft stack packages (Microsoft.Bcl.AsyncInterfaces, System.IO.Pipelines, System.Text.Encodings.Web, System.Text.Json) updated from v9.0.1 to v10.0.1 without issues. Application runs correctly with no errors or performance degradation observed.
 
+**Date:** December 27, 2024  
+**Note:** Revised Phase 3 execution order. Phase 3C (.NET Standard/Core packages) moved first as lowest risk. Phase 3B (OMDb) second as isolated addon. Phase 3A (SQLite) remains deferred due to high risk to database layer.
+
 ---
 
 ## Approval and Sign-off
@@ -501,9 +544,9 @@ Each phase is considered successful when:
 |-------|------------|------|-------|
 | Phase 1 | ulrick65 | 12/26/2024 | Build successful, app runs correctly |
 | Phase 2 | ulrick65 | 12/27/2024 | Build successful, app runs correctly |
-| Phase 3A | _____ | _____ | _____ |
-| Phase 3B | _____ | _____ | _____ |
 | Phase 3C | _____ | _____ | _____ |
+| Phase 3B | _____ | _____ | _____ |
+| Phase 3A | _____ | _____ | _____ |
 
 ---
 
