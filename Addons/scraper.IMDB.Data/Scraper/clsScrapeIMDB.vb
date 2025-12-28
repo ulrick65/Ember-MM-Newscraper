@@ -189,243 +189,249 @@ Public Class Scraper
     End Function
 
     Public Function GetMovieInfo(ByVal id As String, ByVal getposter As Boolean, ByVal filteredoptions As Structures.ScrapeOptions) As MediaContainers.Movie
-        If String.IsNullOrEmpty(id) Then Return Nothing
+        Using scopeTotal = EmberAPI.PerformanceTracker.StartOperation("IMDB.GetMovieInfo")
+            If String.IsNullOrEmpty(id) Then Return Nothing
 
-        Try
-            If bwIMDB.CancellationPending Then Return Nothing
-
-            Dim bIsScraperLanguage As Boolean = _SpecialSettings.PrefLanguage.ToLower.StartsWith("en")
-            strPosterURL = String.Empty
-
-            Dim nMovie As New MediaContainers.Movie With {
-                .UniqueIDs = New MediaContainers.UniqueidContainer(Enums.ContentType.Movie) With {.IMDbId = id},
-                .Scrapersource = "IMDB"
-            }
-
-            Dim webParsing As New HtmlWeb
-            Dim htmldReference As HtmlDocument = webParsing.Load(String.Concat("https://www.imdb.com/title/", id, "/reference/"))
-
-            If webParsing.StatusCode <> 200 Then
-                logger.Trace(String.Format("[IMDB] [GetMovieInfo] [ID:""{0}""] failed to retrieve imdb reference page", id))
-                Return Nothing
-            End If
-
-            'Get our React JSON next_data
-            json_IMBD_next_data = DeserializeJsonObject(Of IMDBJson)(htmldReference.DocumentNode.SelectSingleNode("//script[@id='__NEXT_DATA__']").InnerHtml)
-
-            If json_IMBD_next_data IsNot Nothing Then
-
-                'Original Title
-                If filteredoptions.bMainOriginalTitle Then
-                    nMovie.OriginalTitle = json_IMBD_next_data.props.PageProps.MainColumnData.OriginalTitleText.Text
-                End If
-
-                'Title
-                If filteredoptions.bMainTitle Then
-                    If Not String.IsNullOrEmpty(_SpecialSettings.ForceTitleLanguage) Then
-                        'Translated English title
-                        nMovie.Title = json_IMBD_next_data.props.PageProps.MainColumnData.TitleText.Text
-                    Else
-                        nMovie.Title = json_IMBD_next_data.props.PageProps.MainColumnData.OriginalTitleText.Text
-                    End If
-                End If
-
+            Try
                 If bwIMDB.CancellationPending Then Return Nothing
 
-                'Actors
-                If filteredoptions.bMainActors Then
-                    Dim nActors = ParseActors(json_IMBD_next_data)
-                    If nActors IsNot Nothing Then
-                        nMovie.Actors = nActors
-                    Else
-                        logger.Trace(String.Format("[IMDB] [GetMovieInfo] [ID:""{0}""] can't parse Actors", id))
-                    End If
+                Dim bIsScraperLanguage As Boolean = _SpecialSettings.PrefLanguage.ToLower.StartsWith("en")
+                strPosterURL = String.Empty
+
+                Dim nMovie As New MediaContainers.Movie With {
+                    .UniqueIDs = New MediaContainers.UniqueidContainer(Enums.ContentType.Movie) With {.IMDbId = id},
+                    .Scrapersource = "IMDB"
+                }
+
+                Dim webParsing As New HtmlWeb
+                Dim htmldReference As HtmlDocument
+
+                Using scopeHttp = EmberAPI.PerformanceTracker.StartOperation("IMDB.GetMovieInfo.HttpRequest")
+                    htmldReference = webParsing.Load(String.Concat("https://www.imdb.com/title/", id, "/reference/"))
+                End Using
+
+                If webParsing.StatusCode <> 200 Then
+                    logger.Trace(String.Format("[IMDB] [GetMovieInfo] [ID:""{0}""] failed to retrieve imdb reference page", id))
+                    Return Nothing
                 End If
 
-                If bwIMDB.CancellationPending Then Return Nothing
+                'Get our React JSON next_data
+                json_IMBD_next_data = DeserializeJsonObject(Of IMDBJson)(htmldReference.DocumentNode.SelectSingleNode("//script[@id='__NEXT_DATA__']").InnerHtml)
 
-                'Certifications
-                If filteredoptions.bMainCertifications Then
-                    Dim lstCertifications = ParseCertifications(json_IMBD_next_data)
-                    If lstCertifications IsNot Nothing Then
-                        nMovie.Certifications = lstCertifications
-                    Else
-                        logger.Trace(String.Format("[IMDB] [GetMovieInfo] [ID:""{0}""] can't parse Certifications", id))
+                If json_IMBD_next_data IsNot Nothing Then
+
+                    'Original Title
+                    If filteredoptions.bMainOriginalTitle Then
+                        nMovie.OriginalTitle = json_IMBD_next_data.props.PageProps.MainColumnData.OriginalTitleText.Text
                     End If
-                End If
 
-                If bwIMDB.CancellationPending Then Return Nothing
-
-                'Countries
-                If filteredoptions.bMainCountries Then
-                    Dim lstCountries = ParseCountries(json_IMBD_next_data)
-                    If lstCountries IsNot Nothing Then
-                        nMovie.Countries = lstCountries
-                    Else
-                        logger.Trace(String.Format("[IMDB] [GetMovieInfo] [ID:""{0}""] can't parse Countries", id))
-                    End If
-                End If
-
-                If bwIMDB.CancellationPending Then Return Nothing
-
-                'Director
-                If filteredoptions.bMainDirectors Then
-                    Dim lstDirectors = ParseDirectors(json_IMBD_next_data)
-                    If lstDirectors IsNot Nothing Then
-                        nMovie.Directors = lstDirectors
-                    Else
-                        logger.Trace(String.Format("[IMDB] [GetMovieInfo] [ID:""{0}""] can't parse Directors", id))
-                    End If
-                End If
-
-                If bwIMDB.CancellationPending Then Return Nothing
-
-                'Duration
-                If filteredoptions.bMainRuntime Then
-                    Dim strRuntime = ParseRuntime(json_IMBD_next_data)
-                    If strRuntime IsNot Nothing Then
-                        nMovie.Runtime = strRuntime
-                    Else
-                        logger.Trace(String.Format("[IMDB] [GetMovieInfo] [ID:""{0}""] can't parse Runtime", id))
-                    End If
-                End If
-
-                If bwIMDB.CancellationPending Then Return Nothing
-
-                'Genres
-                If filteredoptions.bMainGenres Then
-                    Dim lstGenres = ParseGenres(json_IMBD_next_data)
-                    If lstGenres IsNot Nothing Then
-                        nMovie.Genres = lstGenres
-                    Else
-                        logger.Trace(String.Format("[IMDB] [GetMovieInfo] [ID:""{0}""] can't parse Genres", id))
-                    End If
-                End If
-
-                If bwIMDB.CancellationPending Then Return Nothing
-
-                'MPAA
-                If filteredoptions.bMainMPAA Then
-                    Dim strMPAA = ParseMPAA(json_IMBD_next_data, id)
-                    If id IsNot Nothing Then
-                        nMovie.MPAA = strMPAA
-                    Else
-                        logger.Trace(String.Format("[IMDB] [GetMovieInfo] [ID:""{0}""] can't parse MPAA", id))
-                    End If
-                End If
-
-                If bwIMDB.CancellationPending Then Return Nothing
-
-                'Outline
-                If filteredoptions.bMainOutline AndAlso bIsScraperLanguage Then
-                    Dim strOutline = ParseOutline(json_IMBD_next_data)
-                    If strOutline IsNot Nothing Then
-                        nMovie.Outline = strOutline
-                    Else
-                        logger.Trace(String.Format("[IMDB] [GetMovieInfo] [ID:""{0}""] can't parse Outline", id))
-                    End If
-                End If
-
-                If bwIMDB.CancellationPending Then Return Nothing
-
-                'Plot
-                If filteredoptions.bMainPlot AndAlso bIsScraperLanguage Then
-                    Dim strPlot = ParsePlot(json_IMBD_next_data)
-
-                    If Not String.IsNullOrEmpty(strPlot) Then
-                        nMovie.Plot = strPlot
-                    Else
-                        'if "plot" isn't available then the "outline" will be used as plot
-                        If nMovie.OutlineSpecified Then
-                            nMovie.Plot = nMovie.Outline
+                    'Title
+                    If filteredoptions.bMainTitle Then
+                        If Not String.IsNullOrEmpty(_SpecialSettings.ForceTitleLanguage) Then
+                            'Translated English title
+                            nMovie.Title = json_IMBD_next_data.props.PageProps.MainColumnData.TitleText.Text
+                        Else
+                            nMovie.Title = json_IMBD_next_data.props.PageProps.MainColumnData.OriginalTitleText.Text
                         End If
                     End If
-                End If
 
-                If bwIMDB.CancellationPending Then Return Nothing
+                    If bwIMDB.CancellationPending Then Return Nothing
 
-                'Poster for search result
-                If getposter Then
-                    ParsePosterURL(json_IMBD_next_data)
-                End If
-
-                If bwIMDB.CancellationPending Then Return Nothing
-
-                'Premiered
-                If filteredoptions.bMainPremiered Then
-                    If json_IMBD_next_data.props.PageProps.MainColumnData.ReleaseDate IsNot Nothing Then
-                        nMovie.Premiered = json_IMBD_next_data.props.PageProps.MainColumnData.ReleaseDate.GetFullReleaseDate()
+                    'Actors
+                    If filteredoptions.bMainActors Then
+                        Dim nActors = ParseActors(json_IMBD_next_data)
+                        If nActors IsNot Nothing Then
+                            nMovie.Actors = nActors
+                        Else
+                            logger.Trace(String.Format("[IMDB] [GetMovieInfo] [ID:""{0}""] can't parse Actors", id))
+                        End If
                     End If
-                End If
 
-                If bwIMDB.CancellationPending Then Return Nothing
+                    If bwIMDB.CancellationPending Then Return Nothing
 
-                'Rating
-                If filteredoptions.bMainRating Then
-                    Dim nRating = ParseRating(json_IMBD_next_data)
-                    If nRating IsNot Nothing Then
-                        nMovie.Ratings.Add(nRating)
+                    'Certifications
+                    If filteredoptions.bMainCertifications Then
+                        Dim lstCertifications = ParseCertifications(json_IMBD_next_data)
+                        If lstCertifications IsNot Nothing Then
+                            nMovie.Certifications = lstCertifications
+                        Else
+                            logger.Trace(String.Format("[IMDB] [GetMovieInfo] [ID:""{0}""] can't parse Certifications", id))
+                        End If
+                    End If
+
+                    If bwIMDB.CancellationPending Then Return Nothing
+
+                    'Countries
+                    If filteredoptions.bMainCountries Then
+                        Dim lstCountries = ParseCountries(json_IMBD_next_data)
+                        If lstCountries IsNot Nothing Then
+                            nMovie.Countries = lstCountries
+                        Else
+                            logger.Trace(String.Format("[IMDB] [GetMovieInfo] [ID:""{0}""] can't parse Countries", id))
+                        End If
+                    End If
+
+                    If bwIMDB.CancellationPending Then Return Nothing
+
+                    'Director
+                    If filteredoptions.bMainDirectors Then
+                        Dim lstDirectors = ParseDirectors(json_IMBD_next_data)
+                        If lstDirectors IsNot Nothing Then
+                            nMovie.Directors = lstDirectors
+                        Else
+                            logger.Trace(String.Format("[IMDB] [GetMovieInfo] [ID:""{0}""] can't parse Directors", id))
+                        End If
+                    End If
+
+                    If bwIMDB.CancellationPending Then Return Nothing
+
+                    'Duration
+                    If filteredoptions.bMainRuntime Then
+                        Dim strRuntime = ParseRuntime(json_IMBD_next_data)
+                        If strRuntime IsNot Nothing Then
+                            nMovie.Runtime = strRuntime
+                        Else
+                            logger.Trace(String.Format("[IMDB] [GetMovieInfo] [ID:""{0}""] can't parse Runtime", id))
+                        End If
+                    End If
+
+                    If bwIMDB.CancellationPending Then Return Nothing
+
+                    'Genres
+                    If filteredoptions.bMainGenres Then
+                        Dim lstGenres = ParseGenres(json_IMBD_next_data)
+                        If lstGenres IsNot Nothing Then
+                            nMovie.Genres = lstGenres
+                        Else
+                            logger.Trace(String.Format("[IMDB] [GetMovieInfo] [ID:""{0}""] can't parse Genres", id))
+                        End If
+                    End If
+
+                    If bwIMDB.CancellationPending Then Return Nothing
+
+                    'MPAA
+                    If filteredoptions.bMainMPAA Then
+                        Dim strMPAA = ParseMPAA(json_IMBD_next_data, id)
+                        If id IsNot Nothing Then
+                            nMovie.MPAA = strMPAA
+                        Else
+                            logger.Trace(String.Format("[IMDB] [GetMovieInfo] [ID:""{0}""] can't parse MPAA", id))
+                        End If
+                    End If
+
+                    If bwIMDB.CancellationPending Then Return Nothing
+
+                    'Outline
+                    If filteredoptions.bMainOutline AndAlso bIsScraperLanguage Then
+                        Dim strOutline = ParseOutline(json_IMBD_next_data)
+                        If strOutline IsNot Nothing Then
+                            nMovie.Outline = strOutline
+                        Else
+                            logger.Trace(String.Format("[IMDB] [GetMovieInfo] [ID:""{0}""] can't parse Outline", id))
+                        End If
+                    End If
+
+                    If bwIMDB.CancellationPending Then Return Nothing
+
+                    'Plot
+                    If filteredoptions.bMainPlot AndAlso bIsScraperLanguage Then
+                        Dim strPlot = ParsePlot(json_IMBD_next_data)
+
+                        If Not String.IsNullOrEmpty(strPlot) Then
+                            nMovie.Plot = strPlot
+                        Else
+                            'if "plot" isn't available then the "outline" will be used as plot
+                            If nMovie.OutlineSpecified Then
+                                nMovie.Plot = nMovie.Outline
+                            End If
+                        End If
+                    End If
+
+                    If bwIMDB.CancellationPending Then Return Nothing
+
+                    'Poster for search result
+                    If getposter Then
+                        ParsePosterURL(json_IMBD_next_data)
+                    End If
+
+                    If bwIMDB.CancellationPending Then Return Nothing
+
+                    'Premiered
+                    If filteredoptions.bMainPremiered Then
+                        If json_IMBD_next_data.props.PageProps.MainColumnData.ReleaseDate IsNot Nothing Then
+                            nMovie.Premiered = json_IMBD_next_data.props.PageProps.MainColumnData.ReleaseDate.GetFullReleaseDate()
+                        End If
+                    End If
+
+                    If bwIMDB.CancellationPending Then Return Nothing
+
+                    'Rating
+                    If filteredoptions.bMainRating Then
+                        Dim nRating = ParseRating(json_IMBD_next_data)
+                        If nRating IsNot Nothing Then
+                            nMovie.Ratings.Add(nRating)
+                        Else
+                            logger.Trace(String.Format("[IMDB] [GetMovieInfo] [ID:""{0}""] can't parse Rating", id))
+                        End If
+                    End If
+
+                    If bwIMDB.CancellationPending Then Return Nothing
+
+                    'Studios
+                    If filteredoptions.bMainStudios Then
+                        Dim lstStudios = ParseStudios(json_IMBD_next_data)
+                        If lstStudios IsNot Nothing Then
+                            nMovie.Studios = lstStudios
+                        Else
+                            logger.Trace(String.Format("[IMDB] [GetMovieInfo] [ID:""{0}""] can't parse Studios", id))
+                        End If
+                    End If
+
+                    If bwIMDB.CancellationPending Then Return Nothing
+
+                    'Tagline
+                    If filteredoptions.bMainTagline AndAlso bIsScraperLanguage Then
+                        Dim strTagline = ParseTagline(json_IMBD_next_data)
+                        If strTagline IsNot Nothing Then
+                            nMovie.Tagline = strTagline
+                        Else
+                            logger.Trace(String.Format("[IMDB] [GetMovieInfo] [ID:""{0}""] can't parse Tagline", id))
+                        End If
+                    End If
+
+                    If bwIMDB.CancellationPending Then Return Nothing
+
+                    'Top250
+                    If filteredoptions.bMainTop250 AndAlso json_IMBD_next_data.props.PageProps.MainColumnData.RatingsSummary IsNot Nothing AndAlso json_IMBD_next_data.props.PageProps.MainColumnData.RatingsSummary.topRanking IsNot Nothing Then
+                        If json_IMBD_next_data.props.PageProps.MainColumnData.RatingsSummary.topRanking.rank <= 250 Then
+                            nMovie.Top250 = json_IMBD_next_data.props.PageProps.MainColumnData.RatingsSummary.topRanking.rank
+                        End If
                     Else
-                        logger.Trace(String.Format("[IMDB] [GetMovieInfo] [ID:""{0}""] can't parse Rating", id))
+                        logger.Trace(String.Format("[IMDB] [GetMovieInfo] [ID:""{0}""] can't parse Top250", id))
                     End If
-                End If
 
-                If bwIMDB.CancellationPending Then Return Nothing
+                    If bwIMDB.CancellationPending Then Return Nothing
 
-                'Studios
-                If filteredoptions.bMainStudios Then
-                    Dim lstStudios = ParseStudios(json_IMBD_next_data)
-                    If lstStudios IsNot Nothing Then
-                        nMovie.Studios = lstStudios
-                    Else
-                        logger.Trace(String.Format("[IMDB] [GetMovieInfo] [ID:""{0}""] can't parse Studios", id))
+                    'Credits (writers)
+                    If filteredoptions.bMainWriters Then
+                        Dim lstCredits = ParseCredits(json_IMBD_next_data)
+                        If lstCredits IsNot Nothing Then
+                            nMovie.Credits = lstCredits
+                        Else
+                            logger.Trace(String.Format("[IMDB] [GetMovieInfo] [ID:""{0}""] can't parse Writers (Credits)", id))
+                        End If
                     End If
-                End If
 
-                If bwIMDB.CancellationPending Then Return Nothing
-
-                'Tagline
-                If filteredoptions.bMainTagline AndAlso bIsScraperLanguage Then
-                    Dim strTagline = ParseTagline(json_IMBD_next_data)
-                    If strTagline IsNot Nothing Then
-                        nMovie.Tagline = strTagline
-                    Else
-                        logger.Trace(String.Format("[IMDB] [GetMovieInfo] [ID:""{0}""] can't parse Tagline", id))
-                    End If
-                End If
-
-                If bwIMDB.CancellationPending Then Return Nothing
-
-                'Top250
-                If filteredoptions.bMainTop250 AndAlso json_IMBD_next_data.props.PageProps.MainColumnData.RatingsSummary IsNot Nothing AndAlso json_IMBD_next_data.props.PageProps.MainColumnData.RatingsSummary.topRanking IsNot Nothing Then
-                    If json_IMBD_next_data.props.PageProps.MainColumnData.RatingsSummary.topRanking.rank <= 250 Then
-                        nMovie.Top250 = json_IMBD_next_data.props.PageProps.MainColumnData.RatingsSummary.topRanking.rank
-                    End If
-                Else
-                    logger.Trace(String.Format("[IMDB] [GetMovieInfo] [ID:""{0}""] can't parse Top250", id))
-                End If
-
-                If bwIMDB.CancellationPending Then Return Nothing
-
-                'Credits (writers)
-                If filteredoptions.bMainWriters Then
-                    Dim lstCredits = ParseCredits(json_IMBD_next_data)
-                    If lstCredits IsNot Nothing Then
-                        nMovie.Credits = lstCredits
-                    Else
-                        logger.Trace(String.Format("[IMDB] [GetMovieInfo] [ID:""{0}""] can't parse Writers (Credits)", id))
-                    End If
-                End If
-
-                Return nMovie
+                    Return nMovie
                 Else
                     Return Nothing
-            End If
+                End If
 
-        Catch ex As Exception
-            logger.Error(ex, New StackFrame().GetMethod().Name)
-            Return Nothing
-        End Try
+            Catch ex As Exception
+                logger.Error(ex, New StackFrame().GetMethod().Name)
+                Return Nothing
+            End Try
+        End Using
     End Function
 
     Public Function GetTVEpisodeInfo(ByVal id As String, ByRef filteredoptions As Structures.ScrapeOptions) As MediaContainers.EpisodeDetails
@@ -465,85 +471,85 @@ Public Class Scraper
 
                 'Original Title
                 If filteredoptions.bEpisodeOriginalTitle Then
-                        nTVEpisode.OriginalTitle = json_IMBD_next_data.props.PageProps.MainColumnData.OriginalTitleText.Text
+                    nTVEpisode.OriginalTitle = json_IMBD_next_data.props.PageProps.MainColumnData.OriginalTitleText.Text
+                End If
+
+                'Title
+                If filteredoptions.bEpisodeTitle Then
+                    If Not String.IsNullOrEmpty(_SpecialSettings.ForceTitleLanguage) Then
+                        'Translated English title
+                        nTVEpisode.Title = json_IMBD_next_data.props.PageProps.MainColumnData.TitleText.Text
+                    Else
+                        nTVEpisode.Title = json_IMBD_next_data.props.PageProps.MainColumnData.OriginalTitleText.Text
                     End If
+                End If
 
-                    'Title
-                    If filteredoptions.bEpisodeTitle Then
-                        If Not String.IsNullOrEmpty(_SpecialSettings.ForceTitleLanguage) Then
-                            'Translated English title
-                            nTVEpisode.Title = json_IMBD_next_data.props.PageProps.MainColumnData.TitleText.Text
-                        Else
-                            nTVEpisode.Title = json_IMBD_next_data.props.PageProps.MainColumnData.OriginalTitleText.Text
-                        End If
+                'Actors
+                If filteredoptions.bEpisodeActors Then
+                    Dim lstActors = ParseActors(json_IMBD_next_data)
+                    If lstActors IsNot Nothing Then
+                        nTVEpisode.Actors = lstActors
+                    Else
+                        logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] can't parse Actors", id))
                     End If
+                End If
 
-                    'Actors
-                    If filteredoptions.bEpisodeActors Then
-                        Dim lstActors = ParseActors(json_IMBD_next_data)
-                        If lstActors IsNot Nothing Then
-                            nTVEpisode.Actors = lstActors
-                        Else
-                            logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] can't parse Actors", id))
-                        End If
+                'AiredDate
+                If filteredoptions.bEpisodeAired Then
+                    If json_IMBD_next_data.props.PageProps.MainColumnData.ReleaseDate IsNot Nothing Then
+                        nTVEpisode.Aired = json_IMBD_next_data.props.PageProps.MainColumnData.ReleaseDate.GetFullReleaseDate()
                     End If
+                End If
 
-                    'AiredDate
-                    If filteredoptions.bEpisodeAired Then
-                        If json_IMBD_next_data.props.PageProps.MainColumnData.ReleaseDate IsNot Nothing Then
-                            nTVEpisode.Aired = json_IMBD_next_data.props.PageProps.MainColumnData.ReleaseDate.GetFullReleaseDate()
-                        End If
+                'Credits (writers)
+                If filteredoptions.bEpisodeCredits Then
+                    Dim lstCredits = ParseCredits(json_IMBD_next_data)
+                    If lstCredits IsNot Nothing Then
+                        nTVEpisode.Credits = lstCredits
+                    Else
+                        logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] can't parse Credits (Writers)", id))
                     End If
+                End If
 
-                    'Credits (writers)
-                    If filteredoptions.bEpisodeCredits Then
-                        Dim lstCredits = ParseCredits(json_IMBD_next_data)
-                        If lstCredits IsNot Nothing Then
-                            nTVEpisode.Credits = lstCredits
-                        Else
-                            logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] can't parse Credits (Writers)", id))
-                        End If
+                'Directors
+                If filteredoptions.bEpisodeDirectors Then
+                    Dim lstDirectors = ParseDirectors(json_IMBD_next_data)
+                    If lstDirectors IsNot Nothing Then
+                        nTVEpisode.Directors = lstDirectors
+                    Else
+                        logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] can't parse Directors", id))
                     End If
+                End If
 
-                    'Directors
-                    If filteredoptions.bEpisodeDirectors Then
-                        Dim lstDirectors = ParseDirectors(json_IMBD_next_data)
-                        If lstDirectors IsNot Nothing Then
-                            nTVEpisode.Directors = lstDirectors
-                        Else
-                            logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] can't parse Directors", id))
-                        End If
-                    End If
+                'Plot
+                If filteredoptions.bEpisodePlot AndAlso bIsScraperLanguage Then
+                    Dim strPlot = ParsePlot(json_IMBD_next_data)
 
-                    'Plot
-                    If filteredoptions.bEpisodePlot AndAlso bIsScraperLanguage Then
-                        Dim strPlot = ParsePlot(json_IMBD_next_data)
-
+                    If Not String.IsNullOrEmpty(strPlot) Then
+                        nTVEpisode.Plot = strPlot
+                    Else
+                        strPlot = ParseOutline(json_IMBD_next_data)
                         If Not String.IsNullOrEmpty(strPlot) Then
                             nTVEpisode.Plot = strPlot
                         Else
-                            strPlot = ParseOutline(json_IMBD_next_data)
-                            If Not String.IsNullOrEmpty(strPlot) Then
-                                nTVEpisode.Plot = strPlot
-                            Else
-                                logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] no result from ""plotsummary"" page for Plot", id))
-                            End If
+                            logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] no result from ""plotsummary"" page for Plot", id))
                         End If
                     End If
+                End If
 
-                    'Rating
-                    If filteredoptions.bEpisodeRating Then
-                        Dim nRating = ParseRating(json_IMBD_next_data)
-                        If nRating IsNot Nothing Then
-                            nTVEpisode.Ratings.Add(nRating)
-                        Else
-                            logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] can't parse Rating", id))
-                        End If
+                'Rating
+                If filteredoptions.bEpisodeRating Then
+                    Dim nRating = ParseRating(json_IMBD_next_data)
+                    If nRating IsNot Nothing Then
+                        nTVEpisode.Ratings.Add(nRating)
+                    Else
+                        logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] can't parse Rating", id))
                     End If
+                End If
 
-                    Return nTVEpisode
-                Else
-                    Return Nothing
+                Return nTVEpisode
+            Else
+                Return Nothing
             End If
         Catch ex As Exception
             logger.Error(ex, New StackFrame().GetMethod().Name)
@@ -609,219 +615,225 @@ Public Class Scraper
     End Sub
 
     Public Function GetTVShowInfo(ByVal id As String, ByVal scrapemodifier As Structures.ScrapeModifiers, ByVal filteredoptions As Structures.ScrapeOptions, ByVal getposter As Boolean) As MediaContainers.TVShow
-        If String.IsNullOrEmpty(id) Then Return Nothing
+        Using scopeTotal = EmberAPI.PerformanceTracker.StartOperation("IMDB.GetTVShowInfo")
+            If String.IsNullOrEmpty(id) Then Return Nothing
 
-        Try
-            If bwIMDB.CancellationPending Then Return Nothing
-
-            Dim bIsScraperLanguage As Boolean = _SpecialSettings.PrefLanguage.ToLower.StartsWith("en")
-            strPosterURL = String.Empty
-
-            Dim nTVShow As New MediaContainers.TVShow With {
-                .Scrapersource = "IMDB",
-                .UniqueIDs = New MediaContainers.UniqueidContainer(Enums.ContentType.TVShow) With {.IMDbId = id}
-            }
-
-            Dim webParsing As New HtmlWeb
-            Dim htmldReference As HtmlDocument = webParsing.Load(String.Concat("https://www.imdb.com/title/", id, "/reference/"))
-
-            If webParsing.StatusCode <> 200 Then
-                logger.Trace(String.Format("[IMDB] [GetTVShowInfo] [ID:""{0}""] failed to retrieve imdb reference page", id))
-                Return Nothing
-            End If
-
-            'Get our React JSON next_data
-            json_IMBD_next_data = DeserializeJsonObject(Of IMDBJson)(htmldReference.DocumentNode.SelectSingleNode("//script[@id='__NEXT_DATA__']").InnerHtml)
-
-            If json_IMBD_next_data IsNot Nothing Then
-
-                'Original Title
-                If filteredoptions.bMainOriginalTitle Then
-                    nTVShow.OriginalTitle = json_IMBD_next_data.props.PageProps.MainColumnData.OriginalTitleText.Text
-                End If
-
-                'Title
-                If filteredoptions.bMainTitle Then
-                    If Not String.IsNullOrEmpty(_SpecialSettings.ForceTitleLanguage) Then
-                        'Translated English title
-                        nTVShow.Title = json_IMBD_next_data.props.PageProps.MainColumnData.TitleText.Text
-                    Else
-                        nTVShow.Title = json_IMBD_next_data.props.PageProps.MainColumnData.OriginalTitleText.Text
-                    End If
-                End If
-
+            Try
                 If bwIMDB.CancellationPending Then Return Nothing
 
-                'Actors
-                If filteredoptions.bMainActors Then
-                    Dim lstActors = ParseActors(json_IMBD_next_data)
-                    If lstActors IsNot Nothing Then
-                        nTVShow.Actors = lstActors
-                    Else
-                        logger.Trace(String.Format("[IMDB] [GetTVShowInfo] [ID:""{0}""] can't parse Actors", id))
-                    End If
+                Dim bIsScraperLanguage As Boolean = _SpecialSettings.PrefLanguage.ToLower.StartsWith("en")
+                strPosterURL = String.Empty
+
+                Dim nTVShow As New MediaContainers.TVShow With {
+                    .Scrapersource = "IMDB",
+                    .UniqueIDs = New MediaContainers.UniqueidContainer(Enums.ContentType.TVShow) With {.IMDbId = id}
+                }
+
+                Dim webParsing As New HtmlWeb
+                Dim htmldReference As HtmlDocument
+
+                Using scopeHttp = EmberAPI.PerformanceTracker.StartOperation("IMDB.GetTVShowInfo.HttpRequest")
+                    htmldReference = webParsing.Load(String.Concat("https://www.imdb.com/title/", id, "/reference/"))
+                End Using
+
+                If webParsing.StatusCode <> 200 Then
+                    logger.Trace(String.Format("[IMDB] [GetTVShowInfo] [ID:""{0}""] failed to retrieve imdb reference page", id))
+                    Return Nothing
                 End If
 
-                If bwIMDB.CancellationPending Then Return Nothing
+                'Get our React JSON next_data
+                json_IMBD_next_data = DeserializeJsonObject(Of IMDBJson)(htmldReference.DocumentNode.SelectSingleNode("//script[@id='__NEXT_DATA__']").InnerHtml)
 
-                'Certifications
-                If filteredoptions.bMainCertifications Then
-                    Dim lstCertifications = ParseCertifications(json_IMBD_next_data)
-                    If lstCertifications IsNot Nothing Then
-                        nTVShow.Certifications = lstCertifications
-                    Else
-                        logger.Trace(String.Format("[IMDB] [GetTVShowInfo] [ID:""{0}""] can't parse Certifications", id))
+                If json_IMBD_next_data IsNot Nothing Then
+
+                    'Original Title
+                    If filteredoptions.bMainOriginalTitle Then
+                        nTVShow.OriginalTitle = json_IMBD_next_data.props.PageProps.MainColumnData.OriginalTitleText.Text
                     End If
-                End If
 
-                If bwIMDB.CancellationPending Then Return Nothing
-
-                'Countries
-                If filteredoptions.bMainCountries Then
-                    Dim lstCountries = ParseCountries(json_IMBD_next_data)
-                    If lstCountries IsNot Nothing Then
-                        nTVShow.Countries = lstCountries
-                    Else
-                        logger.Trace(String.Format("[IMDB] [GetTVShowInfo] [ID:""{0}""] can't parse Countries", id))
+                    'Title
+                    If filteredoptions.bMainTitle Then
+                        If Not String.IsNullOrEmpty(_SpecialSettings.ForceTitleLanguage) Then
+                            'Translated English title
+                            nTVShow.Title = json_IMBD_next_data.props.PageProps.MainColumnData.TitleText.Text
+                        Else
+                            nTVShow.Title = json_IMBD_next_data.props.PageProps.MainColumnData.OriginalTitleText.Text
+                        End If
                     End If
-                End If
 
-                If bwIMDB.CancellationPending Then Return Nothing
+                    If bwIMDB.CancellationPending Then Return Nothing
 
-                'Creators
-                If filteredoptions.bMainCreators Then
-                    Dim lstCreators = ParseCreators(json_IMBD_next_data)
-                    If lstCreators IsNot Nothing Then
-                        nTVShow.Creators = lstCreators
-                    Else
-                        logger.Trace(String.Format("[IMDB] [GetTVShowInfo] [ID:""{0}""] can't parse Creators", id))
+                    'Actors
+                    If filteredoptions.bMainActors Then
+                        Dim lstActors = ParseActors(json_IMBD_next_data)
+                        If lstActors IsNot Nothing Then
+                            nTVShow.Actors = lstActors
+                        Else
+                            logger.Trace(String.Format("[IMDB] [GetTVShowInfo] [ID:""{0}""] can't parse Actors", id))
+                        End If
                     End If
-                End If
 
-                If bwIMDB.CancellationPending Then Return Nothing
+                    If bwIMDB.CancellationPending Then Return Nothing
 
-                'Genres
-                If filteredoptions.bMainGenres Then
-                    Dim lstGenres = ParseGenres(json_IMBD_next_data)
-                    If lstGenres IsNot Nothing Then
-                        nTVShow.Genres = lstGenres
-                    Else
-                        logger.Trace(String.Format("[IMDB] [GetTVShowInfo] [ID:""{0}""] can't parse Genres", id))
+                    'Certifications
+                    If filteredoptions.bMainCertifications Then
+                        Dim lstCertifications = ParseCertifications(json_IMBD_next_data)
+                        If lstCertifications IsNot Nothing Then
+                            nTVShow.Certifications = lstCertifications
+                        Else
+                            logger.Trace(String.Format("[IMDB] [GetTVShowInfo] [ID:""{0}""] can't parse Certifications", id))
+                        End If
                     End If
-                End If
 
-                If bwIMDB.CancellationPending Then Return Nothing
+                    If bwIMDB.CancellationPending Then Return Nothing
 
-                'Plot
-                If filteredoptions.bMainPlot AndAlso bIsScraperLanguage Then
-                    Dim strPlot = ParsePlot(json_IMBD_next_data)
-                    If Not String.IsNullOrEmpty(strPlot) Then
-                        nTVShow.Plot = strPlot
-                    Else
-                        strPlot = ParseOutline(json_IMBD_next_data)
+                    'Countries
+                    If filteredoptions.bMainCountries Then
+                        Dim lstCountries = ParseCountries(json_IMBD_next_data)
+                        If lstCountries IsNot Nothing Then
+                            nTVShow.Countries = lstCountries
+                        Else
+                            logger.Trace(String.Format("[IMDB] [GetTVShowInfo] [ID:""{0}""] can't parse Countries", id))
+                        End If
+                    End If
 
+                    If bwIMDB.CancellationPending Then Return Nothing
+
+                    'Creators
+                    If filteredoptions.bMainCreators Then
+                        Dim lstCreators = ParseCreators(json_IMBD_next_data)
+                        If lstCreators IsNot Nothing Then
+                            nTVShow.Creators = lstCreators
+                        Else
+                            logger.Trace(String.Format("[IMDB] [GetTVShowInfo] [ID:""{0}""] can't parse Creators", id))
+                        End If
+                    End If
+
+                    If bwIMDB.CancellationPending Then Return Nothing
+
+                    'Genres
+                    If filteredoptions.bMainGenres Then
+                        Dim lstGenres = ParseGenres(json_IMBD_next_data)
+                        If lstGenres IsNot Nothing Then
+                            nTVShow.Genres = lstGenres
+                        Else
+                            logger.Trace(String.Format("[IMDB] [GetTVShowInfo] [ID:""{0}""] can't parse Genres", id))
+                        End If
+                    End If
+
+                    If bwIMDB.CancellationPending Then Return Nothing
+
+                    'Plot
+                    If filteredoptions.bMainPlot AndAlso bIsScraperLanguage Then
+                        Dim strPlot = ParsePlot(json_IMBD_next_data)
                         If Not String.IsNullOrEmpty(strPlot) Then
                             nTVShow.Plot = strPlot
+                        Else
+                            strPlot = ParseOutline(json_IMBD_next_data)
+
+                            If Not String.IsNullOrEmpty(strPlot) Then
+                                nTVShow.Plot = strPlot
+                            End If
                         End If
                     End If
-                End If
 
-                If bwIMDB.CancellationPending Then Return Nothing
+                    If bwIMDB.CancellationPending Then Return Nothing
 
-                'Poster for search result
-                If getposter Then
-                    ParsePosterURL(json_IMBD_next_data)
-                End If
-
-                If bwIMDB.CancellationPending Then Return Nothing
-
-                'Premiered
-                If filteredoptions.bMainPremiered Then
-                    If json_IMBD_next_data.props.PageProps.MainColumnData.ReleaseDate IsNot Nothing Then
-                        nTVShow.Premiered = json_IMBD_next_data.props.PageProps.MainColumnData.ReleaseDate.GetFullReleaseDate()
+                    'Poster for search result
+                    If getposter Then
+                        ParsePosterURL(json_IMBD_next_data)
                     End If
-                End If
 
-                If bwIMDB.CancellationPending Then Return Nothing
+                    If bwIMDB.CancellationPending Then Return Nothing
 
-                'Rating
-                If filteredoptions.bMainRating Then
-                    Dim nRating = ParseRating(json_IMBD_next_data)
-                    If nRating IsNot Nothing Then
-                        nTVShow.Ratings.Add(nRating)
-                    Else
-                        logger.Trace(String.Format("[IMDB] [GetTVShowInfo] [ID:""{0}""] can't parse Rating", id))
-                    End If
-                End If
-
-                If bwIMDB.CancellationPending Then Return Nothing
-
-                'Runtime
-                If filteredoptions.bMainRuntime Then
-                    Dim strRuntime = ParseRuntime(json_IMBD_next_data)
-                    If strRuntime IsNot Nothing Then
-                        nTVShow.Runtime = strRuntime
-                    Else
-                        logger.Trace(String.Format("[IMDB] [GetTVShowInfo] [ID:""{0}""] can't parse Runtime", id))
-                    End If
-                End If
-
-                If bwIMDB.CancellationPending Then Return Nothing
-
-                'Studios
-                If filteredoptions.bMainStudios Then
-                    Dim lstStudios = ParseStudios(json_IMBD_next_data)
-                    If lstStudios IsNot Nothing Then
-                        nTVShow.Studios = lstStudios
-                    Else
-                        logger.Trace(String.Format("[IMDB] [GetTVShowInfo] [ID:""{0}""] can't parse Studios", id))
-                    End If
-                End If
-
-                If bwIMDB.CancellationPending Then Return Nothing
-
-                If scrapemodifier.withEpisodes OrElse scrapemodifier.withSeasons Then
-                    'Seasons and Episodes
-                    Dim htmldSeasonsAndEpisodes As HtmlDocument = webParsing.Load(String.Concat("https://www.imdb.com/title/", id, "/episodes/"))
-
-                    If webParsing.StatusCode <> 200 Then
-                        logger.Trace(String.Format("[IMDB] [GetTVShowInfo] [ID:""{0}""] failed to retrieve imdb episodes page", id))
-                        'Do nothing
-                    Else
-                        'Get our React JSON next_data
-                        json_IMBD_next_data = DeserializeJsonObject(Of IMDBJson)(htmldSeasonsAndEpisodes.DocumentNode.SelectSingleNode("//script[@id='__NEXT_DATA__']").InnerHtml)
-
-                        If json_IMBD_next_data.props.PageProps.ContentData IsNot Nothing Then
-                            Dim lstSeasons As New List(Of Integer)
-                            Dim SeasonItems As List(Of Seasons) = json_IMBD_next_data.props.PageProps.ContentData.Section.Seasons
-
-                            For Each Season In SeasonItems
-                                lstSeasons.Add(Season.ValueAsInteger)
-                            Next
-
-                            For Each tSeason In lstSeasons
-                                If bwIMDB.CancellationPending Then Return Nothing
-
-                                GetTVSeasonInfo(nTVShow, nTVShow.UniqueIDs.IMDbId, tSeason, scrapemodifier, filteredoptions)
-
-                                If scrapemodifier.withSeasons Then
-                                    nTVShow.KnownSeasons.Add(New MediaContainers.SeasonDetails With {.Season = tSeason})
-                                End If
-                            Next
+                    'Premiered
+                    If filteredoptions.bMainPremiered Then
+                        If json_IMBD_next_data.props.PageProps.MainColumnData.ReleaseDate IsNot Nothing Then
+                            nTVShow.Premiered = json_IMBD_next_data.props.PageProps.MainColumnData.ReleaseDate.GetFullReleaseDate()
                         End If
-
                     End If
+
+                    If bwIMDB.CancellationPending Then Return Nothing
+
+                    'Rating
+                    If filteredoptions.bMainRating Then
+                        Dim nRating = ParseRating(json_IMBD_next_data)
+                        If nRating IsNot Nothing Then
+                            nTVShow.Ratings.Add(nRating)
+                        Else
+                            logger.Trace(String.Format("[IMDB] [GetTVShowInfo] [ID:""{0}""] can't parse Rating", id))
+                        End If
+                    End If
+
+                    If bwIMDB.CancellationPending Then Return Nothing
+
+                    'Runtime
+                    If filteredoptions.bMainRuntime Then
+                        Dim strRuntime = ParseRuntime(json_IMBD_next_data)
+                        If strRuntime IsNot Nothing Then
+                            nTVShow.Runtime = strRuntime
+                        Else
+                            logger.Trace(String.Format("[IMDB] [GetTVShowInfo] [ID:""{0}""] can't parse Runtime", id))
+                        End If
+                    End If
+
+                    If bwIMDB.CancellationPending Then Return Nothing
+
+                    'Studios
+                    If filteredoptions.bMainStudios Then
+                        Dim lstStudios = ParseStudios(json_IMBD_next_data)
+                        If lstStudios IsNot Nothing Then
+                            nTVShow.Studios = lstStudios
+                        Else
+                            logger.Trace(String.Format("[IMDB] [GetTVShowInfo] [ID:""{0}""] can't parse Studios", id))
+                        End If
+                    End If
+
+                    If bwIMDB.CancellationPending Then Return Nothing
+
+                    If scrapemodifier.withEpisodes OrElse scrapemodifier.withSeasons Then
+                        'Seasons and Episodes
+                        Dim htmldSeasonsAndEpisodes As HtmlDocument = webParsing.Load(String.Concat("https://www.imdb.com/title/", id, "/episodes/"))
+
+                        If webParsing.StatusCode <> 200 Then
+                            logger.Trace(String.Format("[IMDB] [GetTVShowInfo] [ID:""{0}""] failed to retrieve imdb episodes page", id))
+                            'Do nothing
+                        Else
+                            'Get our React JSON next_data
+                            json_IMBD_next_data = DeserializeJsonObject(Of IMDBJson)(htmldSeasonsAndEpisodes.DocumentNode.SelectSingleNode("//script[@id='__NEXT_DATA__']").InnerHtml)
+
+                            If json_IMBD_next_data.props.PageProps.ContentData IsNot Nothing Then
+                                Dim lstSeasons As New List(Of Integer)
+                                Dim SeasonItems As List(Of Seasons) = json_IMBD_next_data.props.PageProps.ContentData.Section.Seasons
+
+                                For Each Season In SeasonItems
+                                    lstSeasons.Add(Season.ValueAsInteger)
+                                Next
+
+                                For Each tSeason In lstSeasons
+                                    If bwIMDB.CancellationPending Then Return Nothing
+
+                                    GetTVSeasonInfo(nTVShow, nTVShow.UniqueIDs.IMDbId, tSeason, scrapemodifier, filteredoptions)
+
+                                    If scrapemodifier.withSeasons Then
+                                        nTVShow.KnownSeasons.Add(New MediaContainers.SeasonDetails With {.Season = tSeason})
+                                    End If
+                                Next
+                            End If
+
+                        End If
+                    End If
+
+                    Return nTVShow
+                Else
+                    Return Nothing
                 End If
 
-                Return nTVShow
-            Else
+            Catch ex As Exception
+                logger.Error(ex, New StackFrame().GetMethod().Name)
                 Return Nothing
-            End If
-
-        Catch ex As Exception
-            logger.Error(ex, New StackFrame().GetMethod().Name)
-            Return Nothing
-        End Try
+            End Try
+        End Using
     End Function
 
     Public Function GetMovieStudios(ByVal id As String) As List(Of String)

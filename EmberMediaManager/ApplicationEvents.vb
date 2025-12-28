@@ -178,6 +178,24 @@ Namespace My
             Application.Log.WriteException(e.Exception, TraceEventType.Critical, "Unhandled Exception.")
         End Sub
 
+        ''' <summary>
+        ''' Log performance metrics when application shuts down
+        ''' </summary>
+        Private Sub MyApplication_Shutdown(ByVal sender As Object, ByVal e As System.EventArgs) Handles Me.Shutdown
+            ' Log performance metrics collected during this session
+            PerformanceTracker.LogAllMetrics()
+
+            ' Export to CSV for analysis
+            Try
+                Dim metricsPath As String = Path.Combine(Functions.AppPath, "Log", String.Format("performance-metrics-{0:yyyyMMdd-HHmmss}.csv", DateTime.Now))
+                PerformanceTracker.ExportToCsv(metricsPath)
+            Catch ex As Exception
+                logger.Warn(ex, "Failed to export performance metrics to CSV")
+            End Try
+
+            logger.Info("====Ember Media Manager exiting====")
+        End Sub
+
 #End Region 'Methods
 
     End Class

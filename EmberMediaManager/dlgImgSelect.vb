@@ -30,6 +30,7 @@ Public Class dlgImgSelect
     Friend WithEvents bwImgDefaults As New System.ComponentModel.BackgroundWorker
     Friend WithEvents bwImgDownload As New System.ComponentModel.BackgroundWorker
 
+    Private _cancellationTokenSource As Threading.CancellationTokenSource
     Public Delegate Sub LoadImage(ByVal sDescription As String, ByVal iIndex As Integer, ByVal isChecked As Boolean, poster As MediaContainers.Image, ByVal text As String)
     Public Delegate Sub Delegate_MeActivate()
 
@@ -1346,6 +1347,11 @@ Public Class dlgImgSelect
         If bwImgDefaults.IsBusy Then bwImgDefaults.CancelAsync()
         If bwImgDownload.IsBusy Then bwImgDownload.CancelAsync()
 
+        ' Cancel parallel downloads
+        If _cancellationTokenSource IsNot Nothing Then
+            _cancellationTokenSource.Cancel()
+        End If
+
         While bwImgDefaults.IsBusy OrElse bwImgDownload.IsBusy
             Application.DoEvents()
             Threading.Thread.Sleep(50)
@@ -1484,247 +1490,450 @@ Public Class dlgImgSelect
     End Sub
 
     Private Function DownloadAllImages() As Boolean
-        Dim iProgress As Integer = 1
+        Using scopeTotal = PerformanceTracker.StartOperation("dlgImgSelect.DownloadAllImages")
+            Dim iProgress As Integer = 1
 
-        bwImgDownload.ReportProgress(If(DoEpisodeFanart, tSearchResultsContainer.EpisodeFanarts.Count, 0) +
-                                     If(DoEpisodePoster, tSearchResultsContainer.EpisodePosters.Count, 0) +
-                                        tSearchResultsContainer.MainBanners.Count +
-                                        tSearchResultsContainer.MainCharacterArts.Count +
-                                        tSearchResultsContainer.MainClearArts.Count +
-                                        tSearchResultsContainer.MainClearLogos.Count +
-                                        tSearchResultsContainer.MainDiscArts.Count +
-                                        tSearchResultsContainer.MainFanarts.Count +
-                                        tSearchResultsContainer.MainKeyarts.Count +
-                                        tSearchResultsContainer.MainLandscapes.Count +
-                                        tSearchResultsContainer.MainPosters.Count +
-                                        tSearchResultsContainer.SeasonBanners.Where(Function(f) If(Not DoOnlySeason = -2, f.Season = DoOnlySeason, Not f.Season = DoOnlySeason)).Count +
-                                        tSearchResultsContainer.SeasonFanarts.Where(Function(f) If(Not DoOnlySeason = -2, f.Season = DoOnlySeason, Not f.Season = DoOnlySeason)).Count +
-                                        tSearchResultsContainer.SeasonLandscapes.Where(Function(f) If(Not DoOnlySeason = -2, f.Season = DoOnlySeason, Not f.Season = DoOnlySeason)).Count +
-                                        tSearchResultsContainer.SeasonPosters.Where(Function(f) If(Not DoOnlySeason = -2, f.Season = DoOnlySeason, Not f.Season = DoOnlySeason)).Count, "max")
+            bwImgDownload.ReportProgress(If(DoEpisodeFanart, tSearchResultsContainer.EpisodeFanarts.Count, 0) +
+                                         If(DoEpisodePoster, tSearchResultsContainer.EpisodePosters.Count, 0) +
+                                            tSearchResultsContainer.MainBanners.Count +
+                                            tSearchResultsContainer.MainCharacterArts.Count +
+                                            tSearchResultsContainer.MainClearArts.Count +
+                                            tSearchResultsContainer.MainClearLogos.Count +
+                                            tSearchResultsContainer.MainDiscArts.Count +
+                                            tSearchResultsContainer.MainFanarts.Count +
+                                            tSearchResultsContainer.MainKeyarts.Count +
+                                            tSearchResultsContainer.MainLandscapes.Count +
+                                            tSearchResultsContainer.MainPosters.Count +
+                                            tSearchResultsContainer.SeasonBanners.Where(Function(f) If(Not DoOnlySeason = -2, f.Season = DoOnlySeason, Not f.Season = DoOnlySeason)).Count +
+                                            tSearchResultsContainer.SeasonFanarts.Where(Function(f) If(Not DoOnlySeason = -2, f.Season = DoOnlySeason, Not f.Season = DoOnlySeason)).Count +
+                                            tSearchResultsContainer.SeasonLandscapes.Where(Function(f) If(Not DoOnlySeason = -2, f.Season = DoOnlySeason, Not f.Season = DoOnlySeason)).Count +
+                                            tSearchResultsContainer.SeasonPosters.Where(Function(f) If(Not DoOnlySeason = -2, f.Season = DoOnlySeason, Not f.Season = DoOnlySeason)).Count, "max")
 
-        'Main Posters
-        If DoMainPoster OrElse DoAllSeasonsPoster Then
-            For Each tImg As MediaContainers.Image In tSearchResultsContainer.MainPosters
-                tImg.LoadAndCache(tContentType, False, True)
-                If bwImgDownload.CancellationPending Then
-                    Return True
+            ' Create cancellation token for parallel downloads
+            _cancellationTokenSource = New Threading.CancellationTokenSource()
+            Dim token As Threading.CancellationToken = _cancellationTokenSource.Token
+
+            Try
+                'Main Posters - Use parallel download
+                If DoMainPoster OrElse DoAllSeasonsPoster Then
+                    Using scope = PerformanceTracker.StartOperation("dlgImgSelect.MainPosters.Parallel")
+                        Dim progressCallback As Action(Of Integer, Integer) = Sub(current, total)
+                                                                                  If Not bwImgDownload.CancellationPending Then
+                                                                                      bwImgDownload.ReportProgress(iProgress + current - 1, "progress")
+                                                                                  End If
+                                                                              End Sub
+                        Images.DownloadImagesParallelAsync(
+                            tSearchResultsContainer.MainPosters,
+                            tContentType,
+                            5,
+                            True,
+                            token,
+                            progressCallback).GetAwaiter().GetResult()
+                    End Using
+
+                    iProgress += tSearchResultsContainer.MainPosters.Count
+                    If bwImgDownload.CancellationPending Then
+                        _cancellationTokenSource.Cancel()
+                        Return True
+                    End If
                 End If
-                bwImgDownload.ReportProgress(iProgress, "progress")
-                iProgress += 1
-            Next
-        End If
-        LoadedMainPoster = True
-        bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.AllSeasonsPoster)
-        bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.MainPoster)
+                LoadedMainPoster = True
+                bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.AllSeasonsPoster)
+                bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.MainPoster)
 
-        'Main Keyarts
-        If DoMainKeyart Then
-            For Each tImg As MediaContainers.Image In tSearchResultsContainer.MainKeyarts
-                tImg.LoadAndCache(tContentType, False, True)
-                If bwImgDownload.CancellationPending Then
-                    Return True
+                'Main Keyarts - Use parallel download
+                If DoMainKeyart Then
+                    Using scope = PerformanceTracker.StartOperation("dlgImgSelect.MainKeyarts.Parallel")
+                        Dim progressCallback As Action(Of Integer, Integer) = Sub(current, total)
+                                                                                  If Not bwImgDownload.CancellationPending Then
+                                                                                      bwImgDownload.ReportProgress(iProgress + current - 1, "progress")
+                                                                                  End If
+                                                                              End Sub
+                        Images.DownloadImagesParallelAsync(
+                            tSearchResultsContainer.MainKeyarts,
+                            tContentType,
+                            5,
+                            True,
+                            token,
+                            progressCallback).GetAwaiter().GetResult()
+                    End Using
+
+                    iProgress += tSearchResultsContainer.MainKeyarts.Count
+                    If bwImgDownload.CancellationPending Then
+                        _cancellationTokenSource.Cancel()
+                        Return True
+                    End If
                 End If
-                bwImgDownload.ReportProgress(iProgress, "progress")
-                iProgress += 1
-            Next
-        End If
-        LoadedMainKeyart = True
-        bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.MainKeyart)
+                LoadedMainKeyart = True
+                bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.MainKeyart)
 
-        'Main Banners
-        If DoMainBanner OrElse DoAllSeasonsBanner Then
-            For Each tImg As MediaContainers.Image In tSearchResultsContainer.MainBanners
-                tImg.LoadAndCache(tContentType, False, True)
-                If bwImgDownload.CancellationPending Then
-                    Return True
+                'Main Banners - Use parallel download
+                If DoMainBanner OrElse DoAllSeasonsBanner Then
+                    Using scope = PerformanceTracker.StartOperation("dlgImgSelect.MainBanners.Parallel")
+                        Dim progressCallback As Action(Of Integer, Integer) = Sub(current, total)
+                                                                                  If Not bwImgDownload.CancellationPending Then
+                                                                                      bwImgDownload.ReportProgress(iProgress + current - 1, "progress")
+                                                                                  End If
+                                                                              End Sub
+                        Images.DownloadImagesParallelAsync(
+                            tSearchResultsContainer.MainBanners,
+                            tContentType,
+                            5,
+                            True,
+                            token,
+                            progressCallback).GetAwaiter().GetResult()
+                    End Using
+
+                    iProgress += tSearchResultsContainer.MainBanners.Count
+                    If bwImgDownload.CancellationPending Then
+                        _cancellationTokenSource.Cancel()
+                        Return True
+                    End If
                 End If
-                bwImgDownload.ReportProgress(iProgress, "progress")
-                iProgress += 1
-            Next
-        End If
-        LoadedMainBanner = True
-        bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.AllSeasonsBanner)
-        bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.MainBanner)
+                LoadedMainBanner = True
+                bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.AllSeasonsBanner)
+                bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.MainBanner)
 
-        'Main CharacterArts
-        If DoMainCharacterArt Then
-            For Each tImg As MediaContainers.Image In tSearchResultsContainer.MainCharacterArts
-                tImg.LoadAndCache(tContentType, False, True)
-                If bwImgDownload.CancellationPending Then
-                    Return True
+                'Main CharacterArts - Use parallel download
+                If DoMainCharacterArt Then
+                    Using scope = PerformanceTracker.StartOperation("dlgImgSelect.MainCharacterArts.Parallel")
+                        Dim progressCallback As Action(Of Integer, Integer) = Sub(current, total)
+                                                                                  If Not bwImgDownload.CancellationPending Then
+                                                                                      bwImgDownload.ReportProgress(iProgress + current - 1, "progress")
+                                                                                  End If
+                                                                              End Sub
+                        Images.DownloadImagesParallelAsync(
+                            tSearchResultsContainer.MainCharacterArts,
+                            tContentType,
+                            5,
+                            True,
+                            token,
+                            progressCallback).GetAwaiter().GetResult()
+                    End Using
+
+                    iProgress += tSearchResultsContainer.MainCharacterArts.Count
+                    If bwImgDownload.CancellationPending Then
+                        _cancellationTokenSource.Cancel()
+                        Return True
+                    End If
                 End If
-                bwImgDownload.ReportProgress(iProgress, "progress")
-                iProgress += 1
-            Next
-        End If
-        LoadedMainCharacterArt = True
-        bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.MainCharacterArt)
+                LoadedMainCharacterArt = True
+                bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.MainCharacterArt)
 
-        'Main ClearArts
-        If DoMainClearArt Then
-            For Each tImg As MediaContainers.Image In tSearchResultsContainer.MainClearArts
-                tImg.LoadAndCache(tContentType, False, True)
-                If bwImgDownload.CancellationPending Then
-                    Return True
+                'Main ClearArts - Use parallel download
+                If DoMainClearArt Then
+                    Using scope = PerformanceTracker.StartOperation("dlgImgSelect.MainClearArts.Parallel")
+                        Dim progressCallback As Action(Of Integer, Integer) = Sub(current, total)
+                                                                                  If Not bwImgDownload.CancellationPending Then
+                                                                                      bwImgDownload.ReportProgress(iProgress + current - 1, "progress")
+                                                                                  End If
+                                                                              End Sub
+                        Images.DownloadImagesParallelAsync(
+                            tSearchResultsContainer.MainClearArts,
+                            tContentType,
+                            5,
+                            True,
+                            token,
+                            progressCallback).GetAwaiter().GetResult()
+                    End Using
+
+                    iProgress += tSearchResultsContainer.MainClearArts.Count
+                    If bwImgDownload.CancellationPending Then
+                        _cancellationTokenSource.Cancel()
+                        Return True
+                    End If
                 End If
-                bwImgDownload.ReportProgress(iProgress, "progress")
-                iProgress += 1
-            Next
-        End If
-        LoadedMainClearArt = True
-        bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.MainClearArt)
+                LoadedMainClearArt = True
+                bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.MainClearArt)
 
-        'Main ClearLogos
-        If DoMainClearLogo Then
-            For Each tImg As MediaContainers.Image In tSearchResultsContainer.MainClearLogos
-                tImg.LoadAndCache(tContentType, False, True)
-                If bwImgDownload.CancellationPending Then
-                    Return True
+                'Main ClearLogos - Use parallel download
+                If DoMainClearLogo Then
+                    Using scope = PerformanceTracker.StartOperation("dlgImgSelect.MainClearLogos.Parallel")
+                        Dim progressCallback As Action(Of Integer, Integer) = Sub(current, total)
+                                                                                  If Not bwImgDownload.CancellationPending Then
+                                                                                      bwImgDownload.ReportProgress(iProgress + current - 1, "progress")
+                                                                                  End If
+                                                                              End Sub
+                        Images.DownloadImagesParallelAsync(
+                            tSearchResultsContainer.MainClearLogos,
+                            tContentType,
+                            5,
+                            True,
+                            token,
+                            progressCallback).GetAwaiter().GetResult()
+                    End Using
+
+                    iProgress += tSearchResultsContainer.MainClearLogos.Count
+                    If bwImgDownload.CancellationPending Then
+                        _cancellationTokenSource.Cancel()
+                        Return True
+                    End If
                 End If
-                bwImgDownload.ReportProgress(iProgress, "progress")
-                iProgress += 1
-            Next
-        End If
-        LoadedMainClearLogo = True
-        bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.MainClearLogo)
+                LoadedMainClearLogo = True
+                bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.MainClearLogo)
 
-        'Main Discarts
-        If DoMainDiscArt Then
-            For Each tImg As MediaContainers.Image In tSearchResultsContainer.MainDiscArts
-                tImg.LoadAndCache(tContentType, False, True)
-                If bwImgDownload.CancellationPending Then
-                    Return True
+                'Main Discarts - Use parallel download
+                If DoMainDiscArt Then
+                    Using scope = PerformanceTracker.StartOperation("dlgImgSelect.MainDiscArts.Parallel")
+                        Dim progressCallback As Action(Of Integer, Integer) = Sub(current, total)
+                                                                                  If Not bwImgDownload.CancellationPending Then
+                                                                                      bwImgDownload.ReportProgress(iProgress + current - 1, "progress")
+                                                                                  End If
+                                                                              End Sub
+                        Images.DownloadImagesParallelAsync(
+                            tSearchResultsContainer.MainDiscArts,
+                            tContentType,
+                            5,
+                            True,
+                            token,
+                            progressCallback).GetAwaiter().GetResult()
+                    End Using
+
+                    iProgress += tSearchResultsContainer.MainDiscArts.Count
+                    If bwImgDownload.CancellationPending Then
+                        _cancellationTokenSource.Cancel()
+                        Return True
+                    End If
                 End If
-                bwImgDownload.ReportProgress(iProgress, "progress")
-                iProgress += 1
-            Next
-        End If
-        LoadedMainDiscArt = True
-        bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.MainDiscArt)
+                LoadedMainDiscArt = True
+                bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.MainDiscArt)
 
-        'Main Landscapes
-        If DoMainLandscape OrElse DoAllSeasonsLandscape Then
-            For Each tImg As MediaContainers.Image In tSearchResultsContainer.MainLandscapes
-                tImg.LoadAndCache(tContentType, False, True)
-                If bwImgDownload.CancellationPending Then
-                    Return True
+                'Main Landscapes - Use parallel download
+                If DoMainLandscape OrElse DoAllSeasonsLandscape Then
+                    Using scope = PerformanceTracker.StartOperation("dlgImgSelect.MainLandscapes.Parallel")
+                        Dim progressCallback As Action(Of Integer, Integer) = Sub(current, total)
+                                                                                  If Not bwImgDownload.CancellationPending Then
+                                                                                      bwImgDownload.ReportProgress(iProgress + current - 1, "progress")
+                                                                                  End If
+                                                                              End Sub
+                        Images.DownloadImagesParallelAsync(
+                            tSearchResultsContainer.MainLandscapes,
+                            tContentType,
+                            5,
+                            True,
+                            token,
+                            progressCallback).GetAwaiter().GetResult()
+                    End Using
+
+                    iProgress += tSearchResultsContainer.MainLandscapes.Count
+                    If bwImgDownload.CancellationPending Then
+                        _cancellationTokenSource.Cancel()
+                        Return True
+                    End If
                 End If
-                bwImgDownload.ReportProgress(iProgress, "progress")
-                iProgress += 1
-            Next
-        End If
-        LoadedMainLandscape = True
-        bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.AllSeasonsLandscape)
-        bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.MainLandscape)
+                LoadedMainLandscape = True
+                bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.AllSeasonsLandscape)
+                bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.MainLandscape)
 
-        'Main Fanarts
-        If DoMainFanart OrElse DoMainExtrafanarts OrElse DoMainExtrathumbs OrElse DoAllSeasonsFanart OrElse DoEpisodeFanart OrElse DoSeasonFanart Then
-            For Each tImg As MediaContainers.Image In tSearchResultsContainer.MainFanarts
-                tImg.LoadAndCache(tContentType, False, True)
-                If bwImgDownload.CancellationPending Then
-                    Return True
+                'Main Fanarts - Use parallel download
+                If DoMainFanart OrElse DoMainExtrafanarts OrElse DoMainExtrathumbs OrElse DoAllSeasonsFanart OrElse DoEpisodeFanart OrElse DoSeasonFanart Then
+                    Using scope = PerformanceTracker.StartOperation("dlgImgSelect.MainFanarts.Parallel")
+                        Dim progressCallback As Action(Of Integer, Integer) = Sub(current, total)
+                                                                                  If Not bwImgDownload.CancellationPending Then
+                                                                                      bwImgDownload.ReportProgress(iProgress + current - 1, "progress")
+                                                                                  End If
+                                                                              End Sub
+                        Images.DownloadImagesParallelAsync(
+                            tSearchResultsContainer.MainFanarts,
+                            tContentType,
+                            5,
+                            True,
+                            token,
+                            progressCallback).GetAwaiter().GetResult()
+                    End Using
+
+                    iProgress += tSearchResultsContainer.MainFanarts.Count
+                    If bwImgDownload.CancellationPending Then
+                        _cancellationTokenSource.Cancel()
+                        Return True
+                    End If
                 End If
-                bwImgDownload.ReportProgress(iProgress, "progress")
-                iProgress += 1
-            Next
-        End If
-        LoadedMainFanart = True
-        bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.AllSeasonsFanart)
-        bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.EpisodeFanart)
-        bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.MainExtrafanarts)
-        bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.MainExtrathumbs)
-        bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.MainFanart)
-        bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.SeasonFanart)
+                LoadedMainFanart = True
+                bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.AllSeasonsFanart)
+                bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.EpisodeFanart)
+                bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.MainExtrafanarts)
+                bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.MainExtrathumbs)
+                bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.MainFanart)
+                bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.SeasonFanart)
 
-        'Season Banners
-        If DoSeasonBanner OrElse DoAllSeasonsBanner Then
-            For Each tImg As MediaContainers.Image In tSearchResultsContainer.SeasonBanners.Where(Function(f) If(Not DoOnlySeason = -2, f.Season = DoOnlySeason, Not f.Season = DoOnlySeason))
-                tImg.LoadAndCache(tContentType, False, True)
-                If bwImgDownload.CancellationPending Then
-                    Return True
+                'Season Banners - Use parallel download
+                If DoSeasonBanner OrElse DoAllSeasonsBanner Then
+                    Using scope = PerformanceTracker.StartOperation("dlgImgSelect.SeasonBanners.Parallel")
+                        Dim filteredImages = tSearchResultsContainer.SeasonBanners.Where(Function(f) If(Not DoOnlySeason = -2, f.Season = DoOnlySeason, Not f.Season = DoOnlySeason)).ToList()
+                        Dim progressCallback As Action(Of Integer, Integer) = Sub(current, total)
+                                                                                  If Not bwImgDownload.CancellationPending Then
+                                                                                      bwImgDownload.ReportProgress(iProgress + current - 1, "progress")
+                                                                                  End If
+                                                                              End Sub
+                        Images.DownloadImagesParallelAsync(
+                            filteredImages,
+                            tContentType,
+                            5,
+                            True,
+                            token,
+                            progressCallback).GetAwaiter().GetResult()
+
+                        iProgress += filteredImages.Count
+                    End Using
+                    If bwImgDownload.CancellationPending Then
+                        _cancellationTokenSource.Cancel()
+                        Return True
+                    End If
                 End If
-                bwImgDownload.ReportProgress(iProgress, "progress")
-                iProgress += 1
-            Next
-        End If
-        LoadedSeasonBanner = True
-        bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.AllSeasonsBanner)
-        bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.SeasonBanner)
+                LoadedSeasonBanner = True
+                bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.AllSeasonsBanner)
+                bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.SeasonBanner)
 
-        'Season Fanarts
-        If DoSeasonFanart OrElse DoAllSeasonsFanart Then
-            For Each tImg As MediaContainers.Image In tSearchResultsContainer.SeasonFanarts.Where(Function(f) If(Not DoOnlySeason = -2, f.Season = DoOnlySeason, Not f.Season = DoOnlySeason))
-                tImg.LoadAndCache(tContentType, False, True)
-                If bwImgDownload.CancellationPending Then
-                    Return True
+                'Season Fanarts - Use parallel download
+                If DoSeasonFanart OrElse DoAllSeasonsFanart Then
+                    Using scope = PerformanceTracker.StartOperation("dlgImgSelect.SeasonFanarts.Parallel")
+                        Dim filteredImages = tSearchResultsContainer.SeasonFanarts.Where(Function(f) If(Not DoOnlySeason = -2, f.Season = DoOnlySeason, Not f.Season = DoOnlySeason)).ToList()
+                        Dim progressCallback As Action(Of Integer, Integer) = Sub(current, total)
+                                                                                  If Not bwImgDownload.CancellationPending Then
+                                                                                      bwImgDownload.ReportProgress(iProgress + current - 1, "progress")
+                                                                                  End If
+                                                                              End Sub
+                        Images.DownloadImagesParallelAsync(
+                            filteredImages,
+                            tContentType,
+                            5,
+                            True,
+                            token,
+                            progressCallback).GetAwaiter().GetResult()
+
+                        iProgress += filteredImages.Count
+                    End Using
+                    If bwImgDownload.CancellationPending Then
+                        _cancellationTokenSource.Cancel()
+                        Return True
+                    End If
                 End If
-                bwImgDownload.ReportProgress(iProgress, "progress")
-                iProgress += 1
-            Next
-        End If
-        LoadedSeasonFanart = True
-        bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.AllSeasonsFanart)
-        bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.SeasonFanart)
+                LoadedSeasonFanart = True
+                bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.AllSeasonsFanart)
+                bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.SeasonFanart)
 
-        'Season Landscapes
-        If DoSeasonLandscape OrElse DoAllSeasonsLandscape Then
-            For Each tImg As MediaContainers.Image In tSearchResultsContainer.SeasonLandscapes.Where(Function(f) If(Not DoOnlySeason = -2, f.Season = DoOnlySeason, Not f.Season = DoOnlySeason))
-                tImg.LoadAndCache(tContentType, False, True)
-                If bwImgDownload.CancellationPending Then
-                    Return True
+                'Season Landscapes - Use parallel download
+                If DoSeasonLandscape OrElse DoAllSeasonsLandscape Then
+                    Using scope = PerformanceTracker.StartOperation("dlgImgSelect.SeasonLandscapes.Parallel")
+                        Dim filteredImages = tSearchResultsContainer.SeasonLandscapes.Where(Function(f) If(Not DoOnlySeason = -2, f.Season = DoOnlySeason, Not f.Season = DoOnlySeason)).ToList()
+                        Dim progressCallback As Action(Of Integer, Integer) = Sub(current, total)
+                                                                                  If Not bwImgDownload.CancellationPending Then
+                                                                                      bwImgDownload.ReportProgress(iProgress + current - 1, "progress")
+                                                                                  End If
+                                                                              End Sub
+                        Images.DownloadImagesParallelAsync(
+                            filteredImages,
+                            tContentType,
+                            5,
+                            True,
+                            token,
+                            progressCallback).GetAwaiter().GetResult()
+
+                        iProgress += filteredImages.Count
+                    End Using
+                    If bwImgDownload.CancellationPending Then
+                        _cancellationTokenSource.Cancel()
+                        Return True
+                    End If
                 End If
-                bwImgDownload.ReportProgress(iProgress, "progress")
-                iProgress += 1
-            Next
-        End If
-        LoadedSeasonLandscape = True
-        bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.AllSeasonsLandscape)
-        bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.SeasonLandscape)
+                LoadedSeasonLandscape = True
+                bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.AllSeasonsLandscape)
+                bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.SeasonLandscape)
 
-        'Season Posters
-        If DoSeasonPoster OrElse DoAllSeasonsPoster Then
-            For Each tImg As MediaContainers.Image In tSearchResultsContainer.SeasonPosters.Where(Function(f) If(Not DoOnlySeason = -2, f.Season = DoOnlySeason, Not f.Season = DoOnlySeason))
-                tImg.LoadAndCache(tContentType, False, True)
-                If bwImgDownload.CancellationPending Then
-                    Return True
+                'Season Posters - Use parallel download
+                If DoSeasonPoster OrElse DoAllSeasonsPoster Then
+                    Using scope = PerformanceTracker.StartOperation("dlgImgSelect.SeasonPosters.Parallel")
+                        Dim filteredImages = tSearchResultsContainer.SeasonPosters.Where(Function(f) If(Not DoOnlySeason = -2, f.Season = DoOnlySeason, Not f.Season = DoOnlySeason)).ToList()
+                        Dim progressCallback As Action(Of Integer, Integer) = Sub(current, total)
+                                                                                  If Not bwImgDownload.CancellationPending Then
+                                                                                      bwImgDownload.ReportProgress(iProgress + current - 1, "progress")
+                                                                                  End If
+                                                                              End Sub
+                        Images.DownloadImagesParallelAsync(
+                            filteredImages,
+                            tContentType,
+                            5,
+                            True,
+                            token,
+                            progressCallback).GetAwaiter().GetResult()
+
+                        iProgress += filteredImages.Count
+                    End Using
+                    If bwImgDownload.CancellationPending Then
+                        _cancellationTokenSource.Cancel()
+                        Return True
+                    End If
                 End If
-                bwImgDownload.ReportProgress(iProgress, "progress")
-                iProgress += 1
-            Next
-        End If
-        LoadedSeasonPoster = True
-        bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.AllSeasonsPoster)
-        bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.SeasonPoster)
+                LoadedSeasonPoster = True
+                bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.AllSeasonsPoster)
+                bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.SeasonPoster)
 
-        'Episode Fanarts
-        If DoEpisodeFanart Then
-            For Each tImg As MediaContainers.Image In tSearchResultsContainer.EpisodeFanarts
-                tImg.LoadAndCache(tContentType, False, True)
-                If bwImgDownload.CancellationPending Then
-                    Return True
+                'Episode Fanarts - Use parallel download
+                If DoEpisodeFanart Then
+                    Using scope = PerformanceTracker.StartOperation("dlgImgSelect.EpisodeFanarts.Parallel")
+                        Dim progressCallback As Action(Of Integer, Integer) = Sub(current, total)
+                                                                                  If Not bwImgDownload.CancellationPending Then
+                                                                                      bwImgDownload.ReportProgress(iProgress + current - 1, "progress")
+                                                                                  End If
+                                                                              End Sub
+                        Images.DownloadImagesParallelAsync(
+                            tSearchResultsContainer.EpisodeFanarts,
+                            tContentType,
+                            5,
+                            True,
+                            token,
+                            progressCallback).GetAwaiter().GetResult()
+                    End Using
+
+                    iProgress += tSearchResultsContainer.EpisodeFanarts.Count
+                    If bwImgDownload.CancellationPending Then
+                        _cancellationTokenSource.Cancel()
+                        Return True
+                    End If
                 End If
-                bwImgDownload.ReportProgress(iProgress, "progress")
-                iProgress += 1
-            Next
-        End If
-        LoadedEpisodeFanart = True
-        bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.EpisodeFanart)
+                LoadedEpisodeFanart = True
+                bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.EpisodeFanart)
 
-        'Episode Posters
-        If DoEpisodePoster Then
-            For Each tImg As MediaContainers.Image In tSearchResultsContainer.EpisodePosters
-                tImg.LoadAndCache(tContentType, False, True)
-                If bwImgDownload.CancellationPending Then
-                    Return True
+                'Episode Posters - Use parallel download
+                If DoEpisodePoster Then
+                    Using scope = PerformanceTracker.StartOperation("dlgImgSelect.EpisodePosters.Parallel")
+                        Dim progressCallback As Action(Of Integer, Integer) = Sub(current, total)
+                                                                                  If Not bwImgDownload.CancellationPending Then
+                                                                                      bwImgDownload.ReportProgress(iProgress + current - 1, "progress")
+                                                                                  End If
+                                                                              End Sub
+                        Images.DownloadImagesParallelAsync(
+                            tSearchResultsContainer.EpisodePosters,
+                            tContentType,
+                            5,
+                            True,
+                            token,
+                            progressCallback).GetAwaiter().GetResult()
+                    End Using
+
+                    iProgress += tSearchResultsContainer.EpisodePosters.Count
+                    If bwImgDownload.CancellationPending Then
+                        _cancellationTokenSource.Cancel()
+                        Return True
+                    End If
                 End If
-                bwImgDownload.ReportProgress(iProgress, "progress")
-                iProgress += 1
-            Next
-        End If
-        LoadedEpisodePoster = True
-        bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.EpisodePoster)
+                LoadedEpisodePoster = True
+                bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.EpisodePoster)
 
-        Return False
+            Catch ex As OperationCanceledException
+                logger.Info("[dlgImgSelect] Image download cancelled")
+                Return True
+            Catch ex As Exception
+                logger.Error(ex, "[dlgImgSelect] Error during parallel image download")
+            Finally
+                If _cancellationTokenSource IsNot Nothing Then
+                    _cancellationTokenSource.Dispose()
+                    _cancellationTokenSource = Nothing
+                End If
+            End Try
+
+            Return False
+        End Using
     End Function
 
     Private Sub DownloadDefaultImages()

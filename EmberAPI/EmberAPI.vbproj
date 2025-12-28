@@ -227,6 +227,7 @@
     <Compile Include="clsAPICommandLine.vb" />
     <Compile Include="clsAPIFFmpeg.vb" />
     <Compile Include="clsAPIFormsUtils.vb" />
+    <Compile Include="clsAPIHttpClientFactory.vb" />
     <Compile Include="clsAPINFOSerializers.vb" />
     <Compile Include="clsAPIPerformanceTracker.vb" />
     <Compile Include="clsAPIProfiles.vb" />
@@ -495,6 +496,9 @@
     </None>
     <None Include="DB\MyVideosDBSQL_v47_Patch.xml">
       <SubType>Designer</SubType>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="DB\MyVideosDBSQL_v48_Patch.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <Content Include="Defaults\Core.Mapping.Editions.xml">

@@ -18,9 +18,10 @@
 ' # along with Ember Media Manager.  If not, see <http://www.gnu.org/licenses/>. #
 ' ################################################################################
 
+Imports System.Drawing
 Imports System.Drawing.Imaging
 Imports System.IO
-Imports System.Drawing
+Imports System.Threading.Tasks
 Imports System.Windows.Forms
 Imports NLog
 
@@ -325,42 +326,80 @@ Public Class Images
     ''' <param name="LoadBitmap">Create bitmap from memorystream</param>
     ''' <remarks></remarks>
     Public Sub LoadFromWeb(ByVal sURL As String, Optional LoadBitmap As Boolean = False)
-        If String.IsNullOrEmpty(sURL) Then Return
+        Using scopeTotal = PerformanceTracker.StartOperation("Image.LoadFromWeb")
+            If String.IsNullOrEmpty(sURL) Then Return
+
+            Try
+                Dim sHTTP As New HTTP
+                sHTTP.StartDownloadImage(sURL)
+                While sHTTP.IsDownloading
+                    Application.DoEvents()
+                    Threading.Thread.Sleep(50)
+                End While
+
+                If sHTTP.Image IsNot Nothing Then
+                    If _ms IsNot Nothing Then
+                        _ms.Dispose()
+                    End If
+                    _ms = New MemoryStream()
+
+                    Dim retSave() As Byte
+                    retSave = sHTTP.ms.ToArray
+                    _ms.Write(retSave, 0, retSave.Length)
+
+                    'I do not copy from the _ms as it could not be a JPG
+                    '_image = New Bitmap(sHTTP.Image)
+                    If LoadBitmap Then
+                        _image = New Bitmap(sHTTP.Image) '(Me._ms)
+                    End If
+
+                    ' if is not a JPG or PNG we have to convert the memory stream to JPG format
+                    If Not (sHTTP.isJPG OrElse sHTTP.isPNG) Then
+                        UpdateMSfromImg(New Bitmap(_image))
+                    End If
+                End If
+
+            Catch ex As Exception
+                logger.Error(ex, New StackFrame().GetMethod().Name & Convert.ToChar(Keys.Tab) & "<" & sURL & ">")
+            End Try
+        End Using
+    End Sub
+
+    ''' <summary>
+    ''' Loads this Image from the supplied URL asynchronously
+    ''' </summary>
+    ''' <param name="sURL">URL to the image file</param>
+    ''' <param name="loadBitmap">Create bitmap from memorystream</param>
+    ''' <returns>True if image was loaded successfully</returns>
+    ''' <remarks>This is the async version of LoadFromWeb for use with parallel downloads.</remarks>
+    Public Async Function LoadFromWebAsync(ByVal sURL As String, Optional loadBitmap As Boolean = False) As Task(Of Boolean)
+        If String.IsNullOrEmpty(sURL) Then Return False
 
         Try
-            Dim sHTTP As New HTTP
-            sHTTP.StartDownloadImage(sURL)
-            While sHTTP.IsDownloading
-                Application.DoEvents()
-                Threading.Thread.Sleep(50)
-            End While
+            Using scopeTotal = PerformanceTracker.StartOperation("Image.LoadFromWebAsync")
+                Dim bytes = Await HTTP.DownloadBytesAsync(sURL, "Image.LoadFromWebAsync.Download").ConfigureAwait(False)
 
-            If sHTTP.Image IsNot Nothing Then
-                If _ms IsNot Nothing Then
-                    _ms.Dispose()
+                If bytes IsNot Nothing AndAlso bytes.Length > 0 Then
+                    If _ms IsNot Nothing Then
+                        _ms.Dispose()
+                    End If
+                    _ms = New MemoryStream()
+                    _ms.Write(bytes, 0, bytes.Length)
+                    _ms.Flush()
+
+                    If loadBitmap Then
+                        _image = New Bitmap(_ms)
+                    End If
+
+                    Return True
                 End If
-                _ms = New MemoryStream()
-
-                Dim retSave() As Byte
-                retSave = sHTTP.ms.ToArray
-                _ms.Write(retSave, 0, retSave.Length)
-
-                'I do not copy from the _ms as it could not be a JPG
-                '_image = New Bitmap(sHTTP.Image)
-                If LoadBitmap Then
-                    _image = New Bitmap(sHTTP.Image) '(Me._ms)
-                End If
-
-                ' if is not a JPG or PNG we have to convert the memory stream to JPG format
-                If Not (sHTTP.isJPG OrElse sHTTP.isPNG) Then
-                    UpdateMSfromImg(New Bitmap(_image))
-                End If
-            End If
-
+            End Using
         Catch ex As Exception
             logger.Error(ex, New StackFrame().GetMethod().Name & Convert.ToChar(Keys.Tab) & "<" & sURL & ">")
         End Try
-    End Sub
+
+        Return False
+    End Function
 
     Public Sub ResizeExtraFanart(ByVal fromPath As String, ByVal toPath As String)
         LoadFromFile(fromPath)
@@ -2799,7 +2838,6 @@ Public Class Images
 
         'current compared image in imagelist
         Dim tmpImage As Images = Nothing
-        Dim lsttmpSimilarityresults As New List(Of Integer)
 
         'loop through every image scrapedlist
         For i = 0 To ImageList.Count - 1
@@ -3012,6 +3050,82 @@ Public Class Images
             End If
         Next
         Return currentimagesimilarity
+    End Function
+
+    ''' <summary>
+    ''' Downloads multiple images in parallel with controlled concurrency.
+    ''' </summary>
+    ''' <param name="images">List of images to download</param>
+    ''' <param name="contentType">Content type for cache settings</param>
+    ''' <param name="maxConcurrency">Maximum number of concurrent downloads (default 5)</param>
+    ''' <param name="loadBitmap">Whether to load bitmaps into memory</param>
+    ''' <param name="cancellationToken">Cancellation token</param>
+    ''' <param name="progressCallback">Optional callback for progress reporting (current, total)</param>
+    ''' <returns>Number of successfully downloaded images</returns>
+    ''' <remarks>
+    ''' This method uses SemaphoreSlim to limit concurrent downloads and prevent
+    ''' overwhelming the server or exhausting system resources.
+    ''' </remarks>
+    Public Shared Async Function DownloadImagesParallelAsync(
+        ByVal images As List(Of MediaContainers.Image),
+        ByVal contentType As Enums.ContentType,
+        Optional ByVal maxConcurrency As Integer = 5,
+        Optional ByVal loadBitmap As Boolean = False,
+        Optional ByVal cancellationToken As Threading.CancellationToken = Nothing,
+        Optional ByVal progressCallback As Action(Of Integer, Integer) = Nothing) As Task(Of Integer)
+
+        If images Is Nothing OrElse images.Count = 0 Then
+            Return 0
+        End If
+
+        Dim successCount As Integer = 0
+        Dim processedCount As Integer = 0
+        Dim totalCount As Integer = images.Count
+
+        Using semaphore As New Threading.SemaphoreSlim(maxConcurrency)
+            Dim tasks As New List(Of Task)
+
+            For Each img In images
+                If cancellationToken.IsCancellationRequested Then
+                    Exit For
+                End If
+
+                Dim currentImage = img ' Capture for closure
+                Dim downloadTask = Task.Run(
+                    Async Function()
+                        Await semaphore.WaitAsync(cancellationToken).ConfigureAwait(False)
+                        Try
+                            If cancellationToken.IsCancellationRequested Then
+                                Return
+                            End If
+
+                            Dim result = Await currentImage.LoadAndCacheAsync(contentType, False, loadBitmap).ConfigureAwait(False)
+                            If result Then
+                                Threading.Interlocked.Increment(successCount)
+                            End If
+                        Finally
+                            Threading.Interlocked.Increment(processedCount)
+                            If progressCallback IsNot Nothing Then
+                                progressCallback.Invoke(processedCount, totalCount)
+                            End If
+                            semaphore.Release()
+                        End Try
+                    End Function, cancellationToken)
+
+                tasks.Add(downloadTask)
+            Next
+
+            Try
+                Await Task.WhenAll(tasks).ConfigureAwait(False)
+            Catch ex As OperationCanceledException
+                logger.Info("[DownloadImagesParallelAsync] Download cancelled")
+            Catch ex As Exception
+                logger.Error(ex, "[DownloadImagesParallelAsync] Error during parallel download")
+            End Try
+        End Using
+
+        logger.Info(String.Format("[DownloadImagesParallelAsync] Downloaded {0}/{1} images successfully", successCount, totalCount))
+        Return successCount
     End Function
 #End Region 'Methods
 

@@ -975,3 +975,37 @@ CREATE VIEW tvshowlist
         AND (episodelist.Missing = 0)
         GROUP BY
         tvshow.idShow;
+
+-- ============================================================================
+-- PERFORMANCE OPTIMIZATION INDICES (Added in DB v49)
+-- ============================================================================
+
+-- Index on actors.strActor for fast actor lookups during scraping
+CREATE INDEX ix_actors_strActor ON actors (strActor COLLATE NOCASE);
+
+-- Index on movie.idSource for source-based filtering
+CREATE INDEX ix_movie_idSource ON movie (idSource);
+
+-- Index on movie.TMDB for TMDB ID lookups
+CREATE INDEX ix_movie_TMDB ON movie (TMDB);
+
+-- Index on movie.Imdb for IMDB ID lookups  
+CREATE INDEX ix_movie_Imdb ON movie (Imdb);
+
+-- Index on tvshow.idSource for source-based filtering
+CREATE INDEX ix_tvshow_idSource ON tvshow (idSource);
+
+-- Index on episode.idShow for episode lookups by show
+CREATE INDEX ix_episode_idShow ON episode (idShow);
+
+-- Index on episode.idSource for source-based filtering
+CREATE INDEX ix_episode_idSource ON episode (idSource);
+
+-- Index on genre.strGenre for genre lookups
+CREATE INDEX ix_genre_strGenre ON genre (strGenre COLLATE NOCASE);
+
+-- Index on country.strCountry for country lookups
+CREATE INDEX ix_country_strCountry ON country (strCountry COLLATE NOCASE);
+
+-- Index on studio.strStudio for studio lookups
+CREATE INDEX ix_studio_strStudio ON studio (strStudio COLLATE NOCASE);

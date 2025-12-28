@@ -22,6 +22,7 @@ Imports System.IO
 Imports System.IO.Compression
 Imports System.Net
 Imports System.Drawing
+Imports System.Threading.Tasks
 Imports NLog
 
 ''' <summary>
@@ -397,6 +398,111 @@ Public Class HTTP
     End Sub
 
 #End Region 'Methods
+
+#Region "Async Methods Using Shared HttpClient"
+
+    ''' <summary>
+    ''' Downloads string data from the specified URL asynchronously using the shared HttpClient.
+    ''' </summary>
+    ''' <param name="url">The URL to download from.</param>
+    ''' <param name="operationName">Optional name for performance tracking.</param>
+    ''' <returns>The downloaded string content, or empty string on error.</returns>
+    Public Shared Async Function DownloadDataAsync(ByVal url As String, Optional operationName As String = "HTTP.DownloadDataAsync") As Task(Of String)
+        Try
+            Return Await HttpClientFactory.GetStringTrackedAsync(url, operationName).ConfigureAwait(False)
+        Catch ex As Exception
+            logger.Error(ex, New StackFrame().GetMethod().Name & Convert.ToChar(System.Windows.Forms.Keys.Tab) & "<" & url & ">")
+            Return String.Empty
+        End Try
+    End Function
+
+    ''' <summary>
+    ''' Downloads binary data from the specified URL asynchronously using the shared HttpClient.
+    ''' </summary>
+    ''' <param name="url">The URL to download from.</param>
+    ''' <param name="operationName">Optional name for performance tracking.</param>
+    ''' <returns>The downloaded byte array, or Nothing on error.</returns>
+    Public Shared Async Function DownloadBytesAsync(ByVal url As String, Optional operationName As String = "HTTP.DownloadBytesAsync") As Task(Of Byte())
+        Try
+            Return Await HttpClientFactory.GetByteArrayTrackedAsync(url, operationName).ConfigureAwait(False)
+        Catch ex As Exception
+            logger.Error(ex, New StackFrame().GetMethod().Name & Convert.ToChar(System.Windows.Forms.Keys.Tab) & "<" & url & ">")
+            Return Nothing
+        End Try
+    End Function
+
+    ''' <summary>
+    ''' Downloads a stream from the specified URL asynchronously using the shared HttpClient.
+    ''' </summary>
+    ''' <param name="url">The URL to download from.</param>
+    ''' <param name="operationName">Optional name for performance tracking.</param>
+    ''' <returns>The downloaded stream, or Nothing on error.</returns>
+    Public Shared Async Function DownloadStreamAsync(ByVal url As String, Optional operationName As String = "HTTP.DownloadStreamAsync") As Task(Of Stream)
+        Try
+            Return Await HttpClientFactory.GetStreamTrackedAsync(url, operationName).ConfigureAwait(False)
+        Catch ex As Exception
+            logger.Error(ex, New StackFrame().GetMethod().Name & Convert.ToChar(System.Windows.Forms.Keys.Tab) & "<" & url & ">")
+            Return Nothing
+        End Try
+    End Function
+
+    ''' <summary>
+    ''' Downloads an image from the specified URL asynchronously using the shared HttpClient.
+    ''' </summary>
+    ''' <param name="url">The URL to download from.</param>
+    ''' <param name="operationName">Optional name for performance tracking.</param>
+    ''' <returns>The downloaded Image, or Nothing on error.</returns>
+    ''' <remarks>This method is designed for use with parallel image downloads (Item 4).</remarks>
+    Public Shared Async Function DownloadImageAsync(ByVal url As String, Optional operationName As String = "HTTP.DownloadImageAsync") As Task(Of Image)
+        Try
+            If String.IsNullOrEmpty(url) OrElse Not StringUtils.isValidURL(url) Then
+                Return Nothing
+            End If
+
+            Dim bytes = Await HttpClientFactory.GetByteArrayTrackedAsync(url, operationName).ConfigureAwait(False)
+            If bytes IsNot Nothing AndAlso bytes.Length > 0 Then
+                Using ms As New MemoryStream(bytes)
+                    Return New Bitmap(ms)
+                End Using
+            End If
+            Return Nothing
+        Catch ex As Exception
+            logger.Error(ex, New StackFrame().GetMethod().Name & Convert.ToChar(System.Windows.Forms.Keys.Tab) & "<" & url & ">")
+            Return Nothing
+        End Try
+    End Function
+
+    ''' <summary>
+    ''' Downloads an image from the specified URL asynchronously and returns it as a MemoryStream.
+    ''' </summary>
+    ''' <param name="url">The URL to download from.</param>
+    ''' <param name="operationName">Optional name for performance tracking.</param>
+    ''' <returns>A MemoryStream containing the image data, or Nothing on error.</returns>
+    ''' <remarks>
+    ''' Use this method when you need to preserve the original image format (JPG/PNG) 
+    ''' or need access to the raw bytes. The caller is responsible for disposing the stream.
+    ''' </remarks>
+    Public Shared Async Function DownloadImageToStreamAsync(ByVal url As String, Optional operationName As String = "HTTP.DownloadImageToStreamAsync") As Task(Of MemoryStream)
+        Try
+            If String.IsNullOrEmpty(url) OrElse Not StringUtils.isValidURL(url) Then
+                Return Nothing
+            End If
+
+            Dim bytes = Await HttpClientFactory.GetByteArrayTrackedAsync(url, operationName).ConfigureAwait(False)
+            If bytes IsNot Nothing AndAlso bytes.Length > 0 Then
+                Dim ms As New MemoryStream()
+                ms.Write(bytes, 0, bytes.Length)
+                ms.Position = 0
+                Return ms
+            End If
+            Return Nothing
+        Catch ex As Exception
+            logger.Error(ex, New StackFrame().GetMethod().Name & Convert.ToChar(System.Windows.Forms.Keys.Tab) & "<" & url & ">")
+            Return Nothing
+        End Try
+    End Function
+
+#End Region 'Async Methods Using Shared HttpClient
 
 #Region "IDisposable Support"
 

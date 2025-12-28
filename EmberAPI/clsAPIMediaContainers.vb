@@ -18,11 +18,12 @@
 ' # along with Ember Media Manager.  If not, see <http://www.gnu.org/licenses/>. #
 ' ################################################################################
 
-Imports NLog
 Imports System.IO
 Imports System.Text.RegularExpressions
+Imports System.Threading.Tasks
 Imports System.Xml
 Imports System.Xml.Serialization
+Imports NLog
 
 Namespace MediaContainers
 
@@ -4005,6 +4006,91 @@ Namespace MediaContainers
             End If
         End Function
 
+        ''' <summary>
+        ''' Asynchronously loads the image from local file, cache, or web URL
+        ''' </summary>
+        ''' <param name="tContentType">Content type for cache settings</param>
+        ''' <param name="needFullsize">Whether full size image is required</param>
+        ''' <param name="loadBitmap">Whether to load the bitmap into memory</param>
+        ''' <returns>True if image was loaded successfully</returns>
+        ''' <remarks>This is the async version of LoadAndCache for use with parallel downloads.</remarks>
+        Public Async Function LoadAndCacheAsync(ByVal tContentType As Enums.ContentType, ByVal needFullsize As Boolean, Optional ByVal loadBitmap As Boolean = False) As Task(Of Boolean)
+            Dim doCache As Boolean = False
+
+            Select Case tContentType
+                Case Enums.ContentType.Movie
+                    doCache = Master.eSettings.MovieImagesCacheEnabled
+                Case Enums.ContentType.MovieSet
+                    doCache = Master.eSettings.MovieSetImagesCacheEnabled
+                Case Enums.ContentType.TV, Enums.ContentType.TVEpisode, Enums.ContentType.TVSeason, Enums.ContentType.TVShow
+                    doCache = Master.eSettings.TVImagesCacheEnabled
+            End Select
+
+            If Not ((ImageOriginal.HasMemoryStream OrElse (ImageThumb.HasMemoryStream AndAlso Not needFullsize)) AndAlso Not loadBitmap) Then
+                If (ImageOriginal.Image Is Nothing AndAlso needFullsize) OrElse (ImageThumb.Image Is Nothing AndAlso Not needFullsize) Then
+                    ' Try local file first
+                    If File.Exists(LocalFilePath) AndAlso Not ImageOriginal.HasMemoryStream Then
+                        ImageOriginal.LoadFromFile(LocalFilePath, loadBitmap)
+                    ElseIf ImageThumb.HasMemoryStream AndAlso Not needFullsize AndAlso loadBitmap Then
+                        ImageThumb.LoadFromMemoryStream()
+                    ElseIf ImageOriginal.HasMemoryStream AndAlso loadBitmap Then
+                        ImageOriginal.LoadFromMemoryStream()
+                        ' Try cache
+                    ElseIf File.Exists(CacheThumbPath) AndAlso Not needFullsize Then
+                        ImageThumb.LoadFromFile(CacheThumbPath, loadBitmap)
+                    ElseIf File.Exists(CacheOriginalPath) Then
+                        ImageOriginal.LoadFromFile(CacheOriginalPath, loadBitmap)
+                        ' Download from web (async)
+                    Else
+                        If Not String.IsNullOrEmpty(URLThumb) AndAlso Not needFullsize Then
+                            Dim success = Await ImageThumb.LoadFromWebAsync(URLThumb, loadBitmap).ConfigureAwait(False)
+                            If success AndAlso doCache AndAlso Not String.IsNullOrEmpty(CacheThumbPath) AndAlso ImageThumb.HasMemoryStream Then
+                                Directory.CreateDirectory(Directory.GetParent(CacheThumbPath).FullName)
+                                ImageThumb.SaveToFile(CacheThumbPath)
+                            End If
+                        ElseIf Not String.IsNullOrEmpty(URLOriginal) Then
+                            Dim success = Await ImageOriginal.LoadFromWebAsync(URLOriginal, loadBitmap).ConfigureAwait(False)
+                            If success AndAlso doCache AndAlso Not String.IsNullOrEmpty(CacheOriginalPath) AndAlso ImageOriginal.HasMemoryStream Then
+                                Directory.CreateDirectory(Directory.GetParent(CacheOriginalPath).FullName)
+                                ImageOriginal.SaveToFile(CacheOriginalPath)
+                            End If
+                        End If
+                    End If
+                End If
+            End If
+
+            If (ImageOriginal.Image IsNot Nothing OrElse (ImageThumb.Image IsNot Nothing AndAlso Not needFullsize)) OrElse
+                (Not loadBitmap AndAlso (ImageOriginal.HasMemoryStream OrElse (ImageThumb.HasMemoryStream AndAlso Not needFullsize))) Then
+                Return True
+            Else
+                Return False
+            End If
+        End Function
+
+        ''' <summary>
+        ''' Checks if this image needs to be downloaded from a URL
+        ''' </summary>
+        ''' <returns>True if the image has a URL but hasn't been loaded yet</returns>
+        Public Function NeedsDownload() As Boolean
+            ' Already loaded in memory
+            If ImageOriginal.HasMemoryStream OrElse ImageThumb.HasMemoryStream Then
+                Return False
+            End If
+            ' Already has local file
+            If Not String.IsNullOrEmpty(LocalFilePath) AndAlso File.Exists(LocalFilePath) Then
+                Return False
+            End If
+            ' Already cached
+            If Not String.IsNullOrEmpty(CacheOriginalPath) AndAlso File.Exists(CacheOriginalPath) Then
+                Return False
+            End If
+            If Not String.IsNullOrEmpty(CacheThumbPath) AndAlso File.Exists(CacheThumbPath) Then
+                Return False
+            End If
+            ' Has URL to download
+            Return Not String.IsNullOrEmpty(URLOriginal) OrElse Not String.IsNullOrEmpty(URLThumb)
+        End Function
+
         Public Function CompareTo(ByVal other As [Image]) As Integer Implements IComparable(Of [Image]).CompareTo
             Try
                 Dim retVal As Integer = (ShortLang).CompareTo(other.ShortLang)
@@ -4499,6 +4585,159 @@ Namespace MediaContainers
             End Select
         End Sub
 
+        ''' <summary>
+        ''' Asynchronously saves all images for a Movie, using parallel downloads for better performance
+        ''' </summary>
+        ''' <param name="DBElement">Database element containing movie information</param>
+        ''' <param name="ForceFileCleanup">Whether to force cleanup of existing files</param>
+        ''' <returns>Task containing the modified DBElement with updated paths</returns>
+        ''' <remarks>
+        ''' This method downloads all images in parallel before saving them sequentially.
+        ''' Only supports Movie content type - other content types should use synchronous SaveAllImages.
+        ''' Note: Unlike SaveAllImages, this returns the modified DBElement since async methods cannot use ByRef.
+        ''' </remarks>
+        Public Async Function SaveAllImagesAsync(ByVal DBElement As Database.DBElement, ByVal ForceFileCleanup As Boolean) As Task(Of Database.DBElement)
+            ' Only Movie is supported for async - others should use sync version
+            If DBElement.ContentType <> Enums.ContentType.Movie Then
+                SaveAllImages(DBElement, ForceFileCleanup)
+                Return DBElement
+            End If
+
+            If Not DBElement.FilenameSpecified Then Return DBElement
+
+            Using scope = PerformanceTracker.StartOperation("ImagesContainer.SaveAllImagesAsync")
+                Dim tContentType As Enums.ContentType = DBElement.ContentType
+
+                ' Phase 1: Collect all images that need downloading
+                Dim imagesToDownload As New List(Of Image)
+
+                If Banner.NeedsDownload() Then imagesToDownload.Add(Banner)
+                If ClearArt.NeedsDownload() Then imagesToDownload.Add(ClearArt)
+                If ClearLogo.NeedsDownload() Then imagesToDownload.Add(ClearLogo)
+                If DiscArt.NeedsDownload() Then imagesToDownload.Add(DiscArt)
+                If Fanart.NeedsDownload() Then imagesToDownload.Add(Fanart)
+                If Keyart.NeedsDownload() Then imagesToDownload.Add(Keyart)
+                If Landscape.NeedsDownload() Then imagesToDownload.Add(Landscape)
+                If Poster.NeedsDownload() Then imagesToDownload.Add(Poster)
+
+                ' Add extrafanarts and extrathumbs
+                For Each img In Extrafanarts
+                    If img.NeedsDownload() Then imagesToDownload.Add(img)
+                Next
+                For Each img In Extrathumbs
+                    If img.NeedsDownload() Then imagesToDownload.Add(img)
+                Next
+
+                ' Phase 2: Download all images in parallel
+                If imagesToDownload.Count > 0 Then
+                    Using downloadScope = PerformanceTracker.StartOperation("ImagesContainer.SaveAllImagesAsync.ParallelDownload")
+                        Await Images.DownloadImagesParallelAsync(
+                            imagesToDownload,
+                            tContentType,
+                            maxConcurrency:=5,
+                            loadBitmap:=False,
+                            cancellationToken:=Nothing,
+                            progressCallback:=Nothing
+                            ).ConfigureAwait(False)
+                    End Using
+                End If
+
+                ' Phase 3: Save images sequentially (disk I/O)
+                Using saveScope = PerformanceTracker.StartOperation("ImagesContainer.SaveAllImagesAsync.SaveToDisk")
+                    'Movie Banner
+                    If Banner.LoadAndCache(tContentType, True) Then
+                        If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainBanner, ForceFileCleanup)
+                        Banner.LocalFilePath = Banner.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainBanner)
+                    Else
+                        Images.Delete_Movie(DBElement, Enums.ModifierType.MainBanner, ForceFileCleanup)
+                        Banner = New Image
+                    End If
+
+                    'Movie ClearArt
+                    If ClearArt.LoadAndCache(tContentType, True) Then
+                        If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainClearArt, ForceFileCleanup)
+                        ClearArt.LocalFilePath = ClearArt.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainClearArt)
+                    Else
+                        Images.Delete_Movie(DBElement, Enums.ModifierType.MainClearArt, ForceFileCleanup)
+                        ClearArt = New Image
+                    End If
+
+                    'Movie ClearLogo
+                    If ClearLogo.LoadAndCache(tContentType, True) Then
+                        If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainClearLogo, ForceFileCleanup)
+                        ClearLogo.LocalFilePath = ClearLogo.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainClearLogo)
+                    Else
+                        Images.Delete_Movie(DBElement, Enums.ModifierType.MainClearLogo, ForceFileCleanup)
+                        ClearLogo = New Image
+                    End If
+
+                    'Movie DiscArt
+                    If DiscArt.LoadAndCache(tContentType, True) Then
+                        If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainDiscArt, ForceFileCleanup)
+                        DiscArt.LocalFilePath = DiscArt.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainDiscArt)
+                    Else
+                        Images.Delete_Movie(DBElement, Enums.ModifierType.MainDiscArt, ForceFileCleanup)
+                        DiscArt = New Image
+                    End If
+
+                    'Movie Extrafanarts
+                    If Extrafanarts.Count > 0 Then
+                        DBElement.ExtrafanartsPath = Images.SaveMovieExtrafanarts(DBElement)
+                    Else
+                        Images.Delete_Movie(DBElement, Enums.ModifierType.MainExtrafanarts, ForceFileCleanup)
+                        Extrafanarts = New List(Of Image)
+                        DBElement.ExtrafanartsPath = String.Empty
+                    End If
+
+                    'Movie Extrathumbs
+                    If Extrathumbs.Count > 0 Then
+                        DBElement.ExtrathumbsPath = Images.SaveMovieExtrathumbs(DBElement)
+                    Else
+                        Images.Delete_Movie(DBElement, Enums.ModifierType.MainExtrathumbs, ForceFileCleanup)
+                        Extrathumbs = New List(Of Image)
+                        DBElement.ExtrathumbsPath = String.Empty
+                    End If
+
+                    'Movie Fanart
+                    If Fanart.LoadAndCache(tContentType, True) Then
+                        If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainFanart, ForceFileCleanup)
+                        Fanart.LocalFilePath = Fanart.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainFanart)
+                    Else
+                        Images.Delete_Movie(DBElement, Enums.ModifierType.MainFanart, ForceFileCleanup)
+                        Fanart = New Image
+                    End If
+
+                    'Movie Keyart
+                    If Keyart.LoadAndCache(tContentType, True) Then
+                        If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainKeyart, ForceFileCleanup)
+                        Keyart.LocalFilePath = Keyart.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainKeyart)
+                    Else
+                        Images.Delete_Movie(DBElement, Enums.ModifierType.MainKeyart, ForceFileCleanup)
+                        Keyart = New Image
+                    End If
+
+                    'Movie Landscape
+                    If Landscape.LoadAndCache(tContentType, True) Then
+                        If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainLandscape, ForceFileCleanup)
+                        Landscape.LocalFilePath = Landscape.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainLandscape)
+                    Else
+                        Images.Delete_Movie(DBElement, Enums.ModifierType.MainLandscape, ForceFileCleanup)
+                        Landscape = New Image
+                    End If
+
+                    'Movie Poster
+                    If Poster.LoadAndCache(tContentType, True) Then
+                        If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainPoster, ForceFileCleanup)
+                        Poster.LocalFilePath = Poster.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainPoster)
+                    Else
+                        Images.Delete_Movie(DBElement, Enums.ModifierType.MainPoster, ForceFileCleanup)
+                        Poster = New Image
+                    End If
+                End Using
+            End Using
+
+            Return DBElement
+        End Function
 #End Region 'Save Methods
 
 #Region "Sort Methods"

@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<CommandFile xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <transaction name="MyVideosDBSQL_v48_to_v49_indices">
+    <command type="DB">
+      <description>Add index on actors.strActor for fast actor lookups during scraping</description>
+      <execute>CREATE INDEX IF NOT EXISTS ix_actors_strActor ON actors (strActor COLLATE NOCASE);</execute>
+    </command>
+    <command type="DB">
+      <description>Add index on movie.idSource for source-based filtering</description>
+      <execute>CREATE INDEX IF NOT EXISTS ix_movie_idSource ON movie (idSource);</execute>
+    </command>
+    <command type="DB">
+      <description>Add index on movie.TMDB for TMDB ID lookups</description>
+      <execute>CREATE INDEX IF NOT EXISTS ix_movie_TMDB ON movie (TMDB);</execute>
+    </command>
+    <command type="DB">
+      <description>Add index on movie.Imdb for IMDB ID lookups</description>
+      <execute>CREATE INDEX IF NOT EXISTS ix_movie_Imdb ON movie (Imdb);</execute>
+    </command>
+    <command type="DB">
+      <description>Add index on tvshow.idSource for source-based filtering</description>
+      <execute>CREATE INDEX IF NOT EXISTS ix_tvshow_idSource ON tvshow (idSource);</execute>
+    </command>
+    <command type="DB">
+      <description>Add index on episode.idShow for episode lookups by show</description>
+      <execute>CREATE INDEX IF NOT EXISTS ix_episode_idShow ON episode (idShow);</execute>
+    </command>
+    <command type="DB">
+      <description>Add index on episode.idSource for source-based filtering</description>
+      <execute>CREATE INDEX IF NOT EXISTS ix_episode_idSource ON episode (idSource);</execute>
+    </command>
+    <command type="DB">
+      <description>Add index on genre.strGenre for genre lookups</description>
+      <execute>CREATE INDEX IF NOT EXISTS ix_genre_strGenre ON genre (strGenre COLLATE NOCASE);</execute>
+    </command>
+    <command type="DB">
+      <description>Add index on country.strCountry for country lookups</description>
+      <execute>CREATE INDEX IF NOT EXISTS ix_country_strCountry ON country (strCountry COLLATE NOCASE);</execute>
+    </command>
+    <command type="DB">
+      <description>Add index on studio.strStudio for studio lookups</description>
+      <execute>CREATE INDEX IF NOT EXISTS ix_studio_strStudio ON studio (strStudio COLLATE NOCASE);</execute>
+    </command>
+  </transaction>
+</CommandFile>

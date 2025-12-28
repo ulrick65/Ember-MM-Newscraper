@@ -34,7 +34,7 @@ Public Class Scraper
     Private _Options As OpenMovieDatabase.OpenMovieDatabaseOptions
 
     Private _Client As OpenMovieDatabase.OpenMovieDatabaseService = Nothing
-    Private _HttpClient As HttpClient = Nothing
+    ' Removed: Private _HttpClient As HttpClient = Nothing
 
 #End Region 'Fields
 
@@ -55,10 +55,10 @@ Public Class Scraper
             Try
                 _addonSettings = addonSettings
 
-                _HttpClient = New HttpClient
+                ' Use shared HttpClient from factory instead of creating new instance
                 _Options = New OpenMovieDatabase.OpenMovieDatabaseOptions(addonSettings.APIKey)
-                _Client = New OpenMovieDatabase.OpenMovieDatabaseService(_HttpClient, _Options)
-                _Logger.Trace("[OMDb_Data] [CreateAPI] Client created")
+                _Client = New OpenMovieDatabase.OpenMovieDatabaseService(HttpClientFactory.SharedClient, _Options)
+                _Logger.Trace("[OMDb_Data] [CreateAPI] Client created using shared HttpClient")
             Catch ex As Exception
                 _Client = Nothing
                 _Logger.Error(String.Format("[OMDb_Data] [CreateAPI] [Error] {0}", ex.Message))
@@ -68,6 +68,7 @@ Public Class Scraper
             _Client = Nothing
         End If
     End Sub
+
     ''' <summary>
     '''  Scrape MovieDetails from OMDb
     ''' </summary>
