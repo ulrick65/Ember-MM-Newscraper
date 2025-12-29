@@ -2,14 +2,14 @@
 
 | Document Info | |
 |---------------|---|
-| **Version** | 2.7 |
+| **Version** | 2.9 |
 | **Created** | December 27, 2025 |
-| **Updated** | December 28, 2025 |
+| **Updated** | December 29, 2025 |
 | **Author** | Eric H. Anderson |
 | **Status** | In Progress |
 | **Reference** | [PerformanceAnalysis.md](PerformanceAnalysis.md) |
 
----
+---I 
 
 ## Revision History
 
@@ -33,6 +33,8 @@
 | 2.5 | 2025-12-28 | Eric H. Anderson | Item 6 verified already complete - DoneAndClose() correctly downloads full-size; removed from active work |
 | 2.6 | 2025-12-28 | Eric H. Anderson | Item 5 Step 5.3 complete - Save_MovieAsync created; Updated architecture findings |
 | 2.7 | 2025-12-28 | Eric H. Anderson | Item 5 Step 5.4 complete - Architecture analysis documented to prevent re-analysis |
++| 2.8 | 2025-12-28 | Eric H. Anderson | Step 0.7 complete - RecordValue methods added to PerformanceTracker; SaveAllImages metrics instrumented |
++| 2.9 | 2025-12-29 | Eric H. Anderson | Added SaveAllImages metrics analysis; Updated projections for Item 5; Documented current metrics baseline |
 
 ---
 
@@ -112,11 +114,13 @@ Create a reusable performance tracking utility to measure and log operation timi
 - [x] **0.6** Create baseline capture utility/test
     - [x] Scraped 50 movies with TMDB and IMDB scrapers
     - [x] Documented baseline values in Testing Plan section
+    - [x] Verified performance metrics tracked for all operations
 
-- [ ] **0.7** Add instrumentation for Phase 2 decision support
-    - [ ] `SaveAllImages` total time
-    - [ ] `SaveAllImages.Download` phase time  
-    - [ ] `SaveAllImages.DiskWrite` phase time
+- [x] **0.7** Add instrumentation for Phase 2 decision support
+    - [x] `SaveAllImages.Movie.Total` - Total time in SaveAllImages for movies
+    - [x] `SaveAllImages.Movie.Download` - Aggregate time spent in LoadAndCache (network I/O)
+    - [x] `SaveAllImages.Movie.DiskWrite` - Aggregate time spent saving to disk (file I/O)
+    - [x] `SaveAllImages.Movie.ImageCount` - Number of images successfully processed
     - [ ] NFO save operations (`NFO.SaveToNFO_Movie`)
 
 ### Completed
@@ -512,7 +516,7 @@ Enable concurrent image downloads with controlled parallelism using `SemaphoreSl
 
 **dlgImgSelect.vb** - Key changes:
 - Added `_cancellationTokenSource` field
-- `DownloadAllImages` now uses parallel downloads for all 15 image types
+- `DownloadAllImages` now uses parallel downloads for all image types
 - Each image type wrapped in `PerformanceTracker` scope
 - Cancellation support integrated with BackgroundWorker
 
@@ -589,7 +593,7 @@ All async infrastructure has been implemented. What remains is wiring the async 
     - See "Architecture Analysis" section below for complete findings
 
 - [ ] **5.5** Update bulk scrape workflow to use async
-    - Replace `Save_Movie` with `Await Save_MovieAsync` in bulk loop
+    - Replace `Save_Movie` with `Save_MovieAsync` in bulk loop
     - May need `Task.Run()` wrapper for BackgroundWorker context
     - Ensure proper async/await propagation
     - Maintain progress reporting and cancellation
@@ -757,180 +761,53 @@ The async method already exists in `clsAPIMediaContainers.vb`:
 - [ ] Existing cancellation behavior preserved
 - [ ] Metrics confirm improvement
 
----
+### SaveAllImages Metrics Analysis (Step 0.7 Results)
 
----
+**Captured:** 2025-12-28 (49 movies scraped)
 
-## Item 6: Thumbnail Download Inefficiency Fix
+#### Current Sequential Performance (per movie)
 
-**Effort:** N/A | **Risk:** N/A | **Impact:** N/A
+| Phase | Avg Time | % of Total | Notes |
+|-------|----------|------------|-------|
+| **Download** | 815.25 ms | 94% | Network I/O bound |
+| **Disk Write** | 46.42 ms | 5% | Fast local I/O |
+| **Overhead** | 6.18 ms | 1% | Tracking, logic |
+| **Total SaveAllImages** | 867.85 ms | 100% | |
 
-**Status:** ✅ Already Correctly Implemented
+#### Key Metrics
 
-### Original Concern
-During Item 4 analysis, concern was raised that `GetPreferredImages()` might download thumbnails instead of full-size images, causing redundant downloads when `SaveAllImages()` later requests full-size.
+| Metric | Value |
+|--------|-------|
+| Images per movie (avg) | 6.37 |
+| Time per image download | ~128 ms |
+| Total images processed | 312 |
+| Total download time | 39.9 sec |
+| Total disk write time | 2.3 sec |
 
-### Verification Analysis (2025-12-28)
+#### Projected Item 5 Impact (Parallel Downloads)
 
-Thorough code review of `dlgImgSelect.vb` revealed the implementation is **already correct**:
+With **5 concurrent downloads** and average **6.37 images per movie**:
 
-| Method | `needFullsize` | Purpose | Correct? |
-|--------|----------------|---------|----------|
-| `CreateImageTag` (line 995) | `False` | Download thumbnails for dialog list display | ✅ |
-| `DownloadDefaultImages` (lines 1939-2033) | `False` | Download thumbnails for initial preferred image display | ✅ |
-| `DoneAndClose` (lines 1365-1400) | `True` | Download **full-size** when user clicks OK | ✅ |
+| Metric | Current (Sequential) | Projected (Parallel) | Improvement |
+|--------|---------------------|----------------------|-------------|
+| Download phase | 815 ms | ~256 ms | **-69%** |
+| SaveAllImages total | 868 ms | ~308 ms | **-64%** |
+| 50-movie batch (images) | 42.5 sec | ~15.1 sec | **-27.4 sec** |
 
-### Workflow Confirmation
+#### Overall Bulk Scrape Projection (50 movies)
 
-1. **Dialog Opens** → `DownloadDefaultImages()` downloads thumbnails for fast display
-2. **User Browses** → `CreateImageTag()` uses thumbnails for list items
-3. **User Clicks OK** → `DoneAndClose()` downloads full-size images before returning
+| Phase | Current | Projected | Change |
+|-------|---------|-----------|--------|
+| TMDB Scraping | 51.3 sec | 51.3 sec | - |
+| IMDB Scraping | 105.9 sec | 105.9 sec | - |
+| Image Downloads | 42.5 sec | 15.1 sec | **-64%** |
+| Database Save | 10.7 sec | 10.7 sec | - |
+| **Estimated Total** | ~210 sec | ~183 sec | **-13%** |
 
-The `DoneAndClose()` method correctly uses `LoadAndCache(tContentType, True)` for all image types:
+#### Analysis Conclusions
 
-    'Banner
-    Result.ImagesContainer.Banner.LoadAndCache(tContentType, True)
-    
-    'CharacterArt
-    Result.ImagesContainer.CharacterArt.LoadAndCache(tContentType, True)
-    
-    ' ... (all other image types use True)
-
-### Root Cause of Confusion
-
-The original `ImageThumbnailAnalysis.md` document referenced line numbers (1952, 1956, etc.) in a `GetPreferredImages()` method that doesn't exist in the current codebase. The actual `GetPreferredImages()` method (lines 2167-2196) only copies data between containers - it has no `LoadAndCache` calls.
-
-### Conclusion
-
-**No code changes required.** The existing implementation correctly:
-- Downloads thumbnails for fast dialog display
-- Downloads full-size images only when user confirms selection
-- Avoids redundant downloads
-
-### Acceptance Criteria
-- [x] Verified `DoneAndClose()` uses `needFullsize:=True` for all image types
-- [x] Verified workflow: thumbnails for display, full-size on OK
-- [x] No redundant download behavior exists
-
----
-
----
-
-## Session Continuity Notes
-
-**Last Updated:** 2025-12-28
-
-### For Next Session - Resume at Item 5, Step 5.4
-
-**Current State:**
-- Items 0, 1, 2, 4, 6 are **complete**
-- Item 3 is **deferred** (already optimized)
-- Item 5 is **in progress** - Step 5.3 complete, integration pending
-
-**Completed This Session:**
-- ✅ Created `Save_MovieAsync` in `clsAPIDatabase.vb`
-- ✅ Updated `ScrapingProcessMovies.md` with architecture details
-- ✅ Documented image download timing (occurs during Save, not Scrape)
-
-**Next Steps for Item 5:**
-
-1. **Step 5.5** - Implement integration using Option A (sync-over-async wrapper)
-   - Identify the primary bulk scrape caller (likely in `frmMain.vb` or `clsAPIModules.vb`)
-   - Replace `Save_Movie` with `Save_MovieAsync(...).GetAwaiter().GetResult()`
-   - This enables parallel image downloads WITHIN each movie save
-   - Does NOT parallelize across movies (that's Phase 2)
-
-2. **Step 5.6** - Test with bulk scrape operations
-
-3. **Step 5.7** - Capture metrics and validate improvement
-
-**DO NOT RE-ANALYZE the architecture.** See "Architecture Analysis (Step 5.4 Findings)" section above.
-
-**Architecture Insight Discovered:**
-- Image downloads happen during `Save_Movie()`, NOT during `ScrapeImage_Movie()`
-- `ScrapeImage_Movie()` only collects URLs into `ImagesContainer`
-- `SaveAllImages()` (called from `Save_Movie`) does the actual HTTP downloads
-- This is why `Save_MovieAsync` with `SaveAllImagesAsync` is the correct integration point
-
-**Key Files for Item 5:**
-- `EmberAPI\clsAPIDatabase.vb` - Add `Save_MovieAsync`
-- `EmberAPI\clsAPIMediaContainers.vb` - `SaveAllImagesAsync` already exists (lines 4599-4740)
-- `EmberAPI\clsAPIModules.vb` - Likely bulk scrape orchestration
-- `EmberMediaManager\frmMain.vb` - UI bulk scrape trigger
-- `docs\process-docs\ScrapingProcessMovies.md` - Architecture documentation (updated)
-
-**Infrastructure Already Complete:**
-- `SaveAllImagesAsync` in `clsAPIMediaContainers.vb` ✅
-- `DownloadImagesParallelAsync` in `clsAPIImages.vb` ✅
-- `LoadAndCacheAsync` in `clsAPIMediaContainers.vb` ✅
-- Async HTTP methods in `clsAPIHTTP.vb` ✅
-
-**Git Branch:** `feature/performance-improvements-phase1`
-
-## Testing Plan
-
-### Baseline Capture (After Item 0)
-
-Record baseline metrics using `PerformanceTracker`:
-
-| Metric | Baseline Value | Captured Date |
-|--------|----------------|---------------|
-| TMDB Single Movie Scrape (avg ms) | 1,078 | 2025-12-27 |
-| IMDB Single Movie Scrape (avg ms) | 1,910 | 2025-12-27 |
-| 50 Movie Batch Scrape (total sec) | ~250 | 2025-12-27 |
-| Single Image Download (avg ms) | 142 | 2025-12-27 |
-| 312 Image Batch Download (total sec) | 44.4 | 2025-12-27 |
-| Actor DB Lookup (avg ms) | 1.73 | 2025-12-27 |
-| Movie DB Save (avg ms) | 619 | 2025-12-27 |
-| TMDB API Call (avg ms) | 64 | 2025-12-27 |
-| Images per Movie (avg) | 6.4 | 2025-12-27 |
-| TMDB API Calls per Movie | TBD | Pending Item 3 |
-
-### Post-Implementation Validation
-
-After each item, capture metrics and calculate improvement:
-
-| Metric | Baseline | Item 1 | Item 2 | Item 3 | Item 4 | Item 5 | Final |
-|--------|----------|--------|--------|--------|--------|--------|-------|
-| TMDB Movie Scrape (ms) | 1,078 | 1,104 | 1,069 | - | - | | |
-| IMDB Movie Scrape (ms) | 1,910 | 1,858 | 2,033 | - | - | | |
-| Actor Lookup (ms) | 1.73 | 1.50 | 0.67 | - | - | | **-61%** |
-| Movie DB Save (ms) | 619 | | 529 | - | - | | **-15%** |
-| Image Download (ms) | 142 | 190 | 124 | - | - | | |
-| API Calls per Movie | TBD | | | | | | |
-| Memory Peak (MB) | TBD | | | | | | |
-
----
-
-## Rollback Plan
-
-Each item can be reverted independently:
-
-0. **Performance Tracker** - Can be disabled via config flag, no functional impact
-1. **HttpClient** - Restore original `New HttpClient` calls in OMDb scraper
-2. **Database Indices** - Indices can be dropped without data loss
-3. **TMDB Methods** - Revert to original `MovieMethods` flags
-4. **Parallel Downloads (Dialog)** - Restore sequential download loop in dlgImgSelect
-5. **Parallel Downloads (Bulk)** - Use `Save_Movie` instead of `Save_MovieAsync`
-6. **Thumbnail Fix** - N/A (no changes made - already correct)
-
----
-
-## Sign-Off
-
-| Phase | Reviewer | Date | Notes |
-|-------|----------|------|-------|
-| Planning Complete | Eric H. Anderson | 2025-12-27 | Planning document created and agreed to |
-| Item 0 Complete | Eric H. Anderson | 2025-12-28 | Baseline captured: 50 movies |
-| Baseline Captured | Eric H. Anderson | 2025-12-28 | See Testing Plan section |
-| Item 1 Complete | Eric H. Anderson | 2025-12-27 | HttpClientFactory + async methods |
-| Item 2 Complete | Eric H. Anderson | 2025-12-27 | 61% faster actor lookups, 15% faster saves |
-| Item 3 Deferred | Eric H. Anderson | 2025-12-28 | Already optimized - minimal ROI |
-| Item 4 Complete | Eric H. Anderson | 2025-12-28 | Dialog parallel downloads implemented |
-| Item 5 Analysis | Eric H. Anderson | 2025-12-28 | Infrastructure ready, integration documented |
-| Item 6 Verified | Eric H. Anderson | 2025-12-28 | Already correctly implemented - no changes needed |
-| Phase 1 Complete | | | |
-
----
-
-*Next Phase: See [PerformanceAnalysis.md](PerformanceAnalysis.md) Section 8 for Medium Priority items*
+1. **Download dominates**: 94% of SaveAllImages time is network I/O
+2. **Disk I/O is fast**: Only 5% of time - no optimization needed
+3. **Parallel will help**: 5 concurrent downloads should yield ~3.2x speedup
+4. **Scraping dominates overall**: TMDB+IMDB takes 157 sec vs 43 sec for images
+5. **Phase 2 opportunity**: Parallelizing scraping itself would have larger impact

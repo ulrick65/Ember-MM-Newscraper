@@ -778,6 +778,32 @@ Or use `Task.WhenAll` for true parallelism across movies:
 
 ---
 
+## Part 11: Performance Metrics
+
+### 11.1 SaveAllImages Metrics (Implemented)
+
+The following metrics are captured during `SaveAllImages()` for Movie content type:
+
+| Metric Name | Description |
+|-------------|-------------|
+| `SaveAllImages.Movie.Total` | Total time in SaveAllImages method |
+| `SaveAllImages.Movie.Download` | Aggregate time in LoadAndCache (network I/O) |
+| `SaveAllImages.Movie.DiskWrite` | Aggregate time writing to disk |
+| `SaveAllImages.Movie.ImageCount` | Number of images processed |
+
+### 11.2 Observed Performance (49 Movies Baseline - December 2025)
+
+| Phase | Avg Time | % of Total |
+|-------|----------|------------|
+| Download | 815.25 ms | 94% |
+| Disk Write | 46.42 ms | 5% |
+| Overhead | 6.18 ms | 1% |
+| **Total** | 867.85 ms | 100% |
+
+**Key Finding:** Network I/O dominates image save time. Parallel downloads can reduce this by ~64%.
+
+---
+
 ## Summary
 
 The Ember Media Manager scraping system is a flexible, addon-based architecture that:

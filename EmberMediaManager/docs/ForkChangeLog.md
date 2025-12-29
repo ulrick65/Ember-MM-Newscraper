@@ -17,8 +17,9 @@ This document tracks all changes made to this fork of Ember Media Manager, start
 |----------|-------|
 | **Document Version** | 1.0.4 |
 | **Created** | December 25, 2025 |
-| **Last Updated** | December 27, 2025 |
+| **Last Updated** | December 28, 2025 |
 | **Author** | Eric H. Anderson |
+
 ---
 
 ## Fork Information
@@ -41,7 +42,7 @@ This document tracks all changes made to this fork of Ember Media Manager, start
 | 1.11.1.0 | Pre-fork | Upstream nagten version at time of fork |
 | 1.11.1.7 | Dec 21, 2025 | Upstream patch pulled (IMDB writer comparison fix) |
 | 1.12.0.0 | Dec 22, 2025 | Framework upgrade to .NET 4.8, package updates, all addons versioned |
-| 1.12.1.0 | Dec 23-27, 2025 | Bug fixes, cleanup, genre mapping fix, documentation, code organization, additional package updates |
+| 1.12.1.0 | Dec 23-28, 2025 | Bug fixes, cleanup, genre mapping fix, documentation, code organization, performance improvements, additional package updates |
 
 ---
 
@@ -165,7 +166,7 @@ The following features are deprecated and slated for removal in a future version
 
 ## Detailed Change History
 
-### Version 1.12.1.0 (December 23-27, 2025)
+### Version 1.12.1.0 (December 23-28, 2025)
 
 **Summary:** Bug fixes, code cleanup, version standardization, documentation improvements, and additional package updates.
 
@@ -185,6 +186,20 @@ The following features are deprecated and slated for removal in a future version
 | Bug Fix | Fixed image language filtering - uncommented/added missing FilterImages calls for EpisodeFanarts, EpisodePosters, SeasonFanarts, and MainFanarts | `EmberAPI\clsAPIMediaContainers.vb` |
 | Enhancement | Added alphabetical sorting to Versions dialog (Ember Application/API pinned at top) | `EmberAPI\clsAPIModules.vb` |
 | Bug Fix | Fixed duplicate entries in Versions dialog by using HashSet for assembly tracking | `EmberAPI\clsAPIModules.vb` |
+| Feature | Added `PerformanceTracker` class for operation timing and metrics | `EmberAPI\clsAPIPerformanceTracker.vb` (new) |
+| Feature | Added `HttpClientFactory` for shared HTTP client with connection pooling | `EmberAPI\clsAPIHttpClientFactory.vb` (new) |
+| Enhancement | Added async HTTP methods for parallel downloads | `EmberAPI\clsAPIHTTP.vb` |
+| Enhancement | Added `SaveAllImagesAsync` and `LoadAndCacheAsync` for parallel image downloads | `EmberAPI\clsAPIMediaContainers.vb` |
+| Enhancement | Added `DownloadImagesParallelAsync` with SemaphoreSlim throttling | `EmberAPI\clsAPIImages.vb` |
+| Enhancement | Added `Save_MovieAsync` for async database saves | `EmberAPI\clsAPIDatabase.vb` |
+| Enhancement | Added performance instrumentation to TMDB scraper | `Addons\scraper.TMDB.Data\Scraper\clsScrapeTMDB.vb` |
+| Enhancement | Added performance instrumentation to IMDB scraper | `Addons\scraper.IMDB.Data\Scraper\clsScrapeIMDB.vb` |
+| Enhancement | Added parallel image downloads to Image Select dialog | `EmberMediaManager\dlgImgSelect.vb` |
+| Enhancement | Added metrics export on application shutdown | `EmberMediaManager\ApplicationEvents.vb` |
+| Performance | Added 10 database indices for faster lookups | `EmberAPI\DB\MyVideosDBSQL.txt` |
+| Performance | Added SQLite PRAGMA optimizations (WAL mode, cache, mmap) | `EmberAPI\clsAPIDatabase.vb` |
+| Performance | Updated OMDb scraper to use shared HttpClient | `Addons\scraper.Data.OMDb\Scraper\clsScrapeOMDb.vb` |
+| Database | Database version upgraded from 48 to 49; added v48→v49 patch file | `EmberAPI\clsAPIDatabase.vb`, `EmberAPI\DB\MyVideosDBSQL_v48_Patch.xml` (new) |
 
 **Version Updates:**
 
@@ -246,6 +261,9 @@ The following features are deprecated and slated for removal in a future version
 | Documentation | Created ForkChangeLog.md | `EmberMediaManager\docs\ForkChangeLog.md` |
 | Documentation | Created mapping process docs | Multiple mapping docs |
 | Documentation | Created SolutionCleanupAnalysis.md | `EmberMediaManager\docs\SolutionCleanupAnalysis.md` |
+| Documentation | Created PerformanceAnalysis.md | `EmberMediaManager\docs\PerformanceAnalysis.md` |
+| Documentation | Created PerformanceImprovements-Phase1.md | `EmberMediaManager\docs\PerformanceImprovements-Phase1.md` |
+| Documentation | Created ScrapingProcessMovies.md | `EmberMediaManager\docs\process-docs\ScrapingProcessMovies.md` |
 
 **Build and Scripts:**
 
@@ -371,6 +389,9 @@ The following documents provide detailed information about specific initiatives:
 | [ReleaseNotes-v1.12.0.0.md](ReleaseNotes-v1.12.0.0.md) | Release notes for v1.12.0.0 |
 | [GenreMappingProcess.md](GenreMappingProcess.md) | Genre mapping system documentation |
 | [SolutionCleanupAnalysis.md](SolutionCleanupAnalysis.md) | Analysis of solution cleanup |
+| [PerformanceAnalysis.md](PerformanceAnalysis.md) | Performance analysis and optimization recommendations |
+| [PerformanceImprovements-Phase1.md](PerformanceImprovements-Phase1.md) | Phase 1 performance implementation plan and progress |
+| [ScrapingProcessMovies.md](process-docs/ScrapingProcessMovies.md) | Movie scraping process architecture documentation |
 
 ---
 

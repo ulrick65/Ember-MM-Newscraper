@@ -487,10 +487,10 @@ This section catalogs all performance metrics for tracking optimization impact. 
 | Metric Name | Location | Description | Status |
 |-------------|----------|-------------|--------|
 | `Image.LoadFromWeb` | `clsAPIImages.vb` | Time for single image HTTP download | ✅ Implemented |
-| `SaveAllImages.Total` | `clsAPIMediaContainers.vb` | Total time for SaveAllImages method (download + disk write) | ⬜ Not Implemented |
-| `SaveAllImages.Download` | `clsAPIMediaContainers.vb` | Time spent in HTTP download phase only | ⬜ Not Implemented |
-| `SaveAllImages.DiskWrite` | `clsAPIMediaContainers.vb` | Time spent writing images to disk | ⬜ Not Implemented |
-| `SaveAllImages.ImageCount` | `clsAPIMediaContainers.vb` | Count of images processed (for correlation) | ⬜ Not Implemented |
+| `SaveAllImages.Movie.Total` | `clsAPIMediaContainers.vb` | Total time for SaveAllImages method (download + disk write) | ✅ Implemented |
+| `SaveAllImages.Movie.Download` | `clsAPIMediaContainers.vb` | Time spent in HTTP download phase only | ✅ Implemented |
+| `SaveAllImages.Movie.DiskWrite` | `clsAPIMediaContainers.vb` | Time spent writing images to disk | ✅ Implemented |
+| `SaveAllImages.Movie.ImageCount` | `clsAPIMediaContainers.vb` | Count of images processed (for correlation) | ✅ Implemented |
 
 ### 9.3 Database Operations
 
@@ -498,6 +498,7 @@ This section catalogs all performance metrics for tracking optimization impact. 
 |-------------|----------|-------------|--------|
 | `Database.Add_Actor` | `clsAPIDatabase.vb` | Time for single actor lookup/insert operation | ✅ Implemented |
 | `Database.Save_Movie` | `clsAPIDatabase.vb` | Total time for Save_Movie (includes NFO, images, DB write) | ✅ Implemented |
+| `Save_Movie.Images` | `clsAPIDatabase.vb` | Time spent in SaveAllImages() within Save_Movie | ✅ Implemented |
 | `Database.Save_TVShow` | `clsAPIDatabase.vb` | Total time for Save_TVShow | ⬜ Not Implemented |
 | `Database.Save_TVSeason` | `clsAPIDatabase.vb` | Total time for Save_TVSeason | ⬜ Not Implemented |
 | `Database.Save_TVEpisode` | `clsAPIDatabase.vb` | Total time for Save_TVEpisode | ⬜ Not Implemented |
@@ -527,11 +528,11 @@ These metrics decompose `Database.Save_Movie` to identify bottlenecks:
 | Category | Implemented | Not Implemented | Total |
 |----------|-------------|-----------------|-------|
 | Scraper Operations | 4 | 1 | 5 |
-| Image Operations | 1 | 4 | 5 |
-| Database Operations | 2 | 3 | 5 |
+| Image Operations | 5 | 0 | 5 |
+| Database Operations | 3 | 2 | 5 |
 | Save_Movie Breakdown | 0 | 5 | 5 |
 | Scraping Workflow | 0 | 3 | 3 |
-| **Total** | **7** | **16** | **23** |
+| **Total** | **12** | **11** | **23** |
 
 ### 9.7 Priority Metrics for Phase 1 Validation
 
@@ -539,10 +540,10 @@ The following metrics are critical for validating Phase 1 Item 5 (parallel image
 
 1. **`Save_Movie.Images`** - Confirms SaveAllImages is the bottleneck within Save_Movie
 2. **`SaveAllImages.Download`** - Confirms network (not disk) is the bottleneck
-3. **`SaveAllImages.DiskWrite`** - Baseline for disk I/O portion
-4. **`SaveAllImages.ImageCount`** - Correlates time with work done
+3. **`SaveAllImages.DiskWrite`** - Baseline for disk I/O portion ✅ **Confirmed: 5% of time**
+4. **`SaveAllImages.ImageCount`** - Correlates time with work done ✅ **Avg: 6.37 images/movie**
 
-Without these metrics, we cannot objectively measure if the async/parallel infrastructure provides real benefit.
+**Status:** All priority metrics implemented. Analysis confirms download phase (94%) is the bottleneck, validating Item 5 approach.
 
 ### 9.8 Priority Metrics for Phase 2 (TV Shows)
 

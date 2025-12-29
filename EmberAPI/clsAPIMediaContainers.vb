@@ -4248,6 +4248,40 @@ Namespace MediaContainers
 
 #Region "Save Methods"
 
+        ''' <summary>
+        ''' Saves all images for a database element to disk, handling download from URLs and local file operations.
+        ''' </summary>
+        ''' <param name="DBElement">The database element containing content type and file information. Modified by reference to update image paths.</param>
+        ''' <param name="ForceFileCleanup">When True, deletes existing image files before saving new ones to ensure clean state.</param>
+        ''' <remarks>
+        ''' <para>This method processes images sequentially, first downloading from URLs via LoadAndCache, then saving to disk.</para>
+        ''' 
+        ''' <para><b>Supported Content Types:</b></para>
+        ''' <list type="bullet">
+        '''   <item><description>Movie - Banner, ClearArt, ClearLogo, DiscArt, Extrafanarts, Extrathumbs, Fanart, Keyart, Landscape, Poster</description></item>
+        '''   <item><description>MovieSet - Banner, ClearArt, ClearLogo, DiscArt, Fanart, Keyart, Landscape, Poster</description></item>
+        '''   <item><description>TVEpisode - Fanart, Poster</description></item>
+        '''   <item><description>TVSeason - Banner, Fanart, Landscape, Poster (handles AllSeasons separately)</description></item>
+        '''   <item><description>TVShow - Banner, CharacterArt, ClearArt, ClearLogo, Extrafanarts, Fanart, Keyart, Landscape, Poster</description></item>
+        ''' </list>
+        ''' 
+        ''' <para><b>Performance Metrics (Movie only):</b></para>
+        ''' <list type="bullet">
+        '''   <item><description>SaveAllImages.Movie.Total - Total time in method</description></item>
+        '''   <item><description>SaveAllImages.Movie.Download - Aggregate time spent in LoadAndCache (network I/O)</description></item>
+        '''   <item><description>SaveAllImages.Movie.DiskWrite - Aggregate time spent saving to disk (file I/O)</description></item>
+        '''   <item><description>SaveAllImages.Movie.ImageCount - Number of images successfully processed</description></item>
+        ''' </list>
+        ''' 
+        ''' <para><b>Performance Metrics (Other content types):</b></para>
+        ''' <list type="bullet">
+        '''   <item><description>SaveAllImages.[ContentType].Total - Total time in method for that content type</description></item>
+        ''' </list>
+        ''' 
+        ''' <para>For parallel image downloads with better performance, use <see cref="SaveAllImagesAsync"/> (Movie content type only).</para>
+        ''' </remarks>
+        ''' <seealso cref="SaveAllImagesAsync"/>
+        ''' <seealso cref="LoadAllImages"/>
         Public Sub SaveAllImages(ByRef DBElement As Database.DBElement, ByVal ForceFileCleanup As Boolean)
             If Not DBElement.FilenameSpecified AndAlso (DBElement.ContentType = Enums.ContentType.Movie OrElse DBElement.ContentType = Enums.ContentType.TVEpisode) Then Return
 
@@ -4255,333 +4289,402 @@ Namespace MediaContainers
 
             Select Case tContentType
                 Case Enums.ContentType.Movie
+                    ' Performance tracking variables
+                    Dim downloadSw As New Stopwatch()
+                    Dim diskWriteSw As New Stopwatch()
+                    Dim imageCount As Integer = 0
 
-                    'Movie Banner
-                    If Banner.LoadAndCache(tContentType, True) Then
-                        If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainBanner, ForceFileCleanup)
-                        Banner.LocalFilePath = Banner.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainBanner)
-                    Else
-                        Images.Delete_Movie(DBElement, Enums.ModifierType.MainBanner, ForceFileCleanup)
-                        Banner = New Image
-                    End If
+                    Using scopeTotal = PerformanceTracker.StartOperation("SaveAllImages.Movie.Total")
+                        'Movie Banner
+                        downloadSw.Start()
+                        Dim bannerLoaded = Banner.LoadAndCache(tContentType, True)
+                        downloadSw.Stop()
+                        If bannerLoaded Then
+                            imageCount += 1
+                            diskWriteSw.Start()
+                            If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainBanner, ForceFileCleanup)
+                            Banner.LocalFilePath = Banner.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainBanner)
+                            diskWriteSw.Stop()
+                        Else
+                            Images.Delete_Movie(DBElement, Enums.ModifierType.MainBanner, ForceFileCleanup)
+                            Banner = New Image
+                        End If
 
-                    'Movie ClearArt
-                    If ClearArt.LoadAndCache(tContentType, True) Then
-                        If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainClearArt, ForceFileCleanup)
-                        ClearArt.LocalFilePath = ClearArt.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainClearArt)
-                    Else
-                        Images.Delete_Movie(DBElement, Enums.ModifierType.MainClearArt, ForceFileCleanup)
-                        ClearArt = New Image
-                    End If
+                        'Movie ClearArt
+                        downloadSw.Start()
+                        Dim clearArtLoaded = ClearArt.LoadAndCache(tContentType, True)
+                        downloadSw.Stop()
+                        If clearArtLoaded Then
+                            imageCount += 1
+                            diskWriteSw.Start()
+                            If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainClearArt, ForceFileCleanup)
+                            ClearArt.LocalFilePath = ClearArt.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainClearArt)
+                            diskWriteSw.Stop()
+                        Else
+                            Images.Delete_Movie(DBElement, Enums.ModifierType.MainClearArt, ForceFileCleanup)
+                            ClearArt = New Image
+                        End If
 
-                    'Movie ClearLogo
-                    If ClearLogo.LoadAndCache(tContentType, True) Then
-                        If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainClearLogo, ForceFileCleanup)
-                        ClearLogo.LocalFilePath = ClearLogo.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainClearLogo)
-                    Else
-                        Images.Delete_Movie(DBElement, Enums.ModifierType.MainClearLogo, ForceFileCleanup)
-                        ClearLogo = New Image
-                    End If
+                        'Movie ClearLogo
+                        downloadSw.Start()
+                        Dim clearLogoLoaded = ClearLogo.LoadAndCache(tContentType, True)
+                        downloadSw.Stop()
+                        If clearLogoLoaded Then
+                            imageCount += 1
+                            diskWriteSw.Start()
+                            If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainClearLogo, ForceFileCleanup)
+                            ClearLogo.LocalFilePath = ClearLogo.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainClearLogo)
+                            diskWriteSw.Stop()
+                        Else
+                            Images.Delete_Movie(DBElement, Enums.ModifierType.MainClearLogo, ForceFileCleanup)
+                            ClearLogo = New Image
+                        End If
 
-                    'Movie DiscArt
-                    If DiscArt.LoadAndCache(tContentType, True) Then
-                        If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainDiscArt, ForceFileCleanup)
-                        DiscArt.LocalFilePath = DiscArt.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainDiscArt)
-                    Else
-                        Images.Delete_Movie(DBElement, Enums.ModifierType.MainDiscArt, ForceFileCleanup)
-                        DiscArt = New Image
-                    End If
+                        'Movie DiscArt
+                        downloadSw.Start()
+                        Dim discArtLoaded = DiscArt.LoadAndCache(tContentType, True)
+                        downloadSw.Stop()
+                        If discArtLoaded Then
+                            imageCount += 1
+                            diskWriteSw.Start()
+                            If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainDiscArt, ForceFileCleanup)
+                            DiscArt.LocalFilePath = DiscArt.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainDiscArt)
+                            diskWriteSw.Stop()
+                        Else
+                            Images.Delete_Movie(DBElement, Enums.ModifierType.MainDiscArt, ForceFileCleanup)
+                            DiscArt = New Image
+                        End If
 
-                    'Movie Extrafanarts
-                    If Extrafanarts.Count > 0 Then
-                        DBElement.ExtrafanartsPath = Images.SaveMovieExtrafanarts(DBElement)
-                    Else
-                        Images.Delete_Movie(DBElement, Enums.ModifierType.MainExtrafanarts, ForceFileCleanup)
-                        Extrafanarts = New List(Of Image)
-                        DBElement.ExtrafanartsPath = String.Empty
-                    End If
+                        'Movie Extrafanarts
+                        If Extrafanarts.Count > 0 Then
+                            imageCount += Extrafanarts.Count
+                            diskWriteSw.Start()
+                            DBElement.ExtrafanartsPath = Images.SaveMovieExtrafanarts(DBElement)
+                            diskWriteSw.Stop()
+                        Else
+                            Images.Delete_Movie(DBElement, Enums.ModifierType.MainExtrafanarts, ForceFileCleanup)
+                            Extrafanarts = New List(Of Image)
+                            DBElement.ExtrafanartsPath = String.Empty
+                        End If
 
-                    'Movie Extrathumbs
-                    If Extrathumbs.Count > 0 Then
-                        DBElement.ExtrathumbsPath = Images.SaveMovieExtrathumbs(DBElement)
-                    Else
-                        Images.Delete_Movie(DBElement, Enums.ModifierType.MainExtrathumbs, ForceFileCleanup)
-                        Extrathumbs = New List(Of Image)
-                        DBElement.ExtrathumbsPath = String.Empty
-                    End If
+                        'Movie Extrathumbs
+                        If Extrathumbs.Count > 0 Then
+                            imageCount += Extrathumbs.Count
+                            diskWriteSw.Start()
+                            DBElement.ExtrathumbsPath = Images.SaveMovieExtrathumbs(DBElement)
+                            diskWriteSw.Stop()
+                        Else
+                            Images.Delete_Movie(DBElement, Enums.ModifierType.MainExtrathumbs, ForceFileCleanup)
+                            Extrathumbs = New List(Of Image)
+                            DBElement.ExtrathumbsPath = String.Empty
+                        End If
 
-                    'Movie Fanart
-                    If Fanart.LoadAndCache(tContentType, True) Then
-                        If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainFanart, ForceFileCleanup)
-                        Fanart.LocalFilePath = Fanart.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainFanart)
-                    Else
-                        Images.Delete_Movie(DBElement, Enums.ModifierType.MainFanart, ForceFileCleanup)
-                        Fanart = New Image
-                    End If
+                        'Movie Fanart
+                        downloadSw.Start()
+                        Dim fanartLoaded = Fanart.LoadAndCache(tContentType, True)
+                        downloadSw.Stop()
+                        If fanartLoaded Then
+                            imageCount += 1
+                            diskWriteSw.Start()
+                            If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainFanart, ForceFileCleanup)
+                            Fanart.LocalFilePath = Fanart.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainFanart)
+                            diskWriteSw.Stop()
+                        Else
+                            Images.Delete_Movie(DBElement, Enums.ModifierType.MainFanart, ForceFileCleanup)
+                            Fanart = New Image
+                        End If
 
-                    'Movie Keyart
-                    If Keyart.LoadAndCache(tContentType, True) Then
-                        If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainKeyart, ForceFileCleanup)
-                        Keyart.LocalFilePath = Keyart.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainKeyart)
-                    Else
-                        Images.Delete_Movie(DBElement, Enums.ModifierType.MainKeyart, ForceFileCleanup)
-                        Keyart = New Image
-                    End If
+                        'Movie Keyart
+                        downloadSw.Start()
+                        Dim keyartLoaded = Keyart.LoadAndCache(tContentType, True)
+                        downloadSw.Stop()
+                        If keyartLoaded Then
+                            imageCount += 1
+                            diskWriteSw.Start()
+                            If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainKeyart, ForceFileCleanup)
+                            Keyart.LocalFilePath = Keyart.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainKeyart)
+                            diskWriteSw.Stop()
+                        Else
+                            Images.Delete_Movie(DBElement, Enums.ModifierType.MainKeyart, ForceFileCleanup)
+                            Keyart = New Image
+                        End If
 
-                    'Movie Landscape
-                    If Landscape.LoadAndCache(tContentType, True) Then
-                        If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainLandscape, ForceFileCleanup)
-                        Landscape.LocalFilePath = Landscape.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainLandscape)
-                    Else
-                        Images.Delete_Movie(DBElement, Enums.ModifierType.MainLandscape, ForceFileCleanup)
-                        Landscape = New Image
-                    End If
+                        'Movie Landscape
+                        downloadSw.Start()
+                        Dim landscapeLoaded = Landscape.LoadAndCache(tContentType, True)
+                        downloadSw.Stop()
+                        If landscapeLoaded Then
+                            imageCount += 1
+                            diskWriteSw.Start()
+                            If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainLandscape, ForceFileCleanup)
+                            Landscape.LocalFilePath = Landscape.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainLandscape)
+                            diskWriteSw.Stop()
+                        Else
+                            Images.Delete_Movie(DBElement, Enums.ModifierType.MainLandscape, ForceFileCleanup)
+                            Landscape = New Image
+                        End If
 
-                    'Movie Poster
-                    If Poster.LoadAndCache(tContentType, True) Then
-                        If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainPoster, ForceFileCleanup)
-                        Poster.LocalFilePath = Poster.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainPoster)
-                    Else
-                        Images.Delete_Movie(DBElement, Enums.ModifierType.MainPoster, ForceFileCleanup)
-                        Poster = New Image
-                    End If
+                        'Movie Poster
+                        downloadSw.Start()
+                        Dim posterLoaded = Poster.LoadAndCache(tContentType, True)
+                        downloadSw.Stop()
+                        If posterLoaded Then
+                            imageCount += 1
+                            diskWriteSw.Start()
+                            If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainPoster, ForceFileCleanup)
+                            Poster.LocalFilePath = Poster.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainPoster)
+                            diskWriteSw.Stop()
+                        Else
+                            Images.Delete_Movie(DBElement, Enums.ModifierType.MainPoster, ForceFileCleanup)
+                            Poster = New Image
+                        End If
+                    End Using
+
+                    ' Record aggregate metrics for Movie
+                    PerformanceTracker.RecordValue("SaveAllImages.Movie.Download", downloadSw.Elapsed.TotalMilliseconds)
+                    PerformanceTracker.RecordValue("SaveAllImages.Movie.DiskWrite", diskWriteSw.Elapsed.TotalMilliseconds)
+                    PerformanceTracker.RecordValue("SaveAllImages.Movie.ImageCount", imageCount)
 
                 Case Enums.ContentType.MovieSet
+                    Using scopeTotal = PerformanceTracker.StartOperation("SaveAllImages.MovieSet.Total")
+                        'MovieSet Banner
+                        If Banner.LoadAndCache(tContentType, True) Then
+                            If DBElement.MovieSet.TitleHasChanged Then Images.Delete_MovieSet(DBElement, Enums.ModifierType.MainBanner, True)
+                            Banner.LocalFilePath = Banner.ImageOriginal.Save_MovieSet(DBElement, Enums.ModifierType.MainBanner)
+                        Else
+                            Images.Delete_MovieSet(DBElement, Enums.ModifierType.MainBanner, DBElement.MovieSet.TitleHasChanged)
+                            Banner = New Image
+                        End If
 
-                    'MovieSet Banner
-                    If Banner.LoadAndCache(tContentType, True) Then
-                        If DBElement.MovieSet.TitleHasChanged Then Images.Delete_MovieSet(DBElement, Enums.ModifierType.MainBanner, True)
-                        Banner.LocalFilePath = Banner.ImageOriginal.Save_MovieSet(DBElement, Enums.ModifierType.MainBanner)
-                    Else
-                        Images.Delete_MovieSet(DBElement, Enums.ModifierType.MainBanner, DBElement.MovieSet.TitleHasChanged)
-                        Banner = New Image
-                    End If
+                        'MovieSet ClearArt
+                        If ClearArt.LoadAndCache(tContentType, True) Then
+                            If DBElement.MovieSet.TitleHasChanged Then Images.Delete_MovieSet(DBElement, Enums.ModifierType.MainClearArt, True)
+                            ClearArt.LocalFilePath = ClearArt.ImageOriginal.Save_MovieSet(DBElement, Enums.ModifierType.MainClearArt)
+                        Else
+                            Images.Delete_MovieSet(DBElement, Enums.ModifierType.MainClearArt, DBElement.MovieSet.TitleHasChanged)
+                            ClearArt = New Image
+                        End If
 
-                    'MovieSet ClearArt
-                    If ClearArt.LoadAndCache(tContentType, True) Then
-                        If DBElement.MovieSet.TitleHasChanged Then Images.Delete_MovieSet(DBElement, Enums.ModifierType.MainClearArt, True)
-                        ClearArt.LocalFilePath = ClearArt.ImageOriginal.Save_MovieSet(DBElement, Enums.ModifierType.MainClearArt)
-                    Else
-                        Images.Delete_MovieSet(DBElement, Enums.ModifierType.MainClearArt, DBElement.MovieSet.TitleHasChanged)
-                        ClearArt = New Image
-                    End If
+                        'MovieSet ClearLogo
+                        If ClearLogo.LoadAndCache(tContentType, True) Then
+                            If DBElement.MovieSet.TitleHasChanged Then Images.Delete_MovieSet(DBElement, Enums.ModifierType.MainClearLogo, True)
+                            ClearLogo.LocalFilePath = ClearLogo.ImageOriginal.Save_MovieSet(DBElement, Enums.ModifierType.MainClearLogo)
+                        Else
+                            Images.Delete_MovieSet(DBElement, Enums.ModifierType.MainClearLogo, DBElement.MovieSet.TitleHasChanged)
+                            ClearLogo = New Image
+                        End If
 
-                    'MovieSet ClearLogo
-                    If ClearLogo.LoadAndCache(tContentType, True) Then
-                        If DBElement.MovieSet.TitleHasChanged Then Images.Delete_MovieSet(DBElement, Enums.ModifierType.MainClearLogo, True)
-                        ClearLogo.LocalFilePath = ClearLogo.ImageOriginal.Save_MovieSet(DBElement, Enums.ModifierType.MainClearLogo)
-                    Else
-                        Images.Delete_MovieSet(DBElement, Enums.ModifierType.MainClearLogo, DBElement.MovieSet.TitleHasChanged)
-                        ClearLogo = New Image
-                    End If
+                        'MovieSet DiscArt
+                        If DiscArt.LoadAndCache(tContentType, True) Then
+                            If DBElement.MovieSet.TitleHasChanged Then Images.Delete_MovieSet(DBElement, Enums.ModifierType.MainDiscArt, True)
+                            DiscArt.LocalFilePath = DiscArt.ImageOriginal.Save_MovieSet(DBElement, Enums.ModifierType.MainDiscArt)
+                        Else
+                            Images.Delete_MovieSet(DBElement, Enums.ModifierType.MainDiscArt, DBElement.MovieSet.TitleHasChanged)
+                            DiscArt = New Image
+                        End If
 
-                    'MovieSet DiscArt
-                    If DiscArt.LoadAndCache(tContentType, True) Then
-                        If DBElement.MovieSet.TitleHasChanged Then Images.Delete_MovieSet(DBElement, Enums.ModifierType.MainDiscArt, True)
-                        DiscArt.LocalFilePath = DiscArt.ImageOriginal.Save_MovieSet(DBElement, Enums.ModifierType.MainDiscArt)
-                    Else
-                        Images.Delete_MovieSet(DBElement, Enums.ModifierType.MainDiscArt, DBElement.MovieSet.TitleHasChanged)
-                        DiscArt = New Image
-                    End If
+                        'MovieSet Fanart
+                        If Fanart.LoadAndCache(tContentType, True) Then
+                            If DBElement.MovieSet.TitleHasChanged Then Images.Delete_MovieSet(DBElement, Enums.ModifierType.MainFanart, True)
+                            Fanart.LocalFilePath = Fanart.ImageOriginal.Save_MovieSet(DBElement, Enums.ModifierType.MainFanart)
+                        Else
+                            Images.Delete_MovieSet(DBElement, Enums.ModifierType.MainFanart, DBElement.MovieSet.TitleHasChanged)
+                            Fanart = New Image
+                        End If
 
-                    'MovieSet Fanart
-                    If Fanart.LoadAndCache(tContentType, True) Then
-                        If DBElement.MovieSet.TitleHasChanged Then Images.Delete_MovieSet(DBElement, Enums.ModifierType.MainFanart, True)
-                        Fanart.LocalFilePath = Fanart.ImageOriginal.Save_MovieSet(DBElement, Enums.ModifierType.MainFanart)
-                    Else
-                        Images.Delete_MovieSet(DBElement, Enums.ModifierType.MainFanart, DBElement.MovieSet.TitleHasChanged)
-                        Fanart = New Image
-                    End If
+                        'MovieSet Keyart
+                        If Keyart.LoadAndCache(tContentType, True) Then
+                            If DBElement.MovieSet.TitleHasChanged Then Images.Delete_MovieSet(DBElement, Enums.ModifierType.MainKeyart, True)
+                            Keyart.LocalFilePath = Keyart.ImageOriginal.Save_MovieSet(DBElement, Enums.ModifierType.MainKeyart)
+                        Else
+                            Images.Delete_MovieSet(DBElement, Enums.ModifierType.MainKeyart, DBElement.MovieSet.TitleHasChanged)
+                            Keyart = New Image
+                        End If
 
-                    'MovieSet Keyart
-                    If Keyart.LoadAndCache(tContentType, True) Then
-                        If DBElement.MovieSet.TitleHasChanged Then Images.Delete_MovieSet(DBElement, Enums.ModifierType.MainKeyart, True)
-                        Keyart.LocalFilePath = Keyart.ImageOriginal.Save_MovieSet(DBElement, Enums.ModifierType.MainKeyart)
-                    Else
-                        Images.Delete_MovieSet(DBElement, Enums.ModifierType.MainKeyart, DBElement.MovieSet.TitleHasChanged)
-                        Keyart = New Image
-                    End If
+                        'MovieSet Landscape
+                        If Landscape.LoadAndCache(tContentType, True) Then
+                            If DBElement.MovieSet.TitleHasChanged Then Images.Delete_MovieSet(DBElement, Enums.ModifierType.MainLandscape, True)
+                            Landscape.LocalFilePath = Landscape.ImageOriginal.Save_MovieSet(DBElement, Enums.ModifierType.MainLandscape)
+                        Else
+                            Images.Delete_MovieSet(DBElement, Enums.ModifierType.MainLandscape, DBElement.MovieSet.TitleHasChanged)
+                            Landscape = New Image
+                        End If
 
-                    'MovieSet Landscape
-                    If Landscape.LoadAndCache(tContentType, True) Then
-                        If DBElement.MovieSet.TitleHasChanged Then Images.Delete_MovieSet(DBElement, Enums.ModifierType.MainLandscape, True)
-                        Landscape.LocalFilePath = Landscape.ImageOriginal.Save_MovieSet(DBElement, Enums.ModifierType.MainLandscape)
-                    Else
-                        Images.Delete_MovieSet(DBElement, Enums.ModifierType.MainLandscape, DBElement.MovieSet.TitleHasChanged)
-                        Landscape = New Image
-                    End If
-
-                    'MovieSet Poster
-                    If Poster.LoadAndCache(tContentType, True) Then
-                        If DBElement.MovieSet.TitleHasChanged Then Images.Delete_MovieSet(DBElement, Enums.ModifierType.MainPoster, True)
-                        Poster.LocalFilePath = Poster.ImageOriginal.Save_MovieSet(DBElement, Enums.ModifierType.MainPoster)
-                    Else
-                        Images.Delete_MovieSet(DBElement, Enums.ModifierType.MainPoster, DBElement.MovieSet.TitleHasChanged)
-                        Poster = New Image
-                    End If
+                        'MovieSet Poster
+                        If Poster.LoadAndCache(tContentType, True) Then
+                            If DBElement.MovieSet.TitleHasChanged Then Images.Delete_MovieSet(DBElement, Enums.ModifierType.MainPoster, True)
+                            Poster.LocalFilePath = Poster.ImageOriginal.Save_MovieSet(DBElement, Enums.ModifierType.MainPoster)
+                        Else
+                            Images.Delete_MovieSet(DBElement, Enums.ModifierType.MainPoster, DBElement.MovieSet.TitleHasChanged)
+                            Poster = New Image
+                        End If
+                    End Using
 
                 Case Enums.ContentType.TVEpisode
+                    Using scopeTotal = PerformanceTracker.StartOperation("SaveAllImages.TVEpisode.Total")
+                        'Episode Fanart
+                        If Fanart.LoadAndCache(tContentType, True) Then
+                            Fanart.LocalFilePath = Fanart.ImageOriginal.Save_TVEpisode(DBElement, Enums.ModifierType.EpisodeFanart)
+                        Else
+                            Images.Delete_TVEpisode(DBElement, Enums.ModifierType.EpisodeFanart)
+                            Fanart = New Image
+                        End If
 
-                    'Episode Fanart
-                    If Fanart.LoadAndCache(tContentType, True) Then
-                        Fanart.LocalFilePath = Fanart.ImageOriginal.Save_TVEpisode(DBElement, Enums.ModifierType.EpisodeFanart)
-                    Else
-                        Images.Delete_TVEpisode(DBElement, Enums.ModifierType.EpisodeFanart)
-                        Fanart = New Image
-                    End If
-
-                    'Episode Poster
-                    If Poster.LoadAndCache(tContentType, True) Then
-                        Poster.LocalFilePath = Poster.ImageOriginal.Save_TVEpisode(DBElement, Enums.ModifierType.EpisodePoster)
-                    Else
-                        Images.Delete_TVEpisode(DBElement, Enums.ModifierType.EpisodePoster)
-                        Poster = New Image
-                    End If
+                        'Episode Poster
+                        If Poster.LoadAndCache(tContentType, True) Then
+                            Poster.LocalFilePath = Poster.ImageOriginal.Save_TVEpisode(DBElement, Enums.ModifierType.EpisodePoster)
+                        Else
+                            Images.Delete_TVEpisode(DBElement, Enums.ModifierType.EpisodePoster)
+                            Poster = New Image
+                        End If
+                    End Using
 
                 Case Enums.ContentType.TVSeason
+                    Using scopeTotal = PerformanceTracker.StartOperation("SaveAllImages.TVSeason.Total")
+                        'Season Banner
+                        If Banner.LoadAndCache(tContentType, True) Then
+                            If DBElement.TVSeason.IsAllSeasons Then
+                                Banner.LocalFilePath = Banner.ImageOriginal.Save_TVAllSeasons(DBElement, Enums.ModifierType.AllSeasonsBanner)
+                            Else
+                                Banner.LocalFilePath = Banner.ImageOriginal.Save_TVSeason(DBElement, Enums.ModifierType.SeasonBanner)
+                            End If
+                        Else
+                            If DBElement.TVSeason.IsAllSeasons Then
+                                Images.Delete_TVAllSeasons(DBElement, Enums.ModifierType.AllSeasonsBanner)
+                                Banner = New Image
+                            Else
+                                Images.Delete_TVSeason(DBElement, Enums.ModifierType.SeasonBanner)
+                                Banner = New Image
+                            End If
+                        End If
 
-                    'Season Banner
-                    If Banner.LoadAndCache(tContentType, True) Then
-                        If DBElement.TVSeason.IsAllSeasons Then
-                            Banner.LocalFilePath = Banner.ImageOriginal.Save_TVAllSeasons(DBElement, Enums.ModifierType.AllSeasonsBanner)
+                        'Season Fanart
+                        If Fanart.LoadAndCache(tContentType, True) Then
+                            If DBElement.TVSeason.IsAllSeasons Then
+                                Fanart.LocalFilePath = Fanart.ImageOriginal.Save_TVAllSeasons(DBElement, Enums.ModifierType.AllSeasonsFanart)
+                            Else
+                                Fanart.LocalFilePath = Fanart.ImageOriginal.Save_TVSeason(DBElement, Enums.ModifierType.SeasonFanart)
+                            End If
                         Else
-                            Banner.LocalFilePath = Banner.ImageOriginal.Save_TVSeason(DBElement, Enums.ModifierType.SeasonBanner)
+                            If DBElement.TVSeason.IsAllSeasons Then
+                                Images.Delete_TVAllSeasons(DBElement, Enums.ModifierType.AllSeasonsFanart)
+                                Fanart = New Image
+                            Else
+                                Images.Delete_TVSeason(DBElement, Enums.ModifierType.SeasonFanart)
+                                Fanart = New Image
+                            End If
                         End If
-                    Else
-                        If DBElement.TVSeason.IsAllSeasons Then
-                            Images.Delete_TVAllSeasons(DBElement, Enums.ModifierType.AllSeasonsBanner)
-                            Banner = New Image
-                        Else
-                            Images.Delete_TVSeason(DBElement, Enums.ModifierType.SeasonBanner)
-                            Banner = New Image
-                        End If
-                    End If
 
-                    'Season Fanart
-                    If Fanart.LoadAndCache(tContentType, True) Then
-                        If DBElement.TVSeason.IsAllSeasons Then
-                            Fanart.LocalFilePath = Fanart.ImageOriginal.Save_TVAllSeasons(DBElement, Enums.ModifierType.AllSeasonsFanart)
+                        'Season Landscape
+                        If Landscape.LoadAndCache(tContentType, True) Then
+                            If DBElement.TVSeason.IsAllSeasons Then
+                                Landscape.LocalFilePath = Landscape.ImageOriginal.Save_TVAllSeasons(DBElement, Enums.ModifierType.AllSeasonsLandscape)
+                            Else
+                                Landscape.LocalFilePath = Landscape.ImageOriginal.Save_TVSeason(DBElement, Enums.ModifierType.SeasonLandscape)
+                            End If
                         Else
-                            Fanart.LocalFilePath = Fanart.ImageOriginal.Save_TVSeason(DBElement, Enums.ModifierType.SeasonFanart)
+                            If DBElement.TVSeason.IsAllSeasons Then
+                                Images.Delete_TVAllSeasons(DBElement, Enums.ModifierType.AllSeasonsLandscape)
+                                Landscape = New Image
+                            Else
+                                Images.Delete_TVSeason(DBElement, Enums.ModifierType.SeasonLandscape)
+                                Landscape = New Image
+                            End If
                         End If
-                    Else
-                        If DBElement.TVSeason.IsAllSeasons Then
-                            Images.Delete_TVAllSeasons(DBElement, Enums.ModifierType.AllSeasonsFanart)
-                            Fanart = New Image
-                        Else
-                            Images.Delete_TVSeason(DBElement, Enums.ModifierType.SeasonFanart)
-                            Fanart = New Image
-                        End If
-                    End If
 
-                    'Season Landscape
-                    If Landscape.LoadAndCache(tContentType, True) Then
-                        If DBElement.TVSeason.IsAllSeasons Then
-                            Landscape.LocalFilePath = Landscape.ImageOriginal.Save_TVAllSeasons(DBElement, Enums.ModifierType.AllSeasonsLandscape)
+                        'Season Poster
+                        If Poster.LoadAndCache(tContentType, True) Then
+                            If DBElement.TVSeason.IsAllSeasons Then
+                                Poster.LocalFilePath = Poster.ImageOriginal.Save_TVAllSeasons(DBElement, Enums.ModifierType.AllSeasonsPoster)
+                            Else
+                                Poster.LocalFilePath = Poster.ImageOriginal.Save_TVSeason(DBElement, Enums.ModifierType.SeasonPoster)
+                            End If
                         Else
-                            Landscape.LocalFilePath = Landscape.ImageOriginal.Save_TVSeason(DBElement, Enums.ModifierType.SeasonLandscape)
+                            If DBElement.TVSeason.IsAllSeasons Then
+                                Images.Delete_TVAllSeasons(DBElement, Enums.ModifierType.AllSeasonsPoster)
+                                Poster = New Image
+                            Else
+                                Images.Delete_TVSeason(DBElement, Enums.ModifierType.SeasonPoster)
+                                Poster = New Image
+                            End If
                         End If
-                    Else
-                        If DBElement.TVSeason.IsAllSeasons Then
-                            Images.Delete_TVAllSeasons(DBElement, Enums.ModifierType.AllSeasonsLandscape)
-                            Landscape = New Image
-                        Else
-                            Images.Delete_TVSeason(DBElement, Enums.ModifierType.SeasonLandscape)
-                            Landscape = New Image
-                        End If
-                    End If
-
-                    'Season Poster
-                    If Poster.LoadAndCache(tContentType, True) Then
-                        If DBElement.TVSeason.IsAllSeasons Then
-                            Poster.LocalFilePath = Poster.ImageOriginal.Save_TVAllSeasons(DBElement, Enums.ModifierType.AllSeasonsPoster)
-                        Else
-                            Poster.LocalFilePath = Poster.ImageOriginal.Save_TVSeason(DBElement, Enums.ModifierType.SeasonPoster)
-                        End If
-                    Else
-                        If DBElement.TVSeason.IsAllSeasons Then
-                            Images.Delete_TVAllSeasons(DBElement, Enums.ModifierType.AllSeasonsPoster)
-                            Poster = New Image
-                        Else
-                            Images.Delete_TVSeason(DBElement, Enums.ModifierType.SeasonPoster)
-                            Poster = New Image
-                        End If
-                    End If
+                    End Using
 
                 Case Enums.ContentType.TVShow
+                    Using scopeTotal = PerformanceTracker.StartOperation("SaveAllImages.TVShow.Total")
+                        'Show Banner
+                        If Banner.LoadAndCache(tContentType, True) Then
+                            Banner.LocalFilePath = Banner.ImageOriginal.Save_TVShow(DBElement, Enums.ModifierType.MainBanner)
+                        Else
+                            Images.Delete_TVShow(DBElement, Enums.ModifierType.MainBanner)
+                            Banner = New Image
+                        End If
 
-                    'Show Banner
-                    If Banner.LoadAndCache(tContentType, True) Then
-                        Banner.LocalFilePath = Banner.ImageOriginal.Save_TVShow(DBElement, Enums.ModifierType.MainBanner)
-                    Else
-                        Images.Delete_TVShow(DBElement, Enums.ModifierType.MainBanner)
-                        Banner = New Image
-                    End If
+                        'Show CharacterArt
+                        If CharacterArt.LoadAndCache(tContentType, True) Then
+                            CharacterArt.LocalFilePath = CharacterArt.ImageOriginal.Save_TVShow(DBElement, Enums.ModifierType.MainCharacterArt)
+                        Else
+                            Images.Delete_TVShow(DBElement, Enums.ModifierType.MainCharacterArt)
+                            CharacterArt = New Image
+                        End If
 
-                    'Show CharacterArt
-                    If CharacterArt.LoadAndCache(tContentType, True) Then
-                        CharacterArt.LocalFilePath = CharacterArt.ImageOriginal.Save_TVShow(DBElement, Enums.ModifierType.MainCharacterArt)
-                    Else
-                        Images.Delete_TVShow(DBElement, Enums.ModifierType.MainCharacterArt)
-                        CharacterArt = New Image
-                    End If
+                        'Show ClearArt
+                        If ClearArt.LoadAndCache(tContentType, True) Then
+                            ClearArt.LocalFilePath = ClearArt.ImageOriginal.Save_TVShow(DBElement, Enums.ModifierType.MainClearArt)
+                        Else
+                            Images.Delete_TVShow(DBElement, Enums.ModifierType.MainClearArt)
+                            ClearArt = New Image
+                        End If
 
-                    'Show ClearArt
-                    If ClearArt.LoadAndCache(tContentType, True) Then
-                        ClearArt.LocalFilePath = ClearArt.ImageOriginal.Save_TVShow(DBElement, Enums.ModifierType.MainClearArt)
-                    Else
-                        Images.Delete_TVShow(DBElement, Enums.ModifierType.MainClearArt)
-                        ClearArt = New Image
-                    End If
+                        'Show ClearLogo
+                        If ClearLogo.LoadAndCache(tContentType, True) Then
+                            ClearLogo.LocalFilePath = ClearLogo.ImageOriginal.Save_TVShow(DBElement, Enums.ModifierType.MainClearLogo)
+                        Else
+                            Images.Delete_TVShow(DBElement, Enums.ModifierType.MainClearLogo)
+                            ClearLogo = New Image
+                        End If
 
-                    'Show ClearLogo
-                    If ClearLogo.LoadAndCache(tContentType, True) Then
-                        ClearLogo.LocalFilePath = ClearLogo.ImageOriginal.Save_TVShow(DBElement, Enums.ModifierType.MainClearLogo)
-                    Else
-                        Images.Delete_TVShow(DBElement, Enums.ModifierType.MainClearLogo)
-                        ClearLogo = New Image
-                    End If
+                        'Show Extrafanarts
+                        If Extrafanarts.Count > 0 Then
+                            DBElement.ExtrafanartsPath = Images.SaveTVShowExtrafanarts(DBElement)
+                        Else
+                            Images.Delete_TVShow(DBElement, Enums.ModifierType.MainExtrafanarts)
+                            Extrafanarts = New List(Of Image)
+                            DBElement.ExtrafanartsPath = String.Empty
+                        End If
 
-                    'Show Extrafanarts
-                    If Extrafanarts.Count > 0 Then
-                        DBElement.ExtrafanartsPath = Images.SaveTVShowExtrafanarts(DBElement)
-                    Else
-                        Images.Delete_TVShow(DBElement, Enums.ModifierType.MainExtrafanarts)
-                        Extrafanarts = New List(Of Image)
-                        DBElement.ExtrafanartsPath = String.Empty
-                    End If
+                        'Show Fanart
+                        If Fanart.LoadAndCache(tContentType, True) Then
+                            Fanart.LocalFilePath = Fanart.ImageOriginal.Save_TVShow(DBElement, Enums.ModifierType.MainFanart)
+                        Else
+                            Images.Delete_TVShow(DBElement, Enums.ModifierType.MainFanart)
+                            Fanart = New Image
+                        End If
 
-                    'Show Fanart
-                    If Fanart.LoadAndCache(tContentType, True) Then
-                        Fanart.LocalFilePath = Fanart.ImageOriginal.Save_TVShow(DBElement, Enums.ModifierType.MainFanart)
-                    Else
-                        Images.Delete_TVShow(DBElement, Enums.ModifierType.MainFanart)
-                        Fanart = New Image
-                    End If
+                        'Show Keyart
+                        If Keyart.LoadAndCache(tContentType, True) Then
+                            Keyart.LocalFilePath = Keyart.ImageOriginal.Save_TVShow(DBElement, Enums.ModifierType.MainKeyart)
+                        Else
+                            Images.Delete_TVShow(DBElement, Enums.ModifierType.MainKeyart)
+                            Keyart = New Image
+                        End If
 
-                    'Show Keyart
-                    If Keyart.LoadAndCache(tContentType, True) Then
-                        Keyart.LocalFilePath = Keyart.ImageOriginal.Save_TVShow(DBElement, Enums.ModifierType.MainKeyart)
-                    Else
-                        Images.Delete_TVShow(DBElement, Enums.ModifierType.MainKeyart)
-                        Keyart = New Image
-                    End If
+                        'Show Landscape
+                        If Landscape.LoadAndCache(tContentType, True) Then
+                            Landscape.LocalFilePath = Landscape.ImageOriginal.Save_TVShow(DBElement, Enums.ModifierType.MainLandscape)
+                        Else
+                            Images.Delete_TVShow(DBElement, Enums.ModifierType.MainLandscape)
+                            Landscape = New Image
+                        End If
 
-                    'Show Landscape
-                    If Landscape.LoadAndCache(tContentType, True) Then
-                        Landscape.LocalFilePath = Landscape.ImageOriginal.Save_TVShow(DBElement, Enums.ModifierType.MainLandscape)
-                    Else
-                        Images.Delete_TVShow(DBElement, Enums.ModifierType.MainLandscape)
-                        Landscape = New Image
-                    End If
-
-                    'Show Poster
-                    If Poster.LoadAndCache(tContentType, True) Then
-                        Poster.LocalFilePath = Poster.ImageOriginal.Save_TVShow(DBElement, Enums.ModifierType.MainPoster)
-                    Else
-                        Images.Delete_TVShow(DBElement, Enums.ModifierType.MainPoster)
-                        Poster = New Image
-                    End If
+                        'Show Poster
+                        If Poster.LoadAndCache(tContentType, True) Then
+                            Poster.LocalFilePath = Poster.ImageOriginal.Save_TVShow(DBElement, Enums.ModifierType.MainPoster)
+                        Else
+                            Images.Delete_TVShow(DBElement, Enums.ModifierType.MainPoster)
+                            Poster = New Image
+                        End If
+                    End Using
             End Select
         End Sub
 

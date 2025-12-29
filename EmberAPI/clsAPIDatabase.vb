@@ -3614,7 +3614,9 @@ Public Class Database
                 'art Table will be linked later
                 If toNFO Then NFO.SaveToNFO_Movie(dbElement, forceFileCleanup)
                 If toDisk Then
-                    dbElement.ImagesContainer.SaveAllImages(dbElement, forceFileCleanup)
+                    Using scopeImages = PerformanceTracker.StartOperation("Save_Movie.Images")
+                        dbElement.ImagesContainer.SaveAllImages(dbElement, forceFileCleanup)
+                    End Using
                     dbElement.Movie.SaveAllActorThumbs(dbElement)
                     dbElement.Theme.Save(dbElement, Enums.ModifierType.MainTheme, forceFileCleanup)
                     dbElement.Trailer.Save(dbElement, Enums.ModifierType.MainTrailer, forceFileCleanup)

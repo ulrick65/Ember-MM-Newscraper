@@ -186,6 +186,43 @@ Public Class PerformanceTracker
     End Sub
 
     ''' <summary>
+    ''' Records an arbitrary numeric value for a metric (e.g., counts, sizes).
+    ''' This is an alias for RecordMetric to improve code readability when recording
+    ''' non-timing values like image counts or byte sizes.
+    ''' </summary>
+    ''' <param name="metricName">Unique name for the metric (e.g., "SaveAllImages.Movie.ImageCount")</param>
+    ''' <param name="value">The numeric value to record</param>
+    ''' <remarks>
+    ''' Use this method when recording values that are not durations, such as:
+    ''' - Image counts: RecordValue("SaveAllImages.Movie.ImageCount", imageCount)
+    ''' - Byte sizes: RecordValue("Download.TotalBytes", bytesDownloaded)
+    ''' - Item counts: RecordValue("Scrape.ActorCount", actorCount)
+    ''' 
+    ''' The metric will still track min/max/avg/total statistics for the recorded values.
+    ''' </remarks>
+    Public Shared Sub RecordValue(metricName As String, value As Double)
+        RecordMetric(metricName, value)
+    End Sub
+
+    ''' <summary>
+    ''' Records an integer value for a metric (convenience overload).
+    ''' </summary>
+    ''' <param name="metricName">Unique name for the metric</param>
+    ''' <param name="value">The integer value to record</param>
+    Public Shared Sub RecordValue(metricName As String, value As Integer)
+        RecordMetric(metricName, CDbl(value))
+    End Sub
+
+    ''' <summary>
+    ''' Records a long value for a metric (convenience overload).
+    ''' </summary>
+    ''' <param name="metricName">Unique name for the metric</param>
+    ''' <param name="value">The long value to record</param>
+    Public Shared Sub RecordValue(metricName As String, value As Long)
+        RecordMetric(metricName, CDbl(value))
+    End Sub
+
+    ''' <summary>
     ''' Gets all recorded metrics.
     ''' </summary>
     ''' <returns>Dictionary of metric name to metric data</returns>
