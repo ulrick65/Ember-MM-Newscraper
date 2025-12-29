@@ -1637,7 +1637,8 @@ Public Class frmMain
                 If Not (Args.ScrapeType = Enums.ScrapeType.SingleScrape) Then
                     ModulesManager.Instance.RunGeneric(Enums.ModuleEventType.ScraperMulti_Movie, Nothing, Nothing, False, DBScrapeMovie)
                     bwMovieScraper.ReportProgress(-3, String.Concat(Master.eLang.GetString(399, "Downloading and Saving Contents into Database"), ":"))
-                    Master.DB.Save_Movie(DBScrapeMovie, False, tScrapeItem.ScrapeModifiers.MainNFO OrElse tScrapeItem.ScrapeModifiers.MainMeta, True, True, False)
+                    'Use Save_MovieAsync for parallel image downloads (sync-over-async in BackgroundWorker context)
+                    DBScrapeMovie = Master.DB.Save_MovieAsync(DBScrapeMovie, False, tScrapeItem.ScrapeModifiers.MainNFO OrElse tScrapeItem.ScrapeModifiers.MainMeta, True, True, False).GetAwaiter().GetResult()
                     bwMovieScraper.ReportProgress(-2, DBScrapeMovie.ID)
                     bwMovieScraper.ReportProgress(-1, If(Not OldTitle = NewTitle, String.Format(Master.eLang.GetString(812, "Old Title: {0} | New Title: {1}"), OldTitle, NewTitle), NewTitle))
                 End If

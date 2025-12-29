@@ -15,7 +15,7 @@ This document tracks all changes made to this fork of Ember Media Manager, start
 
 | Property | Value |
 |----------|-------|
-| **Document Version** | 1.0.4 |
+| **Document Version** | 1.0.5 |
 | **Created** | December 25, 2025 |
 | **Last Updated** | December 29, 2025 |
 | **Author** | Eric H. Anderson |
@@ -43,6 +43,7 @@ This document tracks all changes made to this fork of Ember Media Manager, start
 | 1.11.1.7 | Dec 21, 2025 | Upstream patch pulled (IMDB writer comparison fix) |
 | 1.12.0.0 | Dec 22, 2025 | Framework upgrade to .NET 4.8, package updates, all addons versioned |
 | 1.12.1.0 | Dec 23-28, 2025 | Bug fixes, cleanup, genre mapping fix, documentation, code organization, performance improvements, additional package updates |
+| 1.12.1.0 | Dec 23-29, 2025 | Bug fixes, cleanup, genre mapping fix, documentation, code organization, **Phase 1 performance complete (61% improvement)**, additional package updates |
 
 ---
 
@@ -203,6 +204,12 @@ The following features are deprecated and slated for removal in a future version
 | Documentation | Consolidated scraping documentation into ScrapingProcessMovies.md v2.0 | `EmberMediaManager\docs\process-docs\ScrapingProcessMovies.md` |
 | Documentation | Updated ScrapingProcessTvShows.md to v2.0 with comprehensive coverage | `EmberMediaManager\docs\process-docs\ScrapingProcessTvShows.md` |
 | Documentation | Archived BulkScrapingDocumentation.md with redirect to consolidated doc | `EmberMediaManager\docs\process-docs\BulkScrapingDocumentation.md` |
+| Bug Fix | Fixed `DownloadImagesParallelAsync` downloading thumbnails instead of fullsize images (`needFullsize` parameter) | `EmberAPI\clsAPIImages.vb` |
+| Performance | Phase 1 complete: 61% improvement in bulk scraping image operations | Multiple files |
+| Performance | Parallel downloads: 64% faster image download phase | `EmberAPI\clsAPIImages.vb`, `EmberAPI\clsAPIMediaContainers.vb` |
+| Performance | Database indices: 63% faster actor lookups | `EmberAPI\clsAPIDatabase.vb`, `EmberAPI\DB\MyVideosDBSQL.txt` |
+| Performance | TMDB API calls: 47% faster with connection pooling | `EmberAPI\clsAPIHttpClientFactory.vb` |
+| Documentation | Updated PerformanceImprovements-Phase1.md to v3.2 - Phase 1 complete with final metrics | `EmberMediaManager\docs\PerformanceImprovements-Phase1.md` |
 
 **Version Updates:**
 

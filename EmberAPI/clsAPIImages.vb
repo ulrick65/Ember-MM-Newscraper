@@ -3148,7 +3148,7 @@ Public Class Images
                                 Return
                             End If
 
-                            Dim result = Await currentImage.LoadAndCacheAsync(contentType, False, loadBitmap).ConfigureAwait(False)
+                            Dim result = Await currentImage.LoadAndCacheAsync(contentType, True, loadBitmap).ConfigureAwait(False)
                             If result Then
                                 Threading.Interlocked.Increment(successCount)
                             End If

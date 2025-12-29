@@ -4126,6 +4126,7 @@ Namespace MediaContainers
 
     <Serializable()>
     Public Class ImagesContainer
+        Private Shared _logger As Logger = LogManager.GetCurrentClassLogger()
 
 #Region "Properties"
 
@@ -4724,31 +4725,61 @@ Namespace MediaContainers
 
             If Not DBElement.FilenameSpecified Then Return DBElement
 
+            Dim movieTitle As String = If(DBElement.Movie?.Title, "Unknown")
+            _logger.Trace($"[SaveAllImagesAsync] START for movie: {movieTitle}")
+
             Using scope = PerformanceTracker.StartOperation("ImagesContainer.SaveAllImagesAsync")
                 Dim tContentType As Enums.ContentType = DBElement.ContentType
 
+                ' ============================================================
                 ' Phase 1: Collect all images that need downloading
+                ' ============================================================
+                _logger.Trace($"[SaveAllImagesAsync] Phase 1: Collecting images that need download")
                 Dim imagesToDownload As New List(Of Image)
 
+                ' Log each image's state before NeedsDownload check
+                _logger.Trace($"[SaveAllImagesAsync] Banner: NeedsDownload={Banner.NeedsDownload()}, HasMemoryStream={Banner.ImageOriginal.HasMemoryStream}, URLOriginal={Not String.IsNullOrEmpty(Banner.URLOriginal)}, LocalFilePath={Banner.LocalFilePath}")
                 If Banner.NeedsDownload() Then imagesToDownload.Add(Banner)
+
+                _logger.Trace($"[SaveAllImagesAsync] ClearArt: NeedsDownload={ClearArt.NeedsDownload()}, HasMemoryStream={ClearArt.ImageOriginal.HasMemoryStream}, URLOriginal={Not String.IsNullOrEmpty(ClearArt.URLOriginal)}, LocalFilePath={ClearArt.LocalFilePath}")
                 If ClearArt.NeedsDownload() Then imagesToDownload.Add(ClearArt)
+
+                _logger.Trace($"[SaveAllImagesAsync] ClearLogo: NeedsDownload={ClearLogo.NeedsDownload()}, HasMemoryStream={ClearLogo.ImageOriginal.HasMemoryStream}, URLOriginal={Not String.IsNullOrEmpty(ClearLogo.URLOriginal)}, LocalFilePath={ClearLogo.LocalFilePath}")
                 If ClearLogo.NeedsDownload() Then imagesToDownload.Add(ClearLogo)
+
+                _logger.Trace($"[SaveAllImagesAsync] DiscArt: NeedsDownload={DiscArt.NeedsDownload()}, HasMemoryStream={DiscArt.ImageOriginal.HasMemoryStream}, URLOriginal={Not String.IsNullOrEmpty(DiscArt.URLOriginal)}, LocalFilePath={DiscArt.LocalFilePath}")
                 If DiscArt.NeedsDownload() Then imagesToDownload.Add(DiscArt)
+
+                _logger.Trace($"[SaveAllImagesAsync] Fanart: NeedsDownload={Fanart.NeedsDownload()}, HasMemoryStream={Fanart.ImageOriginal.HasMemoryStream}, URLOriginal={Not String.IsNullOrEmpty(Fanart.URLOriginal)}, LocalFilePath={Fanart.LocalFilePath}")
                 If Fanart.NeedsDownload() Then imagesToDownload.Add(Fanart)
+
+                _logger.Trace($"[SaveAllImagesAsync] Keyart: NeedsDownload={Keyart.NeedsDownload()}, HasMemoryStream={Keyart.ImageOriginal.HasMemoryStream}, URLOriginal={Not String.IsNullOrEmpty(Keyart.URLOriginal)}, LocalFilePath={Keyart.LocalFilePath}")
                 If Keyart.NeedsDownload() Then imagesToDownload.Add(Keyart)
+
+                _logger.Trace($"[SaveAllImagesAsync] Landscape: NeedsDownload={Landscape.NeedsDownload()}, HasMemoryStream={Landscape.ImageOriginal.HasMemoryStream}, URLOriginal={Not String.IsNullOrEmpty(Landscape.URLOriginal)}, LocalFilePath={Landscape.LocalFilePath}")
                 If Landscape.NeedsDownload() Then imagesToDownload.Add(Landscape)
+
+                _logger.Trace($"[SaveAllImagesAsync] Poster: NeedsDownload={Poster.NeedsDownload()}, HasMemoryStream={Poster.ImageOriginal.HasMemoryStream}, URLOriginal={Not String.IsNullOrEmpty(Poster.URLOriginal)}, LocalFilePath={Poster.LocalFilePath}")
                 If Poster.NeedsDownload() Then imagesToDownload.Add(Poster)
 
                 ' Add extrafanarts and extrathumbs
+                _logger.Trace($"[SaveAllImagesAsync] Extrafanarts count: {Extrafanarts.Count}")
                 For Each img In Extrafanarts
                     If img.NeedsDownload() Then imagesToDownload.Add(img)
                 Next
+
+                _logger.Trace($"[SaveAllImagesAsync] Extrathumbs count: {Extrathumbs.Count}")
                 For Each img In Extrathumbs
                     If img.NeedsDownload() Then imagesToDownload.Add(img)
                 Next
 
+                _logger.Trace($"[SaveAllImagesAsync] Phase 1 complete: {imagesToDownload.Count} images need downloading")
+
+                ' ============================================================
                 ' Phase 2: Download all images in parallel
+                ' ============================================================
                 If imagesToDownload.Count > 0 Then
+                    _logger.Trace($"[SaveAllImagesAsync] Phase 2: Starting parallel download of {imagesToDownload.Count} images")
                     Using downloadScope = PerformanceTracker.StartOperation("ImagesContainer.SaveAllImagesAsync.ParallelDownload")
                         Await Images.DownloadImagesParallelAsync(
                             imagesToDownload,
@@ -4759,20 +4790,40 @@ Namespace MediaContainers
                             progressCallback:=Nothing
                             ).ConfigureAwait(False)
                     End Using
+
+                    ' Log state after parallel download
+                    _logger.Trace($"[SaveAllImagesAsync] Phase 2 complete. Post-download state:")
+                    _logger.Trace($"[SaveAllImagesAsync] Banner.HasMemoryStream={Banner.ImageOriginal.HasMemoryStream}")
+                    _logger.Trace($"[SaveAllImagesAsync] ClearArt.HasMemoryStream={ClearArt.ImageOriginal.HasMemoryStream}")
+                    _logger.Trace($"[SaveAllImagesAsync] ClearLogo.HasMemoryStream={ClearLogo.ImageOriginal.HasMemoryStream}")
+                    _logger.Trace($"[SaveAllImagesAsync] DiscArt.HasMemoryStream={DiscArt.ImageOriginal.HasMemoryStream}")
+                    _logger.Trace($"[SaveAllImagesAsync] Fanart.HasMemoryStream={Fanart.ImageOriginal.HasMemoryStream}")
+                    _logger.Trace($"[SaveAllImagesAsync] Keyart.HasMemoryStream={Keyart.ImageOriginal.HasMemoryStream}")
+                    _logger.Trace($"[SaveAllImagesAsync] Landscape.HasMemoryStream={Landscape.ImageOriginal.HasMemoryStream}")
+                    _logger.Trace($"[SaveAllImagesAsync] Poster.HasMemoryStream={Poster.ImageOriginal.HasMemoryStream}")
+                Else
+                    _logger.Trace($"[SaveAllImagesAsync] Phase 2: Skipped - no images need downloading")
                 End If
 
+                ' ============================================================
                 ' Phase 3: Save images sequentially (disk I/O)
+                ' ============================================================
+                _logger.Trace($"[SaveAllImagesAsync] Phase 3: Starting save to disk")
                 Using saveScope = PerformanceTracker.StartOperation("ImagesContainer.SaveAllImagesAsync.SaveToDisk")
                     'Movie Banner
+                    _logger.Trace($"[SaveAllImagesAsync] Phase 3 - Banner: HasMemoryStream={Banner.ImageOriginal.HasMemoryStream} before LoadAndCache")
                     If Banner.LoadAndCache(tContentType, True) Then
+                        _logger.Trace($"[SaveAllImagesAsync] Phase 3 - Banner: LoadAndCache returned True, HasMemoryStream={Banner.ImageOriginal.HasMemoryStream}")
                         If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainBanner, ForceFileCleanup)
                         Banner.LocalFilePath = Banner.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainBanner)
                     Else
+                        _logger.Trace($"[SaveAllImagesAsync] Phase 3 - Banner: LoadAndCache returned False")
                         Images.Delete_Movie(DBElement, Enums.ModifierType.MainBanner, ForceFileCleanup)
                         Banner = New Image
                     End If
 
                     'Movie ClearArt
+                    _logger.Trace($"[SaveAllImagesAsync] Phase 3 - ClearArt: HasMemoryStream={ClearArt.ImageOriginal.HasMemoryStream} before LoadAndCache")
                     If ClearArt.LoadAndCache(tContentType, True) Then
                         If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainClearArt, ForceFileCleanup)
                         ClearArt.LocalFilePath = ClearArt.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainClearArt)
@@ -4782,6 +4833,7 @@ Namespace MediaContainers
                     End If
 
                     'Movie ClearLogo
+                    _logger.Trace($"[SaveAllImagesAsync] Phase 3 - ClearLogo: HasMemoryStream={ClearLogo.ImageOriginal.HasMemoryStream} before LoadAndCache")
                     If ClearLogo.LoadAndCache(tContentType, True) Then
                         If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainClearLogo, ForceFileCleanup)
                         ClearLogo.LocalFilePath = ClearLogo.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainClearLogo)
@@ -4791,6 +4843,7 @@ Namespace MediaContainers
                     End If
 
                     'Movie DiscArt
+                    _logger.Trace($"[SaveAllImagesAsync] Phase 3 - DiscArt: HasMemoryStream={DiscArt.ImageOriginal.HasMemoryStream} before LoadAndCache")
                     If DiscArt.LoadAndCache(tContentType, True) Then
                         If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainDiscArt, ForceFileCleanup)
                         DiscArt.LocalFilePath = DiscArt.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainDiscArt)
@@ -4800,6 +4853,7 @@ Namespace MediaContainers
                     End If
 
                     'Movie Extrafanarts
+                    _logger.Trace($"[SaveAllImagesAsync] Phase 3 - Extrafanarts: Count={Extrafanarts.Count}")
                     If Extrafanarts.Count > 0 Then
                         DBElement.ExtrafanartsPath = Images.SaveMovieExtrafanarts(DBElement)
                     Else
@@ -4809,6 +4863,7 @@ Namespace MediaContainers
                     End If
 
                     'Movie Extrathumbs
+                    _logger.Trace($"[SaveAllImagesAsync] Phase 3 - Extrathumbs: Count={Extrathumbs.Count}")
                     If Extrathumbs.Count > 0 Then
                         DBElement.ExtrathumbsPath = Images.SaveMovieExtrathumbs(DBElement)
                     Else
@@ -4818,6 +4873,7 @@ Namespace MediaContainers
                     End If
 
                     'Movie Fanart
+                    _logger.Trace($"[SaveAllImagesAsync] Phase 3 - Fanart: HasMemoryStream={Fanart.ImageOriginal.HasMemoryStream} before LoadAndCache")
                     If Fanart.LoadAndCache(tContentType, True) Then
                         If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainFanart, ForceFileCleanup)
                         Fanart.LocalFilePath = Fanart.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainFanart)
@@ -4827,6 +4883,7 @@ Namespace MediaContainers
                     End If
 
                     'Movie Keyart
+                    _logger.Trace($"[SaveAllImagesAsync] Phase 3 - Keyart: HasMemoryStream={Keyart.ImageOriginal.HasMemoryStream} before LoadAndCache")
                     If Keyart.LoadAndCache(tContentType, True) Then
                         If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainKeyart, ForceFileCleanup)
                         Keyart.LocalFilePath = Keyart.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainKeyart)
@@ -4836,6 +4893,7 @@ Namespace MediaContainers
                     End If
 
                     'Movie Landscape
+                    _logger.Trace($"[SaveAllImagesAsync] Phase 3 - Landscape: HasMemoryStream={Landscape.ImageOriginal.HasMemoryStream} before LoadAndCache")
                     If Landscape.LoadAndCache(tContentType, True) Then
                         If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainLandscape, ForceFileCleanup)
                         Landscape.LocalFilePath = Landscape.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainLandscape)
@@ -4845,6 +4903,7 @@ Namespace MediaContainers
                     End If
 
                     'Movie Poster
+                    _logger.Trace($"[SaveAllImagesAsync] Phase 3 - Poster: HasMemoryStream={Poster.ImageOriginal.HasMemoryStream} before LoadAndCache")
                     If Poster.LoadAndCache(tContentType, True) Then
                         If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainPoster, ForceFileCleanup)
                         Poster.LocalFilePath = Poster.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainPoster)
@@ -4853,8 +4912,10 @@ Namespace MediaContainers
                         Poster = New Image
                     End If
                 End Using
+                _logger.Trace($"[SaveAllImagesAsync] Phase 3 complete")
             End Using
 
+            _logger.Trace($"[SaveAllImagesAsync] END for movie: {movieTitle}")
             Return DBElement
         End Function
 #End Region 'Save Methods

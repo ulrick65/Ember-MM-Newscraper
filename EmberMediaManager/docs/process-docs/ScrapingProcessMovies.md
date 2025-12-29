@@ -1,6 +1,6 @@
 ﻿# Movie Scraping Process Analysis
 
-> **Document Version:** 2.0 (Consolidated December 29, 2025)
+> **Document Version:** 2.1 (Updated December 29, 2025 - Phase 1 Performance Complete)
 > **Related Documentation:** For TV Show scraping, see [ScrapingProcessTvShows.md](ScrapingProcessTvShows.md). Both processes share architectural patterns through the `ModulesManager` class.
 > **Performance Documentation:** See [PerformanceImprovements-Phase1.md](../PerformanceImprovements-Phase1.md) for optimization details.
 
@@ -484,6 +484,13 @@ Selects best images based on user preferences:
 | Disk Write | 46 ms | 5% |
 | Overhead | 6 ms | 1% |
 
+**Async Alternative (Phase 1 Complete):**
+
+`Save_MovieAsync()` now uses `SaveAllImagesAsync()` for parallel downloads:
+- 5 concurrent downloads (SemaphoreSlim throttled)
+- 61% faster than sequential `SaveAllImages()`
+- Integrated into bulk scrape at `frmMain.vb` line 1640
+
 ---
 
 ## Part 6: Theme & Trailer Scraping
@@ -804,16 +811,18 @@ Controls **which metadata fields** to scrape:
         Download all concurrently (max 5)
         Write all to disk
 
-### 11.5 Optimization Status
+### 11.5 Optimization Status (Phase 1 Complete - December 29, 2025)
 
-| Area | Status |
-|------|--------|
-| Shared HttpClient | ✅ Implemented |
-| Database Indices | ✅ Implemented |
-| Parallel Image Downloads | ✅ Infrastructure ready |
-| Bulk Scrape Integration | 🔄 In progress |
+| Area | Status | Improvement |
+|------|--------|-------------|
+| Shared HttpClient | ✅ Complete | -47% TMDB API calls |
+| Database Indices | ✅ Complete | -63% actor lookups |
+| Parallel Image Downloads | ✅ Complete | -64% download phase |
+| Bulk Scrape Integration | ✅ Complete | -61% SaveAllImages |
 
-See [PerformanceImprovements-Phase1.md](../PerformanceImprovements-Phase1.md) for details.
+**Phase 1 Result:** 61% improvement in bulk scraping image operations.
+
+See [PerformanceImprovements-Phase1.md](../PerformanceImprovements-Phase1.md) for complete details.
 
 ---
 
