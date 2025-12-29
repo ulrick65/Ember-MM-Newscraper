@@ -22,6 +22,8 @@ This document provides a comprehensive analysis of how Ember Media Manager scrap
 | `EmberAPI\clsAPINFO.vb` | Merges results from multiple scrapers |
 | `EmberAPI\clsAPIInterfaces.vb` | Defines scraper interfaces and result structures |
 | `EmberAPI\clsAPICommon.vb` | Contains ScrapeModifiers, ScrapeOptions, and ScrapeType enums |
+| `EmberAPI\clsAPIDatabase.vb` | Database operations including `Save_Movie()` and `Save_MovieAsync()` |
+| `EmberAPI\clsAPIImages.vb` | Image container and save operations |
 | `Addons\scraper.TMDB.Data\*` | TMDB data scraper implementation |
 | `Addons\scraper.IMDB.Data\*` | IMDB data scraper implementation |
 
@@ -51,6 +53,29 @@ Scrapers are loaded dynamically at application startup via `ModulesManager.LoadM
    - `externalScrapersModules_Theme_Movie`
 4. Loads enabled state and order from settings
 5. Assigns default order (999) for newly discovered scrapers
+
+### 1.4 Generic Module Event System
+
+Generic modules (like the BulkRenamer) can subscribe to scraping events via `ModuleEventType`:
+
+| Event | When Fired |
+|-------|------------|
+| `ScraperMulti_Movie` | During bulk/auto scraping operations |
+| `ScraperSingle_Movie` | During single movie scrape |
+| `AfterEdit_Movie` | After movie data is edited |
+| `BeforeEdit_Movie` | Before movie data is edited |
+| `Sync_Movie` | When movie sync is requested |
+
+Generic modules implement `RunGeneric()` to handle these events:
+
+    Public Function RunGeneric(ByVal mType As Enums.ModuleEventType, ...) As Interfaces.ModuleResult
+        Select Case mType
+            Case Enums.ModuleEventType.ScraperMulti_Movie
+                ' Handle bulk scrape event
+            Case Enums.ModuleEventType.AfterEdit_Movie
+                ' Handle after edit event
+        End Select
+    End Function
 
 ---
 
@@ -322,6 +347,37 @@ Image scraping is initiated by calling `ModulesManager.Instance.ScrapeImage_Movi
 | TMDB Image | TMDB API | Posters, Fanarts, Banners |
 | FanartTV | fanart.tv API | All artwork types |
 
+### 4.4 Image Download and Save Process
+
+**Critical Performance Note:** Image downloading occurs during `Save_Movie()`, not during `ScrapeImage_Movie()`.
+
+The scraping phase collects image URLs and metadata into `ImagesContainer`. The actual download happens when:
+
+    ' In Save_Movie() - clsAPIDatabase.vb
+    If toDisk Then
+        dbElement.ImagesContainer.SaveAllImages(dbElement, forceFileCleanup)  ' Downloads images here
+        dbElement.Movie.SaveAllActorThumbs(dbElement)
+        dbElement.Theme.Save(dbElement, Enums.ModifierType.MainTheme, forceFileCleanup)
+        dbElement.Trailer.Save(dbElement, Enums.ModifierType.MainTrailer, forceFileCleanup)
+    End If
+
+**SaveAllImages Flow (clsAPIImages.vb):**
+
+    Public Sub SaveAllImages(ByRef dbElement As Database.DBElement, ByVal forceFileCleanup As Boolean)
+        ' Saves each image type sequentially
+        Banner.Save(dbElement, Enums.ModifierType.MainBanner, forceFileCleanup)
+        ClearArt.Save(dbElement, Enums.ModifierType.MainClearArt, forceFileCleanup)
+        ClearLogo.Save(dbElement, Enums.ModifierType.MainClearLogo, forceFileCleanup)
+        DiscArt.Save(dbElement, Enums.ModifierType.MainDiscArt, forceFileCleanup)
+        Fanart.Save(dbElement, Enums.ModifierType.MainFanart, forceFileCleanup)
+        Keyart.Save(dbElement, Enums.ModifierType.MainKeyart, forceFileCleanup)
+        Landscape.Save(dbElement, Enums.ModifierType.MainLandscape, forceFileCleanup)
+        Poster.Save(dbElement, Enums.ModifierType.MainPoster, forceFileCleanup)
+        ' ... extrafanarts, extrathumbs
+    End Sub
+
+Each `Image.Save()` call potentially downloads from a URL if the image hasn't been cached locally.
+
 ---
 
 ## Part 5: Trailer Scraping Process
@@ -467,11 +523,31 @@ Controls which metadata fields to scrape:
             |       For each scraper (TMDB, FanartTV):
             |           |
             |           v
-            |       Aggregate images into container
+            |       Aggregate image URLs into container
+            |           |
+            |           v
+            |       (Images NOT downloaded yet - only URLs collected)
             |
             +---> ScrapeTrailer_Movie() (if requested)
             |
             +---> Save_Movie() to database
+            |           |
+            |           v
+            |       Write NFO file
+            |           |
+            |           v
+            |       SaveAllImages() - DOWNLOADS images here (sequential)
+            |           |
+            |           v
+            |       Save actor thumbs
+            |           |
+            |           v
+            |       Save theme/trailer files
+            |           |
+            |           v
+            |       Write to database
+            |
+            +---> RunGeneric(ScraperMulti_Movie) - notify modules
             |
             v
     Process complete
@@ -517,6 +593,43 @@ During movie scraping, `Save_Movie()` is called at multiple points:
 2. After image processing completes (image paths updated)
 
 This explains why 50 movies result in ~100 `Save_Movie()` calls.
+
+### 7.4 Save_Movie Method Variants
+
+The database layer provides two save methods:
+
+| Method | Location | Purpose |
+|--------|----------|---------|
+| `Save_Movie()` | `clsAPIDatabase.vb` | Synchronous save with sequential image downloads |
+| `Save_MovieAsync()` | `clsAPIDatabase.vb` | Async save with parallel image downloads |
+
+**Save_Movie() - Synchronous (Current Default):**
+
+    Public Function Save_Movie(...) As DBElement
+        ' ... database operations ...
+        If toDisk Then
+            dbElement.ImagesContainer.SaveAllImages(dbElement, forceFileCleanup)  ' Sequential
+            dbElement.Movie.SaveAllActorThumbs(dbElement)
+            dbElement.Theme.Save(...)
+            dbElement.Trailer.Save(...)
+        End If
+        ' ... more database operations ...
+    End Function
+
+**Save_MovieAsync() - Asynchronous (For Bulk Operations):**
+
+    Public Async Function Save_MovieAsync(...) As Task(Of DBElement)
+        ' ... database operations ...
+        If toDisk Then
+            dbElement = Await dbElement.ImagesContainer.SaveAllImagesAsync(dbElement, forceFileCleanup)  ' Parallel
+            dbElement.Movie.SaveAllActorThumbs(dbElement)
+            dbElement.Theme.Save(...)
+            dbElement.Trailer.Save(...)
+        End If
+        ' ... more database operations ...
+    End Function
+
+The async version enables parallel image downloads during bulk scraping, significantly reducing total scrape time.
 
 ---
 
@@ -610,15 +723,58 @@ TV Show scraping uses the same architectural patterns:
 4. **Multiple saves:** ~2 database saves per movie during scrape process
 5. **Actor lookups:** ~48 actor lookups per movie (checking for existing actors)
 6. **Save points:** Database saves occur after data scraping AND after image processing (~2 per movie)
+7. **Image bottleneck:** Image downloads during `SaveAllImages()` are sequential
 
-### 10.3 Optimization Opportunities
+### 10.3 Performance Bottleneck Analysis
 
-| Area | Current Behavior | Potential Improvement |
-|------|-----------------|----------------------|
-| HTTP Clients | New instance per request | Shared HttpClient with connection pooling |
-| Database | Individual actor lookups | Batch lookups with indices |
-| Image Downloads | Sequential | Parallel with throttling |
-| API Calls | Separate calls for related data | Consolidated append_to_response |
+**Where Time Is Spent During Save_Movie():**
+
+| Phase | Operations | Bottleneck |
+|-------|------------|------------|
+| NFO Write | Write XML to disk | Fast (< 10ms) |
+| Image Save | Download + write each image | **SLOW - Sequential downloads** |
+| Actor Thumbs | Download actor images | Moderate |
+| Database Write | SQL operations | Fast with transactions |
+
+**Image Download Pattern (Current - Sequential):**
+
+    SaveAllImages():
+        Banner.Save()     -> Download if URL, write to disk (wait)
+        ClearArt.Save()   -> Download if URL, write to disk (wait)
+        ClearLogo.Save()  -> Download if URL, write to disk (wait)
+        ... (8+ image types, each waits for previous)
+
+**With Parallel Downloads (SaveAllImagesAsync):**
+
+    SaveAllImagesAsync():
+        Start all downloads concurrently
+        Await Task.WhenAll(allDownloadTasks)
+        Write all to disk
+
+### 10.4 Optimization Opportunities
+
+| Area | Current Behavior | Potential Improvement | Status |
+|------|-----------------|----------------------|--------|
+| HTTP Clients | New instance per request | Shared HttpClient with connection pooling | Available |
+| Database | Individual actor lookups | Batch lookups with indices | Partial |
+| Image Downloads | Sequential in Save_Movie | Parallel via Save_MovieAsync | **Implemented** |
+| API Calls | Separate calls for related data | Consolidated append_to_response | Possible |
+| Bulk Scraping | Sequential movie processing | Parallel with throttling | Future |
+
+### 10.5 Using Async Save for Bulk Operations
+
+To leverage parallel image downloads during bulk scraping, call `Save_MovieAsync()` instead of `Save_Movie()`:
+
+    ' In bulk scraping loop
+    For Each movie In movieList
+        ' ... scraping logic ...
+        Await Master.DB.Save_MovieAsync(dbElement, True, True, True, True, False)
+    Next
+
+Or use `Task.WhenAll` for true parallelism across movies:
+
+    Dim saveTasks = movieList.Select(Function(m) Master.DB.Save_MovieAsync(m, True, True, True, True, False))
+    Await Task.WhenAll(saveTasks)
 
 ---
 
@@ -633,5 +789,15 @@ The Ember Media Manager scraping system is a flexible, addon-based architecture 
 5. **Applies mappings and filters** during merge
 6. **Supports granular control** via ScrapeModifiers and ScrapeOptions
 7. **Shares architecture** between Movie and TV content types
+8. **Downloads images during Save_Movie()** not during scraping
+9. **Provides async save option** for parallel image downloads
 
 The key insight for performance is that ALL enabled scrapers run for each movie, with results merged afterward. This means enabling both TMDB and IMDB scrapers doubles the scrape time but provides more comprehensive data coverage.
+
+**Performance Critical Path:**
+1. Data scraping (network-bound, sequential per scraper)
+2. Image URL collection (fast)
+3. **Image download during save (network-bound, sequential by default)**
+4. Database write (fast)
+
+The async `Save_MovieAsync()` method addresses the image download bottleneck by enabling parallel downloads

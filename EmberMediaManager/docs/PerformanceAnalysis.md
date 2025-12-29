@@ -1,7 +1,7 @@
 ﻿# Ember Media Manager - Performance Analysis & Optimization Recommendations
 
 Created: December 27, 2025
-Updated: December 27, 2025
+Updated: December 28, 2025
 Author: Eric H. Anderson
 
 ## Executive Summary
@@ -468,9 +468,111 @@ This document provides a thorough analysis of the Ember Media Manager codebase w
 
 ---
 
-## 9. Performance Metrics to Track
+## 9. Performance Metrics Catalog
 
-Implement logging to track these metrics:
+This section catalogs all performance metrics for tracking optimization impact. Metrics are grouped by category and indicate implementation status.
+
+### 9.1 Scraper Operations
+
+| Metric Name | Location | Description | Status |
+|-------------|----------|-------------|--------|
+| `TMDB.GetInfo_Movie` | `clsScrapeTMDB.vb` | Time for single TMDB movie API call and data extraction | ✅ Implemented |
+| `TMDB.GetInfo_TVShow` | `clsScrapeTMDB.vb` | Time for single TMDB TV show API call and data extraction | ✅ Implemented |
+| `IMDB.GetMovieInfo` | `clsScrapeIMDB.vb` | Time for single IMDB movie HTML scrape and parse | ✅ Implemented |
+| `IMDB.GetTVShowInfo` | `clsScrapeIMDB.vb` | Time for single IMDB TV show HTML scrape and parse | ✅ Implemented |
+| `TVDB.GetInfo_TVShow` | TVDB scraper | Time for single TVDB TV show API call | ⬜ Not Implemented |
+
+### 9.2 Image Operations
+
+| Metric Name | Location | Description | Status |
+|-------------|----------|-------------|--------|
+| `Image.LoadFromWeb` | `clsAPIImages.vb` | Time for single image HTTP download | ✅ Implemented |
+| `SaveAllImages.Total` | `clsAPIMediaContainers.vb` | Total time for SaveAllImages method (download + disk write) | ⬜ Not Implemented |
+| `SaveAllImages.Download` | `clsAPIMediaContainers.vb` | Time spent in HTTP download phase only | ⬜ Not Implemented |
+| `SaveAllImages.DiskWrite` | `clsAPIMediaContainers.vb` | Time spent writing images to disk | ⬜ Not Implemented |
+| `SaveAllImages.ImageCount` | `clsAPIMediaContainers.vb` | Count of images processed (for correlation) | ⬜ Not Implemented |
+
+### 9.3 Database Operations
+
+| Metric Name | Location | Description | Status |
+|-------------|----------|-------------|--------|
+| `Database.Add_Actor` | `clsAPIDatabase.vb` | Time for single actor lookup/insert operation | ✅ Implemented |
+| `Database.Save_Movie` | `clsAPIDatabase.vb` | Total time for Save_Movie (includes NFO, images, DB write) | ✅ Implemented |
+| `Database.Save_TVShow` | `clsAPIDatabase.vb` | Total time for Save_TVShow | ⬜ Not Implemented |
+| `Database.Save_TVSeason` | `clsAPIDatabase.vb` | Total time for Save_TVSeason | ⬜ Not Implemented |
+| `Database.Save_TVEpisode` | `clsAPIDatabase.vb` | Total time for Save_TVEpisode | ⬜ Not Implemented |
+
+### 9.4 Save_Movie Breakdown
+
+These metrics decompose `Database.Save_Movie` to identify bottlenecks:
+
+| Metric Name | Location | Description | Status |
+|-------------|----------|-------------|--------|
+| `Save_Movie.NFO` | `clsAPIDatabase.vb` | Time spent in NFO.SaveToNFO_Movie() | ⬜ Not Implemented |
+| `Save_Movie.Images` | `clsAPIDatabase.vb` | Time spent in SaveAllImages() | ⬜ Not Implemented |
+| `Save_Movie.ActorThumbs` | `clsAPIDatabase.vb` | Time spent in SaveAllActorThumbs() | ⬜ Not Implemented |
+| `Save_Movie.Trailer` | `clsAPIDatabase.vb` | Time spent in Trailer.Save() | ⬜ Not Implemented |
+| `Save_Movie.Database` | `clsAPIDatabase.vb` | Time spent in pure SQL operations | ⬜ Not Implemented |
+
+### 9.5 Scraping Workflow
+
+| Metric Name | Location | Description | Status |
+|-------------|----------|-------------|--------|
+| `ScrapeData_Movie` | `clsAPIModules.vb` | Total time for data scrape orchestration (all scrapers) | ⬜ Not Implemented |
+| `ScrapeImage_Movie` | `clsAPIModules.vb` | Time to collect image URLs (not download) | ⬜ Not Implemented |
+| `MergeDataScraperResults_Movie` | `clsAPINFO.vb` | Time to merge results from multiple scrapers | ⬜ Not Implemented |
+
+### 9.6 Metric Implementation Summary
+
+| Category | Implemented | Not Implemented | Total |
+|----------|-------------|-----------------|-------|
+| Scraper Operations | 4 | 1 | 5 |
+| Image Operations | 1 | 4 | 5 |
+| Database Operations | 2 | 3 | 5 |
+| Save_Movie Breakdown | 0 | 5 | 5 |
+| Scraping Workflow | 0 | 3 | 3 |
+| **Total** | **7** | **16** | **23** |
+
+### 9.7 Priority Metrics for Phase 1 Validation
+
+The following metrics are critical for validating Phase 1 Item 5 (parallel image downloads):
+
+1. **`Save_Movie.Images`** - Confirms SaveAllImages is the bottleneck within Save_Movie
+2. **`SaveAllImages.Download`** - Confirms network (not disk) is the bottleneck
+3. **`SaveAllImages.DiskWrite`** - Baseline for disk I/O portion
+4. **`SaveAllImages.ImageCount`** - Correlates time with work done
+
+Without these metrics, we cannot objectively measure if the async/parallel infrastructure provides real benefit.
+
+### 9.8 Priority Metrics for Phase 2 (TV Shows)
+
+The following metrics should be implemented before Phase 2 TV Show optimization:
+
+1. **`Database.Save_TVShow`** - Baseline for TV show save performance
+2. **`Database.Save_TVSeason`** - Baseline for season save performance  
+3. **`Database.Save_TVEpisode`** - Baseline for episode save performance
+4. **`TVDB.GetInfo_TVShow`** - Alternative scraper timing
+
+### 9.9 Baseline Data (Phase 1 - 50 Movies)
+
+Captured: December 27, 2025
+
+| Metric | Count | Total (ms) | Avg (ms) | Min (ms) | Max (ms) |
+|--------|-------|------------|----------|----------|----------|
+| `TMDB.GetInfo_Movie` | 49 | 52,822 | 1,078 | 450 | 2,100 |
+| `IMDB.GetMovieInfo` | 49 | 93,590 | 1,910 | 800 | 4,500 |
+| `Image.LoadFromWeb` | 312 | 44,304 | 142 | 50 | 500 |
+| `Database.Add_Actor` | 2,400 | 4,152 | 1.73 | 0.5 | 15 |
+| `Database.Save_Movie` | 98 | 60,662 | 619 | 300 | 1,200 |
+
+**Observations:**
+- ~2 Save_Movie calls per movie (after data scrape, after image processing)
+- ~48 actor lookups per movie average
+- ~6.4 images downloaded per movie average
+- IMDB scraping is ~77% slower than TMDB per movie
+
+
+Implement performance tracking helper to track these metrics:
 
     ' Performance tracking helper
     Public Class PerformanceTracker
@@ -495,6 +597,7 @@ Implement logging to track these metrics:
     End Class
 
 ---
+
 
 ## 10. Testing Recommendations
 

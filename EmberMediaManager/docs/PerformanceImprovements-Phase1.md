@@ -2,7 +2,7 @@
 
 | Document Info | |
 |---------------|---|
-| **Version** | 2.3 |
+| **Version** | 2.7 |
 | **Created** | December 27, 2025 |
 | **Updated** | December 28, 2025 |
 | **Author** | Eric H. Anderson |
@@ -29,6 +29,10 @@
 | 2.1 | 2025-12-28 | Eric H. Anderson | Item 4 implementation complete - Parallel image downloads in dlgImgSelect |
 | 2.2 | 2025-12-28 | Eric H. Anderson | Item 4 complete - Parallel downloads for dlgImgSelect dialog |
 | 2.3 | 2025-12-28 | Eric H. Anderson | Item 5 analysis complete - Infrastructure ready, integration documented |
+| 2.4 | 2025-12-28 | Eric H. Anderson | Added Item 6: Thumbnail inefficiency fix; Added step 0.7 for SaveAllImages metrics |
+| 2.5 | 2025-12-28 | Eric H. Anderson | Item 6 verified already complete - DoneAndClose() correctly downloads full-size; removed from active work |
+| 2.6 | 2025-12-28 | Eric H. Anderson | Item 5 Step 5.3 complete - Save_MovieAsync created; Updated architecture findings |
+| 2.7 | 2025-12-28 | Eric H. Anderson | Item 5 Step 5.4 complete - Architecture analysis documented to prevent re-analysis |
 
 ---
 
@@ -52,7 +56,8 @@ This plan covers the 4 high-priority performance improvements identified in the 
 | 2 | Database Indices | ✅ Complete | 2025-12-27 |
 | 3 | TMDB append_to_response | ⏸️ Deferred | |
 | 4 | Parallel Image Downloads (Dialog) | ✅ Complete | 2025-12-28 |
-| 5 | Parallel Image Downloads (Bulk Scrape) | 🔄 Infrastructure Ready | |
+| 5 | Parallel Image Downloads (Bulk Scrape) | 🔄 Step 5.4 Complete | |
+| 6 | Thumbnail Download Inefficiency Fix | ✅ Already Correct | 2025-12-28 |
 
 **Legend:** ⬜ Not Started | 🔄 In Progress | ✅ Complete | ⏸️ Blocked
 
@@ -107,6 +112,12 @@ Create a reusable performance tracking utility to measure and log operation timi
 - [x] **0.6** Create baseline capture utility/test
     - [x] Scraped 50 movies with TMDB and IMDB scrapers
     - [x] Documented baseline values in Testing Plan section
+
+- [ ] **0.7** Add instrumentation for Phase 2 decision support
+    - [ ] `SaveAllImages` total time
+    - [ ] `SaveAllImages.Download` phase time  
+    - [ ] `SaveAllImages.DiskWrite` phase time
+    - [ ] NFO save operations (`NFO.SaveToNFO_Movie`)
 
 ### Completed
 Item 0 is complete. Baseline metrics have been captured and documented.
@@ -549,77 +560,6 @@ All async infrastructure has been implemented. What remains is wiring the async 
 | `DownloadImagesParallelAsync` | `clsAPIImages.vb` | ✅ Complete |
 | `LoadFromWebAsync` | `clsAPIImages.vb` (Images class) | ✅ Complete |
 
-### What Needs to Be Done
-
-#### Challenge: Synchronous Save Methods
-
-All callers of `SaveAllImages` are synchronous methods in `clsAPIDatabase.vb`:
-
-| Line | Method | Content Type | Primary Target? |
-|------|--------|--------------|-----------------|
-| 3616 | `Save_Movie` | Movie | **YES** |
-| 3998 | `Save_MovieSet` | MovieSet | Future |
-| 4413 | `Save_TVEpisode` | TVEpisode | Future |
-| 4724 | `Save_TVSeason` | TVSeason | Future |
-| 4886 | `Save_TVShow` | TVShow | Future |
-
-**Why we can't just replace the call:**
-- VB.NET `Async`/`Await` requires the calling method to also be `Async`
-- `Save_Movie` returns `DBElement` (not `Task(Of DBElement)`)
-- Using `.GetAwaiter().GetResult()` or `.Result` blocks the UI thread
-- All `Save_*` methods are called from many places throughout the codebase
-
-#### Recommended Implementation Approach
-
-**Step 1: Create `Save_MovieAsync` in `clsAPIDatabase.vb`**
-
-Add alongside existing `Save_Movie` (don't replace):
-
-    ''' <summary>
-    ''' Async version of Save_Movie for bulk scraping with parallel image downloads
-    ''' </summary>
-    Public Async Function Save_MovieAsync(
-        ByVal dbElement As DBElement, 
-        ByVal batchMode As Boolean, 
-        ByVal toNFO As Boolean, 
-        ByVal toDisk As Boolean, 
-        ByVal doSync As Boolean, 
-        ByVal forceFileCleanup As Boolean
-    ) As Task(Of DBElement)
-        
-        ' Copy ALL existing Save_Movie logic here (database operations are fast, keep sync)
-        ' ...
-        
-        ' Replace this synchronous call:
-        ' If toDisk Then dbElement.ImagesContainer.SaveAllImages(dbElement, forceFileCleanup)
-        
-        ' With this async call:
-        If toDisk Then
-            dbElement = Await dbElement.ImagesContainer.SaveAllImagesAsync(dbElement, forceFileCleanup).ConfigureAwait(False)
-            dbElement.Movie.SaveAllActorThumbs(dbElement)
-            dbElement.Theme.Save(dbElement, Enums.ModifierType.MainTheme, forceFileCleanup)
-            dbElement.Trailer.Save(dbElement, Enums.ModifierType.MainTrailer, forceFileCleanup)
-        End If
-        
-        Return dbElement
-    End Function
-
-**Step 2: Identify Bulk Scraping Entry Point**
-
-Need to find where bulk scraping calls `Save_Movie` and update to call `Save_MovieAsync` instead.
-
-Likely locations (requires investigation):
-- `EmberAPI\clsAPIModules.vb` - ModulesManager scraping methods
-- `EmberMediaManager\frmMain.vb` - UI-triggered bulk scrape
-- Task/BackgroundWorker that processes movie list
-
-**Step 3: Update Bulk Scrape to Use Async**
-
-The bulk scrape workflow needs to be updated to:
-1. Use `Task.Run()` or similar to run async code
-2. Call `Save_MovieAsync` instead of `Save_Movie`
-3. Maintain progress reporting and cancellation
-
 ### Implementation Steps
 
 - [x] **5.1** Analyze `SaveAllImagesAsync` implementation ✅
@@ -635,20 +575,24 @@ The bulk scrape workflow needs to be updated to:
     - Line 4724: `Save_TVSeason`
     - Line 4886: `Save_TVShow`
 
-- [ ] **5.3** Create `Save_MovieAsync` method
-    - Copy `Save_Movie` method body
-    - Change return type to `Task(Of DBElement)`
-    - Replace `SaveAllImages` call with `Await SaveAllImagesAsync`
-    - Add `Async` keyword and `ConfigureAwait(False)` calls
+- [x] **5.3** Create `Save_MovieAsync` method ✅
+    - Copied `Save_Movie` method body
+    - Changed return type to `Task(Of DBElement)`
+    - Replaced `SaveAllImages` call with `Await SaveAllImagesAsync`
+    - Added `Async` keyword and `ConfigureAwait(False)` calls
+    - Located at `clsAPIDatabase.vb` lines ~3957-4500
 
-- [ ] **5.4** Identify bulk scraping entry point
-    - Search for where `Save_Movie` is called during bulk operations
-    - Document the call chain
+- [x] **5.4** Identify bulk scraping entry point ✅
+    - **Finding:** Bulk scraping uses an event-driven architecture, NOT a centralized loop
+    - `Save_Movie` is called from **multiple scattered locations** across the codebase
+    - There is no single "bulk scrape loop" to modify
+    - See "Architecture Analysis" section below for complete findings
 
-- [ ] **5.5** Update bulk scrape workflow
-    - Modify to call `Save_MovieAsync`
+- [ ] **5.5** Update bulk scrape workflow to use async
+    - Replace `Save_Movie` with `Await Save_MovieAsync` in bulk loop
+    - May need `Task.Run()` wrapper for BackgroundWorker context
     - Ensure proper async/await propagation
-    - Maintain progress reporting
+    - Maintain progress reporting and cancellation
 
 - [ ] **5.6** Test with bulk scrape operations
     - Test 10, 50, 100 movie batch scrapes
@@ -656,6 +600,112 @@ The bulk scrape workflow needs to be updated to:
     - Measure performance improvement
 
 - [ ] **5.7** Capture metrics and validate improvement
+
+### Architecture Analysis (Step 5.4 Findings)
+
+**Completed:** 2025-12-28
+
+This analysis documents where `Save_Movie` is called and why integration is complex. **Do not re-analyze this in future sessions.**
+
+#### Key Finding: Event-Driven Architecture
+
+Bulk scraping does **NOT** happen in a centralized loop. Instead:
+1. User initiates scrape via UI (`dlgCustomScraper`) or command line
+2. `CustomUpdater` structure is populated with scrape settings
+3. Events flow through `ModulesManager` module event system
+4. Individual scrapers run via `ScraperMulti_Movie` event type
+5. `Save_Movie` is called at various points after scraping completes
+
+#### All `Save_Movie` Call Sites
+
+| Location | File | Context |
+|----------|------|---------|
+| Scanner | `clsAPIScanner.vb` ~line 731 | During media file scanning |
+| TaskManager | `clsAPITaskManager.vb` ~line 173 | Bulk edit operations |
+| Images | `clsAPIImages.vb` ~line 401 | After image operations |
+| NFO | `clsAPINFO.vb` ~line 2128 | NFO save operations |
+| Edit Dialog | `dlgEdit_Movie.vb` ~line 715 | Single movie edit |
+| Trakt Sync | `Addons\generic.Interface.Trakttv\clsAPITrakt.vb` ~line 1034 | Sync operations |
+| DVD Profiler | `clsAPIDVDProfiler.vb` ~line 88 | Import operations |
+
+#### Why Simple Replacement Won't Work
+
+1. **Async propagation required:** Replacing `Save_Movie` with `Save_MovieAsync` requires ALL callers to be async
+2. **BackgroundWorker incompatibility:** Many callers use `BackgroundWorker.DoWork` which is synchronous
+3. **No central orchestration:** The module event system (`RunGeneric`) doesn't have a single entry point for bulk movie saves
+4. **Scattered call sites:** 7+ different locations call `Save_Movie`, each with different contexts
+
+#### Recommended Integration Approach
+
+**Option A: Wrapper with sync-over-async (Simple but blocks thread)**
+
+    ' In existing Save_Movie callers that do bulk operations:
+    dbElement = Save_MovieAsync(dbElement, ...).GetAwaiter().GetResult()
+
+**Pros:** Minimal code changes, works in BackgroundWorker context
+**Cons:** Blocks thread (loses parallelism benefit within single movie)
+
+**Option B: Task-based bulk processing (Complex but optimal)**
+
+Requires refactoring bulk scrape to use `Task.WhenAll`:
+
+    ' Pseudocode for bulk scrape refactor:
+    Dim saveTasks = scrapedMovies.Select(Function(m) Save_MovieAsync(m, ...))
+    Await Task.WhenAll(saveTasks)
+
+**Pros:** True parallelism across movies
+**Cons:** Major refactor of scraping architecture, affects cancellation/progress
+
+**Option C: Parallel.ForEachAsync (Medium complexity)**
+
+    Await Parallel.ForEachAsync(scrapedMovies, 
+        New ParallelOptions With {.MaxDegreeOfParallelism = 3},
+        Async Function(movie, ct)
+            Await Save_MovieAsync(movie, ...)
+        End Function)
+
+**Pros:** Controlled parallelism, maintains order
+**Cons:** Requires .NET Framework 4.8 compatibility check, progress reporting changes
+
+#### Decision Point
+
+The infrastructure (`Save_MovieAsync`, `SaveAllImagesAsync`) is **complete and ready**.
+
+Integration requires choosing an approach:
+- **Quick win:** Option A (sync-over-async wrapper) - gets parallel image downloads per movie
+- **Full optimization:** Option B or C - requires architecture refactor
+
+**Recommendation:** Start with Option A to validate the async infrastructure works, then consider Option B/C for Phase 2 if more parallelism is needed.
+
+### Reference: Save_MovieAsync Signature
+
+Created in `clsAPIDatabase.vb` (Step 5.3):
+
+    Public Async Function Save_MovieAsync(
+        ByVal dbElement As DBElement, 
+        ByVal batchMode As Boolean, 
+        ByVal toNFO As Boolean, 
+        ByVal toDisk As Boolean, 
+        ByVal doSync As Boolean, 
+        ByVal forceFileCleanup As Boolean
+    ) As Task(Of DBElement)
+
+Key difference from `Save_Movie`: Uses `Await SaveAllImagesAsync()` for parallel image downloads.
+
+### Reference: SaveAllImagesAsync
+
+Exists in `clsAPIMediaContainers.vb` (lines 4599-4740):
+
+    Public Async Function SaveAllImagesAsync(
+        ByVal DBElement As Database.DBElement, 
+        ByVal ForceFileCleanup As Boolean
+    ) As Task(Of Database.DBElement)
+        
+        ' Phase 1: Collect all images that need downloading
+        ' Phase 2: Download all images in parallel (max 5 concurrent)
+        ' Phase 3: Save images sequentially (disk I/O)
+
+**Note:** Only Movie content type is supported for async. Others fall back to sync.
 
 ### SaveAllImagesAsync Implementation Reference
 
@@ -709,6 +759,114 @@ The async method already exists in `clsAPIMediaContainers.vb`:
 
 ---
 
+---
+
+## Item 6: Thumbnail Download Inefficiency Fix
+
+**Effort:** N/A | **Risk:** N/A | **Impact:** N/A
+
+**Status:** ✅ Already Correctly Implemented
+
+### Original Concern
+During Item 4 analysis, concern was raised that `GetPreferredImages()` might download thumbnails instead of full-size images, causing redundant downloads when `SaveAllImages()` later requests full-size.
+
+### Verification Analysis (2025-12-28)
+
+Thorough code review of `dlgImgSelect.vb` revealed the implementation is **already correct**:
+
+| Method | `needFullsize` | Purpose | Correct? |
+|--------|----------------|---------|----------|
+| `CreateImageTag` (line 995) | `False` | Download thumbnails for dialog list display | ✅ |
+| `DownloadDefaultImages` (lines 1939-2033) | `False` | Download thumbnails for initial preferred image display | ✅ |
+| `DoneAndClose` (lines 1365-1400) | `True` | Download **full-size** when user clicks OK | ✅ |
+
+### Workflow Confirmation
+
+1. **Dialog Opens** → `DownloadDefaultImages()` downloads thumbnails for fast display
+2. **User Browses** → `CreateImageTag()` uses thumbnails for list items
+3. **User Clicks OK** → `DoneAndClose()` downloads full-size images before returning
+
+The `DoneAndClose()` method correctly uses `LoadAndCache(tContentType, True)` for all image types:
+
+    'Banner
+    Result.ImagesContainer.Banner.LoadAndCache(tContentType, True)
+    
+    'CharacterArt
+    Result.ImagesContainer.CharacterArt.LoadAndCache(tContentType, True)
+    
+    ' ... (all other image types use True)
+
+### Root Cause of Confusion
+
+The original `ImageThumbnailAnalysis.md` document referenced line numbers (1952, 1956, etc.) in a `GetPreferredImages()` method that doesn't exist in the current codebase. The actual `GetPreferredImages()` method (lines 2167-2196) only copies data between containers - it has no `LoadAndCache` calls.
+
+### Conclusion
+
+**No code changes required.** The existing implementation correctly:
+- Downloads thumbnails for fast dialog display
+- Downloads full-size images only when user confirms selection
+- Avoids redundant downloads
+
+### Acceptance Criteria
+- [x] Verified `DoneAndClose()` uses `needFullsize:=True` for all image types
+- [x] Verified workflow: thumbnails for display, full-size on OK
+- [x] No redundant download behavior exists
+
+---
+
+---
+
+## Session Continuity Notes
+
+**Last Updated:** 2025-12-28
+
+### For Next Session - Resume at Item 5, Step 5.4
+
+**Current State:**
+- Items 0, 1, 2, 4, 6 are **complete**
+- Item 3 is **deferred** (already optimized)
+- Item 5 is **in progress** - Step 5.3 complete, integration pending
+
+**Completed This Session:**
+- ✅ Created `Save_MovieAsync` in `clsAPIDatabase.vb`
+- ✅ Updated `ScrapingProcessMovies.md` with architecture details
+- ✅ Documented image download timing (occurs during Save, not Scrape)
+
+**Next Steps for Item 5:**
+
+1. **Step 5.5** - Implement integration using Option A (sync-over-async wrapper)
+   - Identify the primary bulk scrape caller (likely in `frmMain.vb` or `clsAPIModules.vb`)
+   - Replace `Save_Movie` with `Save_MovieAsync(...).GetAwaiter().GetResult()`
+   - This enables parallel image downloads WITHIN each movie save
+   - Does NOT parallelize across movies (that's Phase 2)
+
+2. **Step 5.6** - Test with bulk scrape operations
+
+3. **Step 5.7** - Capture metrics and validate improvement
+
+**DO NOT RE-ANALYZE the architecture.** See "Architecture Analysis (Step 5.4 Findings)" section above.
+
+**Architecture Insight Discovered:**
+- Image downloads happen during `Save_Movie()`, NOT during `ScrapeImage_Movie()`
+- `ScrapeImage_Movie()` only collects URLs into `ImagesContainer`
+- `SaveAllImages()` (called from `Save_Movie`) does the actual HTTP downloads
+- This is why `Save_MovieAsync` with `SaveAllImagesAsync` is the correct integration point
+
+**Key Files for Item 5:**
+- `EmberAPI\clsAPIDatabase.vb` - Add `Save_MovieAsync`
+- `EmberAPI\clsAPIMediaContainers.vb` - `SaveAllImagesAsync` already exists (lines 4599-4740)
+- `EmberAPI\clsAPIModules.vb` - Likely bulk scrape orchestration
+- `EmberMediaManager\frmMain.vb` - UI bulk scrape trigger
+- `docs\process-docs\ScrapingProcessMovies.md` - Architecture documentation (updated)
+
+**Infrastructure Already Complete:**
+- `SaveAllImagesAsync` in `clsAPIMediaContainers.vb` ✅
+- `DownloadImagesParallelAsync` in `clsAPIImages.vb` ✅
+- `LoadAndCacheAsync` in `clsAPIMediaContainers.vb` ✅
+- Async HTTP methods in `clsAPIHTTP.vb` ✅
+
+**Git Branch:** `feature/performance-improvements-phase1`
+
 ## Testing Plan
 
 ### Baseline Capture (After Item 0)
@@ -754,6 +912,7 @@ Each item can be reverted independently:
 3. **TMDB Methods** - Revert to original `MovieMethods` flags
 4. **Parallel Downloads (Dialog)** - Restore sequential download loop in dlgImgSelect
 5. **Parallel Downloads (Bulk)** - Use `Save_Movie` instead of `Save_MovieAsync`
+6. **Thumbnail Fix** - N/A (no changes made - already correct)
 
 ---
 
@@ -769,7 +928,7 @@ Each item can be reverted independently:
 | Item 3 Deferred | Eric H. Anderson | 2025-12-28 | Already optimized - minimal ROI |
 | Item 4 Complete | Eric H. Anderson | 2025-12-28 | Dialog parallel downloads implemented |
 | Item 5 Analysis | Eric H. Anderson | 2025-12-28 | Infrastructure ready, integration documented |
-| Item 5 Complete | | | |
+| Item 6 Verified | Eric H. Anderson | 2025-12-28 | Already correctly implemented - no changes needed |
 | Phase 1 Complete | | | |
 
 ---
