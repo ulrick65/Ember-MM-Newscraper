@@ -1418,6 +1418,20 @@ Public Class frmMain
         End If
     End Sub
 
+    ''' <summary>
+    ''' Handles completion of the bulk movie scraping background worker.
+    ''' </summary>
+    ''' <param name="sender">The BackgroundWorker that raised the event.</param>
+    ''' <param name="e">Contains the Results structure with DBElement and completion status.</param>
+    ''' <remarks>
+    ''' Documentation: See docs/BulkScrapingDocumentation.md for complete flow analysis.
+    ''' Called after bwMovieScraper_DoWork completes (success, cancel, or error).
+    ''' Responsibilities:
+    ''' - Re-enables UI controls
+    ''' - Refreshes the movie list display
+    ''' - Shows completion notification
+    ''' - Handles any errors that occurred during scraping
+    ''' </remarks>
     Private Sub bwMovieScraper_Completed(ByVal sender As Object, ByVal e As System.ComponentModel.RunWorkerCompletedEventArgs) Handles bwMovieScraper.RunWorkerCompleted
         Dim Res As Results = DirectCast(e.Result, Results)
 
@@ -1449,7 +1463,23 @@ Public Class frmMain
             SetControlsEnabled(True)
         End If
     End Sub
-
+    ''' <summary>
+    ''' Main bulk movie scraping loop - processes each movie in the scrape list sequentially.
+    ''' </summary>
+    ''' <param name="sender">The BackgroundWorker that raised the event.</param>
+    ''' <param name="e">Contains the Arguments structure with ScrapeList, ScrapeOptions, and ScrapeType.</param>
+    ''' <remarks>
+    ''' PERFORMANCE CRITICAL METHOD - This is the main scraping loop for bulk operations.
+    ''' Documentation: See docs/BulkScrapingDocumentation.md for complete flow analysis.
+    ''' Processing Flow Per Movie:
+    ''' 1. Load movie from database via Master.DB.Load_Movie
+    ''' 2. ScrapeData_Movie - Run TMDB/IMDB scrapers
+    ''' 3. ScrapeImage_Movie - Collect image URLs (no download yet)
+    ''' 4. ScrapeTheme_Movie / ScrapeTrailer_Movie - Find themes and trailers
+    ''' 5. Save_Movie - Downloads images and saves to DB (PERFORMANCE BOTTLENECK)
+    ''' Performance Note: The Save_Movie call downloads images sequentially.
+    ''' Entry Points: Context menu, Tools menu, Command line (-scrapemovies)
+    ''' </remarks>
     Private Sub bwMovieScraper_DoWork(ByVal sender As Object, ByVal e As System.ComponentModel.DoWorkEventArgs) Handles bwMovieScraper.DoWork
         Dim Args As Arguments = DirectCast(e.Argument, Arguments)
         Dim Cancelled As Boolean = False
@@ -1621,6 +1651,19 @@ Public Class frmMain
         logger.Trace(String.Format("[Movie Scraper] [Done] Scraping"))
     End Sub
 
+    ''' <summary>
+    ''' Handles progress updates from the bulk movie scraping background worker.
+    ''' </summary>
+    ''' <param name="sender">The BackgroundWorker that raised the event.</param>
+    ''' <param name="e">Contains progress percentage and current movie title.</param>
+    ''' <remarks>
+    ''' Documentation: See docs/BulkScrapingDocumentation.md for complete flow analysis.
+    ''' Called via bwMovieScraper.ReportProgress() during scraping loop.
+    ''' Updates:
+    ''' - Progress bar value
+    ''' - Status bar text with current movie title
+    ''' - Refreshes row in movie list after each movie is saved
+    ''' </remarks>
     Private Sub bwMovieScraper_ProgressChanged(ByVal sender As Object, ByVal e As System.ComponentModel.ProgressChangedEventArgs) Handles bwMovieScraper.ProgressChanged
         If e.ProgressPercentage = -1 Then
             Notifications.NewNotification(Notifications.Type.Scraped_Movie, e.UserState.ToString)
@@ -1634,6 +1677,18 @@ Public Class frmMain
         End If
     End Sub
 
+    ''' <summary>
+    ''' Handles completion of the bulk movie set scraping background worker.
+    ''' </summary>
+    ''' <param name="sender">The BackgroundWorker that raised the event.</param>
+    ''' <param name="e">Contains the Results structure with DBElement and completion status.</param>
+    ''' <remarks>
+    ''' Called after bwMovieSetScraper_DoWork completes (success, cancel, or error).
+    ''' Responsibilities:
+    ''' - Re-enables UI controls
+    ''' - Refreshes the movie set list display
+    ''' - Shows completion notification
+    ''' </remarks>
     Private Sub bwMovieSetScraper_Completed(ByVal sender As Object, ByVal e As System.ComponentModel.RunWorkerCompletedEventArgs) Handles bwMovieSetScraper.RunWorkerCompleted
         Dim Res As Results = DirectCast(e.Result, Results)
 
@@ -1665,6 +1720,20 @@ Public Class frmMain
         End If
     End Sub
 
+    ''' <summary>
+    ''' Main bulk movie set scraping loop - processes each movie set in the scrape list sequentially.
+    ''' </summary>
+    ''' <param name="sender">The BackgroundWorker that raised the event.</param>
+    ''' <param name="e">Contains the Arguments structure with ScrapeList, ScrapeOptions, and ScrapeType.</param>
+    ''' <remarks>
+    ''' PERFORMANCE CRITICAL METHOD - This is the main scraping loop for bulk movie set operations.
+    ''' Processing Flow Per MovieSet:
+    ''' 1. Load movie set from database via Master.DB.Load_MovieSet
+    ''' 2. ScrapeData_MovieSet - Run TMDB scraper for collection info
+    ''' 3. ScrapeImage_MovieSet - Collect image URLs (poster, fanart, banner, etc.)
+    ''' 4. Save_MovieSet - Downloads images and saves to DB (PERFORMANCE BOTTLENECK)
+    ''' Entry Points: Context menu, Tools menu, Command line (-scrapemoviesets)
+    ''' </remarks>
     Private Sub bwMovieSetScraper_DoWork(ByVal sender As Object, ByVal e As System.ComponentModel.DoWorkEventArgs) Handles bwMovieSetScraper.DoWork
         Dim Args As Arguments = DirectCast(e.Argument, Arguments)
         Dim Cancelled As Boolean = False
@@ -1779,6 +1848,15 @@ Public Class frmMain
         logger.Trace(String.Format("[MovieSet Scraper] [Done] Scraping"))
     End Sub
 
+    ''' <summary>
+    ''' Handles progress updates from the bulk movie set scraping background worker.
+    ''' </summary>
+    ''' <param name="sender">The BackgroundWorker that raised the event.</param>
+    ''' <param name="e">Contains progress percentage and current movie set title.</param>
+    ''' <remarks>
+    ''' Called via bwMovieSetScraper.ReportProgress() during scraping loop.
+    ''' Updates progress bar and status bar text.
+    ''' </remarks>
     Private Sub bwMovieSetScraper_ProgressChanged(ByVal sender As Object, ByVal e As System.ComponentModel.ProgressChangedEventArgs) Handles bwMovieSetScraper.ProgressChanged
         If e.ProgressPercentage = -1 Then
             Notifications.NewNotification(Notifications.Type.Scraped_Movieset, e.UserState.ToString)
@@ -1792,6 +1870,19 @@ Public Class frmMain
         End If
     End Sub
 
+    ''' <summary>
+    ''' Handles completion of the bulk TV show scraping background worker.
+    ''' </summary>
+    ''' <param name="sender">The BackgroundWorker that raised the event.</param>
+    ''' <param name="e">Contains the Results structure with DBElement and completion status.</param>
+    ''' <remarks>
+    ''' Called after bwTVScraper_DoWork completes (success, cancel, or error).
+    ''' Responsibilities:
+    ''' - Re-enables UI controls
+    ''' - Refreshes the TV show list display
+    ''' - Shows completion notification
+    ''' - Handles any errors that occurred during scraping
+    ''' </remarks>
     Private Sub bwTVScraper_Completed(ByVal sender As Object, ByVal e As System.ComponentModel.RunWorkerCompletedEventArgs) Handles bwTVScraper.RunWorkerCompleted
         Dim Res As Results = DirectCast(e.Result, Results)
 
@@ -1823,6 +1914,22 @@ Public Class frmMain
         End If
     End Sub
 
+    ''' <summary>
+    ''' Main bulk TV show scraping loop - processes each TV show in the scrape list sequentially.
+    ''' </summary>
+    ''' <param name="sender">The BackgroundWorker that raised the event.</param>
+    ''' <param name="e">Contains the Arguments structure with ScrapeList, ScrapeOptions, and ScrapeType.</param>
+    ''' <remarks>
+    ''' PERFORMANCE CRITICAL METHOD - This is the main scraping loop for bulk TV show operations.
+    ''' Documentation: See docs/BulkScrapingDocumentation.md for movie equivalent flow analysis.
+    ''' Processing Flow Per TV Show:
+    ''' 1. Load TV show from database via Master.DB.Load_TVShow
+    ''' 2. ScrapeData_TVShow - Run TVDB/TMDB scrapers
+    ''' 3. ScrapeImage_TVShow - Collect image URLs (no download yet)
+    ''' 4. ScrapeTheme_TVShow - Find themes
+    ''' 5. Save_TVShow - Downloads images and saves to DB (PERFORMANCE BOTTLENECK)
+    ''' Entry Points: Context menu, Tools menu, Command line (-scrapetvshows)
+    ''' </remarks>
     Private Sub bwTVScraper_DoWork(ByVal sender As Object, ByVal e As System.ComponentModel.DoWorkEventArgs) Handles bwTVScraper.DoWork
         Dim Args As Arguments = DirectCast(e.Argument, Arguments)
         Dim Cancelled As Boolean = False
@@ -1956,6 +2063,18 @@ Public Class frmMain
         logger.Trace("Ended TV SHOW scrape")
     End Sub
 
+    ''' <summary>
+    ''' Handles progress updates from the bulk TV show scraping background worker.
+    ''' </summary>
+    ''' <param name="sender">The BackgroundWorker that raised the event.</param>
+    ''' <param name="e">Contains progress percentage and current TV show title.</param>
+    ''' <remarks>
+    ''' Called via bwTVScraper.ReportProgress() during scraping loop.
+    ''' Updates:
+    ''' - Progress bar value
+    ''' - Status bar text with current TV show title
+    ''' - Refreshes row in TV show list after each show is saved
+    ''' </remarks>
     Private Sub bwTVScraper_ProgressChanged(ByVal sender As Object, ByVal e As System.ComponentModel.ProgressChangedEventArgs) Handles bwTVScraper.ProgressChanged
         If e.ProgressPercentage = -1 Then
             Notifications.NewNotification(Notifications.Type.Scraped_TVShow, e.UserState.ToString)
@@ -2000,6 +2119,20 @@ Public Class frmMain
         End If
     End Sub
 
+    ''' <summary>
+    ''' Main bulk TV episode scraping loop - processes each episode in the scrape list sequentially.
+    ''' </summary>
+    ''' <param name="sender">The BackgroundWorker that raised the event.</param>
+    ''' <param name="e">Contains the Arguments structure with ScrapeList, ScrapeOptions, and ScrapeType.</param>
+    ''' <remarks>
+    ''' PERFORMANCE CRITICAL METHOD - This is the main scraping loop for bulk TV episode operations.
+    ''' Processing Flow Per Episode:
+    ''' 1. Load episode from database via Master.DB.Load_TVEpisode
+    ''' 2. ScrapeData_TVEpisode - Run TVDB/TMDB scrapers
+    ''' 3. ScrapeImage_TVEpisode - Collect image URLs
+    ''' 4. Save_TVEpisode - Downloads images and saves to DB
+    ''' Entry Points: Context menu on episodes, Command line
+    ''' </remarks>
     Private Sub bwTVEpisodeScraper_DoWork(ByVal sender As Object, ByVal e As System.ComponentModel.DoWorkEventArgs) Handles bwTVEpisodeScraper.DoWork
         Dim Args As Arguments = DirectCast(e.Argument, Arguments)
         Dim Cancelled As Boolean = False
@@ -2149,6 +2282,19 @@ Public Class frmMain
         End If
     End Sub
 
+    ''' <summary>
+    ''' Main bulk TV season scraping loop - processes each season in the scrape list sequentially.
+    ''' </summary>
+    ''' <param name="sender">The BackgroundWorker that raised the event.</param>
+    ''' <param name="e">Contains the Arguments structure with ScrapeList, ScrapeOptions, and ScrapeType.</param>
+    ''' <remarks>
+    ''' PERFORMANCE CRITICAL METHOD - This is the main scraping loop for bulk TV season operations.
+    ''' Processing Flow Per Season:
+    ''' 1. Load season from database via Master.DB.Load_TVSeason
+    ''' 2. ScrapeImage_TVSeason - Collect image URLs (poster, banner, fanart, landscape)
+    ''' 3. Save_TVSeason - Downloads images and saves to DB
+    ''' Entry Points: Context menu on seasons
+    ''' </remarks>
     Private Sub bwTVSeasonScraper_DoWork(ByVal sender As Object, ByVal e As System.ComponentModel.DoWorkEventArgs) Handles bwTVSeasonScraper.DoWork
         Dim Args As Arguments = DirectCast(e.Argument, Arguments)
         Dim Cancelled As Boolean = False
@@ -10621,12 +10767,20 @@ Public Class frmMain
             TasksDone = False
         End If
     End Sub
+
     ''' <summary>
-    ''' This is a generic callback function.
+    ''' Handles callbacks from command line operations and generic module events.
     ''' </summary>
-    ''' <param name="mType"></param>
-    ''' <param name="_params"></param>
-    ''' <remarks></remarks>
+    ''' <param name="mType">The type of module event being processed.</param>
+    ''' <param name="_params">List of parameters specific to the event type.</param>
+    ''' <remarks>
+    ''' Documentation: See docs/BulkScrapingDocumentation.md for complete flow analysis.
+    ''' Command Line Entry Point for bulk scraping:
+    ''' - Case "scrapemovies": Calls CreateScrapeList_Movie with command line parameters
+    ''' - Case "scrapemoviesets": Calls CreateScrapeList_MovieSet
+    ''' - Case "scrapetvshows": Calls CreateScrapeList_TV
+    ''' Also handles other generic events like database operations and sync requests.
+    ''' </remarks>
     Private Sub GenericRunCallBack(ByVal mType As Enums.ModuleEventType, ByRef _params As List(Of Object))
         Select Case mType
 
@@ -12221,6 +12375,22 @@ Public Class frmMain
         End If
     End Sub
 
+    ''' <summary>
+    ''' Central entry point for all scraping operations triggered from menus and context menus.
+    ''' </summary>
+    ''' <param name="sender">The menu item that triggered the scrape.</param>
+    ''' <param name="e">Event arguments.</param>
+    ''' <remarks>
+    ''' Documentation: See docs/BulkScrapingDocumentation.md for complete flow analysis.
+    ''' Parses menu item Tag to determine:
+    ''' - ContentType (movie, movieset, tvshow, etc.)
+    ''' - ScrapeType (SelectedAsk, AllAuto, MarkedSkip, etc.)
+    ''' - ScrapeModifiers (which content types to scrape)
+    ''' Then calls appropriate CreateScrapeList_* method.
+    ''' Entry Points: All scrape menu items including:
+    ''' - mnuScrapeModifierAll, mnuScrapeModifierNFO, mnuScrapeModifierPoster, etc.
+    ''' - Context menu scrape options
+    ''' </remarks>
     Private Sub Autoscraper(ByVal sender As Object, ByVal e As EventArgs) Handles _
         mnuScrapeSubmenuCustom.Click,
         mnuScrapeModifierTrailer.Click,
@@ -12545,6 +12715,16 @@ Public Class frmMain
         pnlMPAA.Top = pnlInfoPanel.Top - (pnlMPAA.Height + 10)
     End Sub
 
+    ''' <summary>
+    ''' Callback invoked when movie info download completes for single-movie scraping.
+    ''' </summary>
+    ''' <param name="DBMovie">The movie element with downloaded information.</param>
+    ''' <remarks>
+    ''' Documentation: See docs/BulkScrapingDocumentation.md for complete flow analysis.
+    ''' Called after single-movie scrape completes (not bulk scraping).
+    ''' Updates the UI to display the newly scraped movie information.
+    ''' For bulk scraping, progress is handled via bwMovieScraper_ProgressChanged instead.
+    ''' </remarks>
     Private Sub InfoDownloaded_Movie(ByRef DBMovie As Database.DBElement)
         If Not String.IsNullOrEmpty(DBMovie.Movie.Title) Then
             tslLoading.Text = Master.eLang.GetString(576, "Verifying Movie Details:")
@@ -12560,6 +12740,7 @@ Public Class frmMain
         SetControlsEnabled(True)
         EnableFilters_Movies(True)
     End Sub
+
     ''' <summary>
     ''' Update the progressbar for the download progress
     ''' </summary>
@@ -12572,6 +12753,22 @@ Public Class frmMain
         End If
     End Sub
 
+    ''' <summary>
+    ''' Creates the list of movies to scrape based on ScrapeType and starts the background worker.
+    ''' </summary>
+    ''' <param name="sType">The type of scrape operation (SelectedAsk, AllAuto, MarkedSkip, etc.).</param>
+    ''' <param name="ScrapeOptions">Which metadata fields to scrape (Title, Plot, Actors, etc.).</param>
+    ''' <param name="ScrapeModifiers">Which content types to scrape (NFO, Poster, Fanart, etc.).</param>
+    ''' <remarks>
+    ''' Documentation: See docs/BulkScrapingDocumentation.md for complete flow analysis.
+    ''' Entry Points:
+    ''' - Context menu: "(Re)Scrape Selected Movies" via Autoscraper method
+    ''' - Command line: GenericRunCallBack "scrapemovies" case
+    ''' - Custom scraper dialog: dlgCustomScraper
+    ''' Flow: Builds DataRowList based on ScrapeType, validates allowed scrapers,
+    ''' applies filters (New/Marked/Missing), configures UI progress, then calls
+    ''' bwMovieScraper.RunWorkerAsync to start bwMovieScraper_DoWork.
+    ''' </remarks>
     Private Sub CreateScrapeList_Movie(ByVal sType As Enums.ScrapeType, ByVal ScrapeOptions As Structures.ScrapeOptions, ByVal ScrapeModifiers As Structures.ScrapeModifiers)
         Dim DataRowList As New List(Of DataRow)
         Dim ScrapeList As New List(Of ScrapeItem)
@@ -12754,6 +12951,19 @@ Public Class frmMain
         End If
     End Sub
 
+    ''' <summary>
+    ''' Creates the list of movie sets to scrape based on ScrapeType and starts the background worker.
+    ''' </summary>
+    ''' <param name="sType">The type of scrape operation (SelectedAsk, AllAuto, MarkedSkip, etc.).</param>
+    ''' <param name="ScrapeOptions">Which metadata fields to scrape (Title, Plot, etc.).</param>
+    ''' <param name="ScrapeModifiers">Which content types to scrape (NFO, Poster, Fanart, etc.).</param>
+    ''' <remarks>
+    ''' Entry Points:
+    ''' - Context menu: "(Re)Scrape Selected Movie Sets" via Autoscraper method
+    ''' - Command line: GenericRunCallBack "scrapemoviesets" case
+    ''' Flow: Builds DataRowList, configures UI progress, then calls
+    ''' bwMovieSetScraper.RunWorkerAsync to start bwMovieSetScraper_DoWork.
+    ''' </remarks>
     Private Sub CreateScrapeList_MovieSet(ByVal sType As Enums.ScrapeType, ByVal ScrapeOptions As Structures.ScrapeOptions, ByVal ScrapeModifiers As Structures.ScrapeModifiers)
         Dim DataRowList As New List(Of DataRow)
         Dim ScrapeList As New List(Of ScrapeItem)
@@ -12921,6 +13131,22 @@ Public Class frmMain
         End If
     End Sub
 
+    ''' <summary>
+    ''' Creates the list of TV shows to scrape based on ScrapeType and starts the background worker.
+    ''' </summary>
+    ''' <param name="sType">The type of scrape operation (SelectedAsk, AllAuto, MarkedSkip, etc.).</param>
+    ''' <param name="ScrapeOptions">Which metadata fields to scrape (Title, Plot, Actors, etc.).</param>
+    ''' <param name="ScrapeModifiers">Which content types to scrape (NFO, Poster, Fanart, etc.).</param>
+    ''' <remarks>
+    ''' Documentation: See docs/BulkScrapingDocumentation.md for movie equivalent flow analysis.
+    ''' Entry Points:
+    ''' - Context menu: "(Re)Scrape Selected TV Shows" via Autoscraper method
+    ''' - Command line: GenericRunCallBack "scrapetvshows" case
+    ''' - Custom scraper dialog: dlgCustomScraper
+    ''' Flow: Builds DataRowList based on ScrapeType, validates allowed scrapers,
+    ''' applies filters (New/Marked/Missing), configures UI progress, then calls
+    ''' bwTVScraper.RunWorkerAsync to start bwTVScraper_DoWork.
+    ''' </remarks>
     Private Sub CreateScrapeList_TV(ByVal sType As Enums.ScrapeType, ByVal ScrapeOptions As Structures.ScrapeOptions, ByVal ScrapeModifiers As Structures.ScrapeModifiers)
         Dim DataRowList As New List(Of DataRow)
         Dim ScrapeList As New List(Of ScrapeItem)
@@ -13122,6 +13348,15 @@ Public Class frmMain
         End If
     End Sub
 
+    ''' <summary>
+    ''' Creates the list of TV episodes to scrape based on ScrapeType and starts the background worker.
+    ''' </summary>
+    ''' <param name="sType">The type of scrape operation (SelectedAsk, AllAuto, MarkedSkip, etc.).</param>
+    ''' <param name="ScrapeOptions">Which metadata fields to scrape.</param>
+    ''' <param name="ScrapeModifiers">Which content types to scrape.</param>
+    ''' <remarks>
+    ''' Builds episode list and starts bwTVEpisodeScraper.RunWorkerAsync.
+    ''' </remarks>
     Private Sub CreateScrapeList_TVEpisode(ByVal sType As Enums.ScrapeType, ByVal ScrapeOptions As Structures.ScrapeOptions, ByVal ScrapeModifiers As Structures.ScrapeModifiers)
         Dim DataRowList As New List(Of DataRow)
         Dim ScrapeList As New List(Of ScrapeItem)
@@ -13274,6 +13509,15 @@ Public Class frmMain
         End If
     End Sub
 
+    ''' <summary>
+    ''' Creates the list of TV seasons to scrape based on ScrapeType and starts the background worker.
+    ''' </summary>
+    ''' <param name="sType">The type of scrape operation (SelectedAsk, AllAuto, MarkedSkip, etc.).</param>
+    ''' <param name="ScrapeOptions">Which metadata fields to scrape.</param>
+    ''' <param name="ScrapeModifiers">Which content types to scrape.</param>
+    ''' <remarks>
+    ''' Builds season list and starts bwTVSeasonScraper.RunWorkerAsync.
+    ''' </remarks>
     Private Sub CreateScrapeList_TVSeason(ByVal sType As Enums.ScrapeType, ByVal ScrapeOptions As Structures.ScrapeOptions, ByVal ScrapeModifiers As Structures.ScrapeModifiers)
         Dim DataRowList As New List(Of DataRow)
         Dim ScrapeList As New List(Of ScrapeItem)

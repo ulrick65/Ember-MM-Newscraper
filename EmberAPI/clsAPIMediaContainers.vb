@@ -3956,6 +3956,18 @@ Namespace MediaContainers
             End Select
         End Sub
 
+        ''' <summary>
+        ''' Loads an image from local file, cache, or web URL (synchronous version).
+        ''' </summary>
+        ''' <param name="tContentType">Content type for determining cache settings.</param>
+        ''' <param name="needFullsize">Whether full-size image is required (vs thumbnail).</param>
+        ''' <param name="LoadBitmap">Whether to load the bitmap into memory.</param>
+        ''' <returns>True if image was loaded successfully.</returns>
+        ''' <remarks>
+        ''' Called during image save operations. This is the synchronous version.
+        ''' For parallel downloads during bulk scraping, use LoadAndCacheAsync instead.
+        ''' Load priority: LocalFilePath → MemoryStream → Cache → Web URL
+        ''' </remarks>
         Public Function LoadAndCache(ByVal tContentType As Enums.ContentType, ByVal needFullsize As Boolean, Optional ByVal LoadBitmap As Boolean = False) As Boolean
             Dim doCache As Boolean = False
 
@@ -4068,9 +4080,13 @@ Namespace MediaContainers
         End Function
 
         ''' <summary>
-        ''' Checks if this image needs to be downloaded from a URL
+        ''' Checks if this image needs to be downloaded from a URL.
         ''' </summary>
-        ''' <returns>True if the image has a URL but hasn't been loaded yet</returns>
+        ''' <returns>True if the image has a URL but hasn't been loaded yet.</returns>
+        ''' <remarks>
+        ''' Used by SaveAllImagesAsync to determine which images need parallel downloading.
+        ''' Returns False if image is already in memory, has a local file, or is cached.
+        ''' </remarks>
         Public Function NeedsDownload() As Boolean
             ' Already loaded in memory
             If ImageOriginal.HasMemoryStream OrElse ImageThumb.HasMemoryStream Then

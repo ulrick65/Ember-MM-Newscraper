@@ -1155,6 +1155,23 @@ Public Class Images
         Return efPath
     End Function
 
+    ''' <summary>
+    ''' Analyzes scraped images and selects the best ones based on user preferences for size, language, etc.
+    ''' </summary>
+    ''' <param name="DBElement">The database element being processed.</param>
+    ''' <param name="SearchResultsContainer">Container holding all scraped image URLs.</param>
+    ''' <param name="ScrapeModifiers">What image types to select (Poster, Fanart, Banner, etc.).</param>
+    ''' <param name="IsAutoScraper">Whether this is an automated scrape (affects duplicate filtering).</param>
+    ''' <returns>PreferredImagesContainer with the selected best images for each type.</returns>
+    ''' <remarks>
+    ''' Called by SetPreferredImages during bulk scraping.
+    ''' Documentation: See docs/BulkScrapingDocumentation.md for complete flow analysis.
+    ''' Selection criteria includes:
+    ''' - Preferred image sizes (MoviePosterPrefSize, MovieFanartPrefSize, etc.)
+    ''' - Keep existing images settings
+    ''' - Extrafanarts/Extrathumbs limits
+    ''' - Duplicate image filtering when enabled
+    ''' </remarks>
     Public Shared Function GetPreferredImagesContainer(ByVal DBElement As Database.DBElement,
                                             ByVal SearchResultsContainer As MediaContainers.SearchResultsContainer,
                                             ByVal ScrapeModifiers As Structures.ScrapeModifiers,
@@ -1735,6 +1752,18 @@ Public Class Images
         Return nPreferredImagesContainer
     End Function
 
+    ''' <summary>
+    ''' Applies preferred images from a PreferredImagesContainer to the DBElement.
+    ''' </summary>
+    ''' <param name="DBElement">The database element to update with preferred images.</param>
+    ''' <param name="PreferredImagesContainer">Container holding the pre-selected preferred images.</param>
+    ''' <remarks>
+    ''' Called during bulk scraping (Phase 3 in bwMovieScraper_DoWork) after ScrapeImage_Movie.
+    ''' Documentation: See docs/BulkScrapingDocumentation.md for complete flow analysis.
+    ''' This method only assigns image references to the DBElement - no downloads occur here.
+    ''' Actual image downloads happen later in Save_Movie() via SaveAllImages().
+    ''' Also handles season and episode images when scraping TV shows.
+    ''' </remarks>
     Public Shared Sub SetPreferredImages(ByRef DBElement As Database.DBElement,
                                          ByVal PreferredImagesContainer As MediaContainers.PreferredImagesContainer)
 
@@ -1759,6 +1788,22 @@ Public Class Images
         End If
     End Sub
 
+    ''' <summary>
+    ''' Selects and applies preferred images from scraped search results based on user settings.
+    ''' </summary>
+    ''' <param name="DBElement">The database element to update with preferred images.</param>
+    ''' <param name="SearchResultsContainer">Container holding all scraped image URLs from image scrapers.</param>
+    ''' <param name="ScrapeModifiers">What image types to process (Poster, Fanart, Banner, etc.).</param>
+    ''' <param name="IsAutoScraper">Whether this is an automated scrape (affects duplicate filtering).</param>
+    ''' <remarks>
+    ''' Called during bulk scraping (Phase 3 in bwMovieScraper_DoWork) after ScrapeImage_Movie.
+    ''' Documentation: See docs/BulkScrapingDocumentation.md for complete flow analysis.
+    ''' This method:
+    ''' 1. Calls GetPreferredImagesContainer to select best images based on size/language preferences
+    ''' 2. Assigns selected image references to DBElement.ImagesContainer
+    ''' 3. Does NOT download images - only selects URLs
+    ''' Actual image downloads happen later in Save_Movie() via SaveAllImages().
+    ''' </remarks>
     Public Shared Sub SetPreferredImages(ByRef DBElement As Database.DBElement,
                                          ByVal SearchResultsContainer As MediaContainers.SearchResultsContainer,
                                          ByVal ScrapeModifiers As Structures.ScrapeModifiers,
@@ -3055,16 +3100,20 @@ Public Class Images
     ''' <summary>
     ''' Downloads multiple images in parallel with controlled concurrency.
     ''' </summary>
-    ''' <param name="images">List of images to download</param>
-    ''' <param name="contentType">Content type for cache settings</param>
-    ''' <param name="maxConcurrency">Maximum number of concurrent downloads (default 5)</param>
-    ''' <param name="loadBitmap">Whether to load bitmaps into memory</param>
-    ''' <param name="cancellationToken">Cancellation token</param>
-    ''' <param name="progressCallback">Optional callback for progress reporting (current, total)</param>
-    ''' <returns>Number of successfully downloaded images</returns>
+    ''' <param name="images">List of images to download.</param>
+    ''' <param name="contentType">Content type for cache settings.</param>
+    ''' <param name="maxConcurrency">Maximum number of concurrent downloads (default 5).</param>
+    ''' <param name="loadBitmap">Whether to load bitmaps into memory.</param>
+    ''' <param name="cancellationToken">Cancellation token.</param>
+    ''' <param name="progressCallback">Optional callback for progress reporting (current, total).</param>
+    ''' <returns>Number of successfully downloaded images.</returns>
     ''' <remarks>
+    ''' PERFORMANCE OPTIMIZATION METHOD - Enables parallel image downloads.
+    ''' Documentation: See docs/PerformanceImprovements-Phase1.md Item 5.
     ''' This method uses SemaphoreSlim to limit concurrent downloads and prevent
     ''' overwhelming the server or exhausting system resources.
+    ''' Used by SaveAllImagesAsync() for parallel downloads during Save_MovieAsync().
+    ''' Performance improvement: ~40-60% faster than sequential downloads.
     ''' </remarks>
     Public Shared Async Function DownloadImagesParallelAsync(
         ByVal images As List(Of MediaContainers.Image),

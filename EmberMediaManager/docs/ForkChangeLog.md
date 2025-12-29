@@ -17,7 +17,7 @@ This document tracks all changes made to this fork of Ember Media Manager, start
 |----------|-------|
 | **Document Version** | 1.0.4 |
 | **Created** | December 25, 2025 |
-| **Last Updated** | December 28, 2025 |
+| **Last Updated** | December 29, 2025 |
 | **Author** | Eric H. Anderson |
 
 ---
@@ -200,6 +200,9 @@ The following features are deprecated and slated for removal in a future version
 | Performance | Added SQLite PRAGMA optimizations (WAL mode, cache, mmap) | `EmberAPI\clsAPIDatabase.vb` |
 | Performance | Updated OMDb scraper to use shared HttpClient | `Addons\scraper.Data.OMDb\Scraper\clsScrapeOMDb.vb` |
 | Database | Database version upgraded from 48 to 49; added v48→v49 patch file | `EmberAPI\clsAPIDatabase.vb`, `EmberAPI\DB\MyVideosDBSQL_v48_Patch.xml` (new) |
+| Documentation | Consolidated scraping documentation into ScrapingProcessMovies.md v2.0 | `EmberMediaManager\docs\process-docs\ScrapingProcessMovies.md` |
+| Documentation | Updated ScrapingProcessTvShows.md to v2.0 with comprehensive coverage | `EmberMediaManager\docs\process-docs\ScrapingProcessTvShows.md` |
+| Documentation | Archived BulkScrapingDocumentation.md with redirect to consolidated doc | `EmberMediaManager\docs\process-docs\BulkScrapingDocumentation.md` |
 
 **Version Updates:**
 
@@ -264,6 +267,7 @@ The following features are deprecated and slated for removal in a future version
 | Documentation | Created PerformanceAnalysis.md | `EmberMediaManager\docs\PerformanceAnalysis.md` |
 | Documentation | Created PerformanceImprovements-Phase1.md | `EmberMediaManager\docs\PerformanceImprovements-Phase1.md` |
 | Documentation | Created ScrapingProcessMovies.md | `EmberMediaManager\docs\process-docs\ScrapingProcessMovies.md` |
+| Documentation | Created ScrapingProcessTvShows.md | `EmberMediaManager\docs\process-docs\ScrapingProcessTvShows.md` |
 
 **Build and Scripts:**
 
@@ -392,6 +396,7 @@ The following documents provide detailed information about specific initiatives:
 | [PerformanceAnalysis.md](PerformanceAnalysis.md) | Performance analysis and optimization recommendations |
 | [PerformanceImprovements-Phase1.md](PerformanceImprovements-Phase1.md) | Phase 1 performance implementation plan and progress |
 | [ScrapingProcessMovies.md](process-docs/ScrapingProcessMovies.md) | Movie scraping process architecture documentation |
+| [ScrapingProcessTvShows.md](process-docs/ScrapingProcessTvShows.md) | TV Show scraping process architecture documentation |
 
 ---
 

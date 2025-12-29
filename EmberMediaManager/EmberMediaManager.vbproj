@@ -523,8 +523,9 @@
   <ItemGroup>
     <None Include="App.config" />
     <None Include="docs\archived-docs\NuGetPackageUpdatePlan.md" />
-    <None Include="docs\ImageThumbnailAnalysis.md" />
-    <None Include="docs\PerformanceAnalysis.md" />
+    <None Include="docs\archived-docs\BulkScrapingDocumentation.md" />
+    <None Include="docs\analysis-docs\ImageThumbnailAnalysis.md" />
+    <None Include="docs\analysis-docs\PerformanceAnalysis.md" />
     <None Include="docs\PerformanceImprovements-Phase1.md" />
     <None Include="docs\process-docs\BuildProcess.md" />
     <None Include="docs\process-docs\CertificationMappingProcess.md" />

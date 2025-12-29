@@ -1,50 +1,319 @@
 ﻿# Movie Scraping Process Analysis
 
-> **Related Documentation:** This document covers Movie scraping. For TV Show scraping, see [ScrapingProcessTvShows.md](ScrapingProcessTvShows.md). Both processes share the same architectural patterns through the `ModulesManager` class.
+> **Document Version:** 2.0 (Consolidated December 29, 2025)
+> **Related Documentation:** For TV Show scraping, see [ScrapingProcessTvShows.md](ScrapingProcessTvShows.md). Both processes share architectural patterns through the `ModulesManager` class.
+> **Performance Documentation:** See [PerformanceImprovements-Phase1.md](../PerformanceImprovements-Phase1.md) for optimization details.
 
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Part 1: Entry Points](#part-1-entry-points)
+- [Part 2: Bulk Scraping Orchestration](#part-2-bulk-scraping-orchestration)
+- [Part 3: Scraper Architecture](#part-3-scraper-architecture)
+- [Part 4: Data Scraping Process](#part-4-data-scraping-process)
+- [Part 5: Image Scraping Process](#part-5-image-scraping-process)
+- [Part 6: Theme & Trailer Scraping](#part-6-theme--trailer-scraping)
+- [Part 7: Saving to Database](#part-7-saving-to-database)
+- [Part 8: Control Structures](#part-8-control-structures)
+- [Part 9: Data Flow Diagrams](#part-9-data-flow-diagrams)
+- [Part 10: Settings Reference](#part-10-settings-reference)
+- [Part 11: Performance Analysis](#part-11-performance-analysis)
+- [Part 12: Debugging Guide](#part-12-debugging-guide)
+- [Part 13: TV Show Overlap](#part-13-tv-show-overlap)
 ---
 
 ## Overview
 
-This document provides a comprehensive analysis of how Ember Media Manager scrapes movie metadata from external data sources. The scraping system uses an addon-based modular architecture where multiple scrapers can be enabled and configured to run in sequence. Each scraper contributes data that is then merged according to user-configured rules.
+Ember Media Manager uses an addon-based modular architecture for scraping movie metadata. Multiple scrapers can be enabled and configured to run in sequence, with each scraper contributing data that is merged according to user-configured rules.
 
-> **Note:** This documentation focuses primarily on Movie scraping. TV Show scraping follows similar patterns but uses different interfaces and methods. Overlaps and shared components are highlighted where applicable.
+**High-Level Flow:**
+
+    User Action (Context Menu / Tools Menu / Command Line)
+            │
+            ▼
+    CreateScrapeList_Movie() - Builds list of movies to scrape
+            │
+            ▼
+    bwMovieScraper.RunWorkerAsync() - Starts background worker
+            │
+            ▼
+    bwMovieScraper_DoWork() - Main scraping loop
+            │
+            ▼
+    For Each movie: Scrape Data → Scrape Images → Save_Movie()
+
+**Key Insight:** Image downloads occur during `Save_Movie()`, not during the scraping phase. This is the primary performance bottleneck.
 
 ---
 
-## Part 1: Scraper Architecture
+## Part 1: Entry Points
 
-### 1.1 Core Files Involved
+Movie scraping can be initiated from three locations:
+
+### 1.1 Context Menu - "(Re)Scrape Selected Movies"
+
+**UI Location:** Right-click on movie(s) → "(Re)Scrape Selected Movies" → [Ask/Auto/Skip] → [All Items/specific item]
+
+**Code Path:**
+
+| Step | File | Method | Line |
+|------|------|--------|------|
+| 1 | `frmMain.vb` | `mnuScrape_Click` | ~12240 |
+| 2 | `frmMain.vb` | `CreateScrapeList_Movie()` | ~12350 |
+| 3 | `frmMain.vb` | `bwMovieScraper.RunWorkerAsync()` | ~12726 |
+
+**Handler Code:**
+
+    Private Sub mnuScrape_Click(ByVal sender As Object, ByVal e As EventArgs)
+        ' Parses menu item tag to determine ContentType, ScrapeType, and Modifier
+        Select Case ContentType
+            Case "movie"
+                CreateScrapeList_Movie(Type, Master.DefaultOptions_Movie, ScrapeModifiers)
+        End Select
+    End Sub
+
+### 1.2 Custom Scraper Dialog
+
+**UI Location:** Tools menu → Custom Scraper, or context menu "custom" option
+
+**Code Path:**
+
+| Step | File | Method | Line |
+|------|------|--------|------|
+| 1 | `frmMain.vb` | Menu click handler | ~12366 |
+| 2 | `dlgCustomScraper.vb` | `ShowDialog()` | - |
+| 3 | `frmMain.vb` | `CreateScrapeList_Movie()` | ~12370 |
+
+**Code:**
+
+    Using dlgCustomScraper As New dlgCustomScraper(Enums.ContentType.Movie)
+        Dim CustomScraper As Structures.CustomUpdaterStruct = dlgCustomScraper.ShowDialog()
+        If Not CustomScraper.Canceled Then
+            CreateScrapeList_Movie(CustomScraper.ScrapeType, CustomScraper.ScrapeOptions, CustomScraper.ScrapeModifiers)
+        End If
+    End Using
+
+### 1.3 Command Line
+
+**Command:** `-scrapemovies [scrapetype]`
+
+**Code Path:**
+
+| Step | File | Method | Line |
+|------|------|--------|------|
+| 1 | `clsAPICommandLine.vb` | `Parse()` | ~159 |
+| 2 | `clsAPICommandLine.vb` | `RaiseEvent TaskEvent` | ~174 |
+| 3 | `frmMain.vb` | `GenericRunCallBack()` | ~10673 |
+| 4 | `frmMain.vb` | `CreateScrapeList_Movie()` | ~10677 |
+
+**Code:**
+
+    Case "scrapemovies"
+        Master.fLoading.SetProgressBarStyle(ProgressBarStyle.Marquee)
+        Master.fLoading.SetLoadingMesg(Master.eLang.GetString(861, "Command Line Scraping..."))
+        Dim ScrapeModifiers As Structures.ScrapeModifiers = CType(_params(2), Structures.ScrapeModifiers)
+        CreateScrapeList_Movie(CType(_params(1), Enums.ScrapeType), Master.DefaultOptions_Movie, ScrapeModifiers)
+        While bwMovieScraper.IsBusy
+            Application.DoEvents()
+            Threading.Thread.Sleep(50)
+        End While
+
+---
+
+## Part 2: Bulk Scraping Orchestration
+
+### 2.1 CreateScrapeList_Movie
+
+**Location:** `frmMain.vb`, lines 12575-12727
+
+**Purpose:** Builds a list of movies to scrape based on `ScrapeType` and validates scraping permissions.
+
+**Flow:**
+
+    CreateScrapeList_Movie(sType, ScrapeOptions, ScrapeModifiers)
+            │
+            ▼
+    ┌───────────────────────────────────────┐
+    │ Step 1: Build DataRowList             │
+    │ - SelectedAsk/Auto/Skip: Selected rows│
+    │ - SingleAuto/Field/Scrape: Selected   │
+    │ - Else: All movies in dtMovies        │
+    └───────────────────────────────────────┘
+            │
+            ▼
+    ┌───────────────────────────────────────┐
+    │ Step 2: Check Allowed Scrapers        │
+    │ - ActorThumbsAllowed, BannerAllowed   │
+    │ - PosterAllowed, FanartAllowed, etc.  │
+    └───────────────────────────────────────┘
+            │
+            ▼
+    ┌───────────────────────────────────────┐
+    │ Step 3: For Each DataRow              │
+    │ - Skip if Locked (unless SingleScrape)│
+    │ - Build ScrapeModifiers per movie     │
+    │ - Apply ScrapeType filters            │
+    │ - Add to ScrapeList                   │
+    └───────────────────────────────────────┘
+            │
+            ▼
+    ┌───────────────────────────────────────┐
+    │ Step 4: Configure UI & Start Worker   │
+    │ bwMovieScraper.RunWorkerAsync(Args)   │
+    └───────────────────────────────────────┘
+
+**Key Code - Building DataRowList (lines 12579-12590):**
+
+    Select Case sType
+        Case Enums.ScrapeType.SelectedAsk, Enums.ScrapeType.SelectedAuto, Enums.ScrapeType.SelectedSkip,
+             Enums.ScrapeType.SingleAuto, Enums.ScrapeType.SingleField, Enums.ScrapeType.SingleScrape
+            For Each sRow As DataGridViewRow In dgvMovies.SelectedRows
+                DataRowList.Add(DirectCast(sRow.DataBoundItem, DataRowView).Row)
+            Next
+        Case Else
+            For Each sRow As DataRow In dtMovies.Rows
+                DataRowList.Add(sRow)
+            Next
+    End Select
+
+**Key Code - Applying Filters (lines 12629-12651):**
+
+    Select Case sType
+        Case Enums.ScrapeType.NewAsk, Enums.ScrapeType.NewAuto, Enums.ScrapeType.NewSkip
+            If Not Convert.ToBoolean(drvRow.Item("New")) Then Continue For
+        Case Enums.ScrapeType.MarkedAsk, Enums.ScrapeType.MarkedAuto, Enums.ScrapeType.MarkedSkip
+            If Not Convert.ToBoolean(drvRow.Item("Mark")) Then Continue For
+        Case Enums.ScrapeType.MissingAsk, Enums.ScrapeType.MissingAuto, Enums.ScrapeType.MissingSkip
+            ' Disable modifiers for items that already exist
+            If Not String.IsNullOrEmpty(drvRow.Item("PosterPath").ToString) Then sModifier.MainPoster = False
+    End Select
+
+### 2.2 The Bulk Scrape Loop (bwMovieScraper_DoWork)
+
+**Location:** `frmMain.vb`, lines 1453-1622
+
+**Purpose:** Main scraping loop that processes each movie sequentially.
+
+**Complete Flow:**
+
+    bwMovieScraper_DoWork(e As DoWorkEventArgs)
+            │
+            ▼
+    Args = DirectCast(e.Argument, Arguments)
+            │
+            ▼
+    ┌─────────────────────────────────────────────────────────────┐
+    │        FOR EACH tScrapeItem IN Args.ScrapeList (line 1460)  │
+    └─────────────────────────────────────────────────────────────┘
+            │
+            ├──► Check CancellationPending → Exit If True
+            ├──► Report Progress (movie name)
+            ├──► Load Movie: Master.DB.Load_Movie(idMovie)
+            │
+            ▼
+    ┌─────────────────────────────────────────────────────────────┐
+    │  PHASE 1: DATA SCRAPING (lines 1478-1512)                   │
+    │  If ScrapeModifiers.MainNFO Then                            │
+    │    → ModulesManager.Instance.ScrapeData_Movie()             │
+    │      (Calls TMDB, IMDB, etc. scrapers sequentially)         │
+    └─────────────────────────────────────────────────────────────┘
+            │
+            ▼
+    ┌─────────────────────────────────────────────────────────────┐
+    │  PHASE 2: MEDIA INFO (lines 1516-1520)                      │
+    │  If MovieScraperMetaDataScan And MainMeta Then              │
+    │    → MediaInfo.UpdateMediaInfo(DBScrapeMovie)               │
+    └─────────────────────────────────────────────────────────────┘
+            │
+            ▼
+    ┌─────────────────────────────────────────────────────────────┐
+    │  PHASE 3: IMAGE SCRAPING (lines 1529-1554)                  │
+    │  If any image modifier enabled Then                         │
+    │    → ModulesManager.Instance.ScrapeImage_Movie()            │
+    │      (Collects URLs only - NO downloads yet)                │
+    │    → Images.SetPreferredImages() or show dlgImgSelect       │
+    └─────────────────────────────────────────────────────────────┘
+            │
+            ▼
+    ┌─────────────────────────────────────────────────────────────┐
+    │  PHASE 4: THEME SCRAPING (lines 1559-1578)                  │
+    │  If MainTheme Then                                          │
+    │    → ModulesManager.Instance.ScrapeTheme_Movie()            │
+    └─────────────────────────────────────────────────────────────┘
+            │
+            ▼
+    ┌─────────────────────────────────────────────────────────────┐
+    │  PHASE 5: TRAILER SCRAPING (lines 1583-1602)                │
+    │  If MainTrailer Then                                        │
+    │    → ModulesManager.Instance.ScrapeTrailer_Movie()          │
+    └─────────────────────────────────────────────────────────────┘
+            │
+            ▼
+    ┌─────────────────────────────────────────────────────────────┐
+    │  PHASE 6: SAVE TO DATABASE (lines 1607-1612)                │
+    │  *** CRITICAL - IMAGE DOWNLOADS HAPPEN HERE ***             │
+    │  → RunGeneric(ScraperMulti_Movie)                           │
+    │  → Master.DB.Save_Movie() (LINE 1610)                       │
+    │    - Writes NFO file                                        │
+    │    - Downloads all images (SEQUENTIAL!)                     │
+    │    - Saves actor thumbs, theme, trailer                     │
+    │    - Updates database                                       │
+    └─────────────────────────────────────────────────────────────┘
+            │
+            ▼
+         NEXT MOVIE
+
+### 2.3 The Critical Save Line
+
+**Location:** `frmMain.vb`, line 1610
+
+    Master.DB.Save_Movie(DBScrapeMovie, False, tScrapeItem.ScrapeModifiers.MainNFO OrElse tScrapeItem.ScrapeModifiers.MainMeta, True, True, False)
+
+| Parameter | Value | Meaning |
+|-----------|-------|---------|
+| `dbElement` | `DBScrapeMovie` | The movie to save |
+| `batchMode` | `False` | Not in batch transaction mode |
+| `toNFO` | `MainNFO Or MainMeta` | Write NFO if scraping NFO or metadata |
+| `toDisk` | `True` | **Save images to disk (triggers downloads)** |
+| `doSync` | `True` | Sync with Kodi if enabled |
+| `forceFileCleanup` | `False` | Don't force cleanup of old files |
+
+**This is where image downloads happen.** The `toDisk = True` parameter causes `SaveAllImages()` to be called, which downloads each image sequentially.
+
+---
+
+## Part 3: Scraper Architecture
+
+### 3.1 Core Files
 
 | File | Purpose |
 |------|---------|
-| `EmberAPI\clsAPIModules.vb` | Module manager that loads, orders, and executes scrapers |
+| `EmberAPI\clsAPIModules.vb` | Module manager - loads, orders, executes scrapers |
 | `EmberAPI\clsAPINFO.vb` | Merges results from multiple scrapers |
 | `EmberAPI\clsAPIInterfaces.vb` | Defines scraper interfaces and result structures |
-| `EmberAPI\clsAPICommon.vb` | Contains ScrapeModifiers, ScrapeOptions, and ScrapeType enums |
-| `EmberAPI\clsAPIDatabase.vb` | Database operations including `Save_Movie()` and `Save_MovieAsync()` |
-| `EmberAPI\clsAPIImages.vb` | Image container and save operations |
-| `Addons\scraper.TMDB.Data\*` | TMDB data scraper implementation |
-| `Addons\scraper.IMDB.Data\*` | IMDB data scraper implementation |
+| `EmberAPI\clsAPICommon.vb` | ScrapeModifiers, ScrapeOptions, ScrapeType enums |
+| `EmberAPI\clsAPIDatabase.vb` | Database operations including `Save_Movie()` |
+| `EmberAPI\clsAPIImages.vb` | Image selection and save operations |
+| `EmberAPI\clsAPIMediaContainers.vb` | `SaveAllImages()` and `SaveAllImagesAsync()` |
+| `Addons\scraper.TMDB.Data\*` | TMDB data scraper |
+| `Addons\scraper.IMDB.Data\*` | IMDB data scraper |
 
-### 1.2 Scraper Types
+### 3.2 Scraper Types
 
-Ember supports four types of movie scrapers, each implementing a specific interface:
+| Type | Interface | Purpose |
+|------|-----------|---------|
+| Data | `ScraperModule_Data_Movie` | Metadata (title, plot, cast, etc.) |
+| Image | `ScraperModule_Image_Movie` | Artwork (posters, fanart, etc.) |
+| Trailer | `ScraperModule_Trailer_Movie` | Trailer URLs |
+| Theme | `ScraperModule_Theme_Movie` | Theme music |
 
-| Scraper Type | Interface | Purpose |
-|--------------|-----------|---------|
-| Data Scraper | `ScraperModule_Data_Movie` | Retrieves metadata (title, plot, cast, etc.) |
-| Image Scraper | `ScraperModule_Image_Movie` | Retrieves artwork (posters, fanart, etc.) |
-| Trailer Scraper | `ScraperModule_Trailer_Movie` | Retrieves trailer URLs |
-| Theme Scraper | `ScraperModule_Theme_Movie` | Retrieves theme music |
+### 3.3 Module Loading
 
-**TV Show Overlap:** TV scrapers use parallel interfaces: `ScraperModule_Data_TV`, `ScraperModule_Image_TV`, etc. The module loading and execution patterns are identical.
+Scrapers are loaded at startup via `ModulesManager.LoadModules()`:
 
-### 1.3 Module Loading
-
-Scrapers are loaded dynamically at application startup via `ModulesManager.LoadModules()`:
-
-1. Scans the Addons directory for assemblies
+1. Scans Addons directory for assemblies
 2. Uses reflection to find types implementing scraper interfaces
 3. Creates instances and stores in typed collections:
    - `externalScrapersModules_Data_Movie`
@@ -52,40 +321,26 @@ Scrapers are loaded dynamically at application startup via `ModulesManager.LoadM
    - `externalScrapersModules_Trailer_Movie`
    - `externalScrapersModules_Theme_Movie`
 4. Loads enabled state and order from settings
-5. Assigns default order (999) for newly discovered scrapers
 
-### 1.4 Generic Module Event System
+### 3.4 Generic Module Event System
 
-Generic modules (like the BulkRenamer) can subscribe to scraping events via `ModuleEventType`:
+Generic modules can subscribe to scraping events:
 
 | Event | When Fired |
 |-------|------------|
-| `ScraperMulti_Movie` | During bulk/auto scraping operations |
+| `ScraperMulti_Movie` | During bulk/auto scraping |
 | `ScraperSingle_Movie` | During single movie scrape |
-| `AfterEdit_Movie` | After movie data is edited |
-| `BeforeEdit_Movie` | Before movie data is edited |
-| `Sync_Movie` | When movie sync is requested |
-
-Generic modules implement `RunGeneric()` to handle these events:
-
-    Public Function RunGeneric(ByVal mType As Enums.ModuleEventType, ...) As Interfaces.ModuleResult
-        Select Case mType
-            Case Enums.ModuleEventType.ScraperMulti_Movie
-                ' Handle bulk scrape event
-            Case Enums.ModuleEventType.AfterEdit_Movie
-                ' Handle after edit event
-        End Select
-    End Function
+| `AfterEdit_Movie` | After movie data edited |
+| `BeforeEdit_Movie` | Before movie data edited |
+| `Sync_Movie` | When movie sync requested |
 
 ---
 
-## Part 2: Data Scraping Process
+## Part 4: Data Scraping Process
 
-### 2.1 Entry Point
+### 4.1 ScrapeData_Movie Entry Point
 
-Data scraping is initiated by calling `ModulesManager.Instance.ScrapeData_Movie()`.
-
-**Method Signature:**
+**Location:** `clsAPIModules.vb`
 
     Function ScrapeData_Movie(
         ByRef DBElement As Database.DBElement,
@@ -95,222 +350,83 @@ Data scraping is initiated by calling `ModulesManager.Instance.ScrapeData_Movie(
         ByVal showMessage As Boolean
     ) As Boolean
 
-### 2.2 ScrapeData_Movie Flow
+### 4.2 Flow
 
-**Step 1: Validate Online Status**
+1. **Validate Online Status** - Check if movie file is accessible
+2. **Get Enabled Scrapers** - Order by `ModuleOrder` setting
+3. **Clean Movie Data** - Reset for new scrapes if `DoSearch = True`
+4. **Clone for Scraping** - Work on copy to preserve original
+5. **Execute Each Scraper** - Run TMDB, IMDB, etc. in sequence
+6. **Pass IDs Between Scrapers** - TMDB finds IMDB ID, passes to IMDB scraper
+7. **Merge Results** - Combine all scraper results
 
-    If DBElement.IsOnline OrElse FileUtils.Common.CheckOnlineStatus_Movie(DBElement, showMessage) Then
-        ' Continue with scraping
-    Else
-        Return True ' Cancelled - movie offline
-    End If
+**Key Code - Executing Scrapers:**
 
-**Step 2: Get Enabled Scrapers in Order**
-
-    Dim modules As IEnumerable(Of _externalScraperModuleClass_Data_Movie) = 
-        externalScrapersModules_Data_Movie.Where(Function(e) e.ProcessorModule.ScraperEnabled).OrderBy(Function(e) e.ModuleOrder)
-
-**Step 3: Clean Movie Data (for New Scrapes)**
-
-If `ScrapeType` is `SingleScrape` or `SingleAuto` AND `ScrapeModifiers.DoSearch` is True, the movie data is reset:
-
-    DBElement.ImagesContainer = New MediaContainers.ImagesContainer
-    DBElement.Movie = New MediaContainers.Movie With {
-        .Edition = DBElement.Edition,
-        .Title = StringUtils.FilterTitleFromPath_Movie(...),
-        .VideoSource = DBElement.VideoSource,
-        .Year = StringUtils.FilterYearFromPath_Movie(...)
-    }
-
-**Step 4: Clone for Scraping**
-
-    Dim oDBMovie As Database.DBElement = CType(DBElement.CloneDeep, Database.DBElement)
-
-**Step 5: Execute Each Scraper in Order**
-
-    For Each _externalScraperModule As _externalScraperModuleClass_Data_Movie In modules
+    For Each _externalScraperModule In modules
         ret = _externalScraperModule.ProcessorModule.Scraper_Movie(oDBMovie, ScrapeModifiers, ScrapeType, ScrapeOptions)
         
         If ret.Cancelled Then Return ret.Cancelled
         
         If ret.Result IsNot Nothing Then
             ScrapedList.Add(ret.Result)
-            
             ' Pass IDs to subsequent scrapers
             If ret.Result.UniqueIDsSpecified Then
                 oDBMovie.Movie.UniqueIDs.AddRange(ret.Result.UniqueIDs)
-            End If
-            If ret.Result.OriginalTitleSpecified Then
-                oDBMovie.Movie.OriginalTitle = ret.Result.OriginalTitle
-            End If
-            If ret.Result.TitleSpecified Then
-                oDBMovie.Movie.Title = ret.Result.Title
-            End If
-            If ret.Result.YearSpecified Then
-                oDBMovie.Movie.Year = ret.Result.Year
             End If
         End If
         
         If ret.breakChain Then Exit For
     Next
 
-**Key Behavior:** 
-- ALL enabled scrapers run in order (unless `breakChain` is True)
-- IDs discovered by earlier scrapers are passed to subsequent scrapers
-- Each scraper's result is added to `ScrapedList` for later merging
+### 4.3 Result Merging ("First Wins" Strategy)
 
-**Step 6: Optionally Scrape Trailers from Trailer Scrapers**
+**Location:** `clsAPINFO.vb` - `MergeDataScraperResults_Movie()`
 
-    If ScrapeOptions.bMainTrailer AndAlso Master.eSettings.MovieScraperTrailerFromTrailerScrapers Then
-        ' Call ScrapeTrailer_Movie and add preferred trailer to ScrapedList
-    End If
+For each field, a value is accepted if ALL conditions are true:
+1. Field not already set OR not locked
+2. Field requested in `ScrapeOptions`
+3. Scraped movie has value for this field
+4. Field scraping enabled in settings
+5. First scraper hasn't already provided this field
 
-**Step 7: Merge All Results**
+**Special Processing:**
 
-    DBElement = NFO.MergeDataScraperResults_Movie(DBElement, ScrapedList, ScrapeType, ScrapeOptions)
-
-### 2.3 Result Merging Logic
-
-The `MergeDataScraperResults_Movie` method in `clsAPINFO.vb` implements a "first wins" strategy with lock protection:
-
-**Merging Pattern:**
-
-    ' Protects first scraped result against overwriting
-    Dim new_Title As Boolean = False
-    Dim new_Plot As Boolean = False
-    ' ... (flags for each field)
-    
-    For Each scrapedmovie In ScrapedList
-        ' Title
-        If (Not DBMovie.Movie.TitleSpecified OrElse Not Master.eSettings.MovieLockTitle) AndAlso 
-           ScrapeOptions.bMainTitle AndAlso
-           scrapedmovie.TitleSpecified AndAlso 
-           Master.eSettings.MovieScraperTitle AndAlso 
-           Not new_Title Then
-            DBMovie.Movie.Title = scrapedmovie.Title
-            new_Title = True
-        ElseIf Master.eSettings.MovieScraperCleanFields AndAlso Not Master.eSettings.MovieScraperTitle AndAlso Not Master.eSettings.MovieLockTitle Then
-            DBMovie.Movie.Title = String.Empty
-        End If
-        
-        ' ... similar logic for all other fields
-    Next
-
-**Merging Conditions:**
-
-For each field, a value is accepted if ALL of these are true:
-1. Field is not already set in DBMovie OR field is not locked
-2. Field is requested in `ScrapeOptions`
-3. Scraped movie has a value for this field
-4. Field scraping is enabled in settings
-5. Flag indicates first scraper hasn't already provided this field (`Not new_*`)
-
-**Special Processing During Merge:**
-
-| Field | Special Processing |
-|-------|-------------------|
-| Actors | Filter by image availability, apply count limit, reorder |
-| Certifications | Filter by language, run certification mapping |
-| Countries | Apply count limit, run country mapping |
+| Field | Processing |
+|-------|------------|
+| Actors | Filter by image availability, apply count limit |
+| Certifications | Filter by language, run mapping |
 | Genres | Run genre mapping, apply count limit |
-| Studios | Run studio mapping, filter by image availability, apply count limit |
-| Ratings | Remove "default" type entries, add new ratings |
-| Trailer | Convert YouTube URLs to Kodi format if enabled |
+| Studios | Run studio mapping, filter by image |
+| Trailer | Convert YouTube URLs to Kodi format |
 
-**Post-Merge Processing:**
+### 4.4 Individual Scraper Behavior
 
-1. **Certification for MPAA:** Convert certification to MPAA format if enabled
-2. **Default MPAA:** Apply "Not Rated" if no MPAA and setting configured
-3. **OriginalTitle as Title:** Copy OriginalTitle to Title if enabled
-4. **Plot for Outline:** Generate Outline from Plot if enabled
-5. **Sort Ratings:** Sort by Default flag and Type name
-6. **Sort UniqueIDs:** Sort by Default flag and Type name
+**TMDB Scraper** (`Addons\scraper.TMDB.Data\`)
 
----
+- ID Resolution: TMDB ID → IMDB ID → Title/Year search
+- Data Retrieved: Title, Plot, Cast, Directors, Ratings, UniqueIDs, Collection info, Trailers
 
-## Part 3: Individual Scraper Behavior
+**IMDB Scraper** (`Addons\scraper.IMDB.Data\`)
 
-### 3.1 TMDB Scraper (`scraper.TMDB.Data`)
+- ID Resolution: IMDB ID → Title/Year search
+- Data Retrieved: Title, Plot, Cast, Ratings (IMDB, Metacritic), Top250
 
-**Location:** `Addons\scraper.TMDB.Data\TMDB_Data.vb` and `Scraper\clsScrapeTMDB.vb`
+**Scraper Chain Behavior:**
 
-**ID Resolution Order:**
-1. If TMDB ID available, scrape directly
-2. If IMDB ID available, use it to find movie on TMDB
-3. If neither, search by Title/Year
-
-**Method:** `Scraper_Movie` in TMDB_Data.vb calls `_TMDBAPI_Movie.GetInfo_Movie()`
-
-**Data Retrieved:**
-- Title, OriginalTitle, Year, Premiered
-- Plot, Tagline, Runtime
-- Genres, Studios, Countries
-- Cast (Actors with images)
-- Directors, Writers
-- Certifications, MPAA
-- Ratings (TMDB rating)
-- UniqueIDs (TMDB, IMDB)
-- Collection information
-- Trailer URLs
-
-### 3.2 IMDB Scraper (`scraper.IMDB.Data`)
-
-**Location:** `Addons\scraper.IMDB.Data\IMDB_Data.vb` and `Scraper\clsScrapeIMDB.vb`
-
-**ID Resolution Order:**
-1. If IMDB ID available, scrape directly
-2. If not, search by Title/Year
-
-**Method:** `Scraper_Movie` calls `_scraper.GetMovieInfo()`
-
-**Data Retrieved:**
-- Title, OriginalTitle, Year
-- Plot, Outline, Tagline, Runtime
-- Genres, Studios, Countries
-- Cast (Actors)
-- Directors, Writers
-- Certifications, MPAA
-- Ratings (IMDB, Metacritic)
-- Top250 ranking
-- UniqueIDs (IMDB)
-
-### 3.3 Scraper Chain Behavior
-
-**CRITICAL:** When both TMDB and IMDB scrapers are enabled:
-
+When both TMDB and IMDB are enabled:
 1. TMDB runs first (typically order 0)
-2. TMDB retrieves IMDB ID along with other data
-3. IMDB ID is passed to IMDB scraper via `oDBMovie.Movie.UniqueIDs`
-4. IMDB scraper runs and retrieves additional/supplementary data
-5. Results are merged with "first wins" logic
-
-**Practical Example (50 Movies):**
-- TMDB runs 49 times (1,078ms average)
-- IMDB runs 49 times (1,910ms average)
-- Both contribute to merged results
-- Database.Save_Movie runs ~98 times (~2 per movie)
-  - First save: After data scraping/merging completes
-  - Second save: After image processing completes
-
-### 3.4 ModuleResult Structure
-
-    Public Structure ModuleResult_Data_Movie
-        Public breakChain As Boolean    ' If True, stop processing subsequent scrapers
-        Public Cancelled As Boolean     ' If True, user cancelled or error occurred
-        Public Result As MediaContainers.Movie  ' Scraped data
-    End Structure
-
-**Note:** Neither TMDB nor IMDB scrapers set `breakChain = True`, so both always run when enabled.
+2. TMDB retrieves IMDB ID
+3. IMDB ID passed to IMDB scraper via `UniqueIDs`
+4. IMDB scraper uses ID directly (no search needed)
+5. Results merged with "first wins" logic
 
 ---
 
-## Part 4: Image Scraping Process
+## Part 5: Image Scraping Process
 
-### 4.1 Entry Point
+### 5.1 ScrapeImage_Movie Entry Point
 
-Image scraping is initiated by calling `ModulesManager.Instance.ScrapeImage_Movie()`.
-
-**Method Signature:**
+**Location:** `clsAPIModules.vb`
 
     Function ScrapeImage_Movie(
         ByRef DBElement As Database.DBElement,
@@ -319,393 +435,329 @@ Image scraping is initiated by calling `ModulesManager.Instance.ScrapeImage_Movi
         ByVal showMessage As Boolean
     ) As Boolean
 
-### 4.2 ScrapeImage_Movie Flow
+### 5.2 Flow
 
 1. Validate online status
 2. Get enabled image scrapers in order
-3. For each scraper:
-   - Check if scraper has capability for requested image types
-   - Call `_externalScraperModule.ProcessorModule.Scraper()`
-   - Aggregate results into single container
-4. Sort and filter results
+3. For each scraper with matching capabilities:
+   - Call `Scraper()` method
+   - Aggregate URLs into single container
+4. Sort and filter results by language/size preferences
 5. Create cache paths
 
 **Image Types Collected:**
-- MainBanners
-- MainCharacterArts
-- MainClearArts
-- MainClearLogos
-- MainDiscArts
-- MainFanarts
-- MainLandscapes
-- MainPosters
+- MainBanners, MainPosters, MainFanarts
+- MainClearArts, MainClearLogos, MainDiscArts
+- MainLandscapes, MainCharacterArts, MainKeyarts
 
-### 4.3 Image Scrapers
+### 5.3 SetPreferredImages
 
-| Scraper | Source | Image Types |
-|---------|--------|-------------|
-| TMDB Image | TMDB API | Posters, Fanarts, Banners |
-| FanartTV | fanart.tv API | All artwork types |
+**Location:** `clsAPIImages.vb`
 
-### 4.4 Image Download and Save Process
+Selects best images based on user preferences:
+- Size preferences (MoviePosterPrefSize, MovieFanartPrefSize, etc.)
+- Language preferences
+- Keep existing settings
+- Extrafanarts/Extrathumbs limits
 
-**Critical Performance Note:** Image downloading occurs during `Save_Movie()`, not during `ScrapeImage_Movie()`.
+**Critical:** This method only assigns image URLs to `DBElement.ImagesContainer`. **No downloads occur here.**
 
-The scraping phase collects image URLs and metadata into `ImagesContainer`. The actual download happens when:
+### 5.4 Image Download (During Save_Movie)
 
-    ' In Save_Movie() - clsAPIDatabase.vb
-    If toDisk Then
-        dbElement.ImagesContainer.SaveAllImages(dbElement, forceFileCleanup)  ' Downloads images here
-        dbElement.Movie.SaveAllActorThumbs(dbElement)
-        dbElement.Theme.Save(dbElement, Enums.ModifierType.MainTheme, forceFileCleanup)
-        dbElement.Trailer.Save(dbElement, Enums.ModifierType.MainTrailer, forceFileCleanup)
-    End If
+**Critical Performance Note:** Image downloading occurs during `Save_Movie()`, not during scraping.
 
-**SaveAllImages Flow (clsAPIImages.vb):**
+**Location:** `clsAPIMediaContainers.vb` - `SaveAllImages()`
 
-    Public Sub SaveAllImages(ByRef dbElement As Database.DBElement, ByVal forceFileCleanup As Boolean)
-        ' Saves each image type sequentially
-        Banner.Save(dbElement, Enums.ModifierType.MainBanner, forceFileCleanup)
-        ClearArt.Save(dbElement, Enums.ModifierType.MainClearArt, forceFileCleanup)
-        ClearLogo.Save(dbElement, Enums.ModifierType.MainClearLogo, forceFileCleanup)
-        DiscArt.Save(dbElement, Enums.ModifierType.MainDiscArt, forceFileCleanup)
-        Fanart.Save(dbElement, Enums.ModifierType.MainFanart, forceFileCleanup)
-        Keyart.Save(dbElement, Enums.ModifierType.MainKeyart, forceFileCleanup)
-        Landscape.Save(dbElement, Enums.ModifierType.MainLandscape, forceFileCleanup)
-        Poster.Save(dbElement, Enums.ModifierType.MainPoster, forceFileCleanup)
-        ' ... extrafanarts, extrathumbs
+    Public Sub SaveAllImages(ByRef DBElement As Database.DBElement, ByVal ForceFileCleanup As Boolean)
+        ' Downloads and saves each image type SEQUENTIALLY
+        Banner.LoadAndCache(...)   → Download if URL → Save to disk
+        ClearArt.LoadAndCache(...) → Download if URL → Save to disk
+        Poster.LoadAndCache(...)   → Download if URL → Save to disk
+        ' ... 8+ image types, each waits for previous
     End Sub
 
-Each `Image.Save()` call potentially downloads from a URL if the image hasn't been cached locally.
+**Performance Metrics (per movie):**
+
+| Phase | Avg Time | % of Total |
+|-------|----------|------------|
+| Download (network) | 815 ms | 94% |
+| Disk Write | 46 ms | 5% |
+| Overhead | 6 ms | 1% |
 
 ---
 
-## Part 5: Trailer Scraping Process
+## Part 6: Theme & Trailer Scraping
 
-### 5.1 Entry Point
+### 6.1 Theme Scraping
 
-Trailer scraping is initiated by calling `ModulesManager.Instance.ScrapeTrailer_Movie()`.
+**Entry Point:** `ModulesManager.Instance.ScrapeTheme_Movie()`
 
-### 5.2 ScrapeTrailer_Movie Flow
+**Scrapers:** TelevisionTunes, YouTube Theme
 
-1. Get enabled trailer scrapers in order
-2. For each scraper:
-   - Call `_externalScraperModule.ProcessorModule.Scraper()`
-   - Build stream variants for each trailer
-   - Aggregate into single list
-3. Return combined trailer list
+**Flow:**
+1. Get enabled theme scrapers
+2. Each scraper searches for theme music
+3. Aggregate results
+4. Select preferred or show dialog
 
-### 5.3 Trailer Scrapers
+### 6.2 Trailer Scraping
 
-| Scraper | Source |
-|---------|--------|
-| TMDB Trailer | TMDB API (YouTube links) |
-| Apple Trailer | Apple Trailers |
-| YouTube | YouTube search |
-| Davestrailerpage | davestrailerpage.co.uk |
+**Entry Point:** `ModulesManager.Instance.ScrapeTrailer_Movie()`
+
+**Scrapers:** TMDB Trailer, Apple Trailer, YouTube, Davestrailerpage
+
+**Flow:**
+1. Get enabled trailer scrapers
+2. Each scraper returns trailer URLs
+3. Build stream variants for each trailer
+4. Select preferred or show dialog
 
 ---
 
-## Part 6: Control Structures
+## Part 7: Saving to Database
 
-### 6.1 ScrapeType Enum
+### 7.1 Save_Movie Method
 
-Controls which movies are scraped and user interaction level:
+**Location:** `clsAPIDatabase.vb`, line ~3616
+
+    Public Function Save_Movie(
+        ByVal dbElement As DBElement,
+        ByVal batchMode As Boolean,
+        ByVal toNFO As Boolean,
+        ByVal toDisk As Boolean,
+        ByVal doSync As Boolean,
+        ByVal forceFileCleanup As Boolean
+    ) As DBElement
+
+**What Happens Inside:**
+
+    If toDisk Then
+        dbElement.ImagesContainer.SaveAllImages(dbElement, forceFileCleanup)  ' ← SEQUENTIAL
+        dbElement.Movie.SaveAllActorThumbs(dbElement)
+        dbElement.Theme.Save(...)
+        dbElement.Trailer.Save(...)
+    End If
+    ' ... database write operations
+
+### 7.2 Save_MovieAsync (Parallel Downloads)
+
+**Location:** `clsAPIDatabase.vb`, line ~3957
+
+    Public Async Function Save_MovieAsync(...) As Task(Of DBElement)
+        If toDisk Then
+            dbElement = Await dbElement.ImagesContainer.SaveAllImagesAsync(...)  ' ← PARALLEL
+            dbElement.Movie.SaveAllActorThumbs(dbElement)
+            ' ...
+        End If
+    End Function
+
+**SaveAllImagesAsync Flow:**
+
+    Phase 1: Collect all images needing download
+    Phase 2: Download all in parallel (max 5 concurrent)
+    Phase 3: Save to disk sequentially
+
+### 7.3 Database Save Points
+
+During scraping, `Save_Movie()` is called at multiple points:
+
+| Location | File | When |
+|----------|------|------|
+| Scanner Load | `clsAPIScanner.vb` | After scanning movie file |
+| Bulk Scrape | `frmMain.vb` (line 1610) | After scraping completes |
+| Edit Dialog | `dlgEdit_Movie.vb` | User saves from dialog |
+| Trakt Sync | `clsAPITrakt.vb` | After synchronization |
+
+**Result:** ~2 saves per movie during typical scrape (after data scraping, after image processing).
+
+---
+
+## Part 8: Control Structures
+
+### 8.1 ScrapeType Enum
 
 | Value | Description |
 |-------|-------------|
-| `AllAuto` | All movies, auto-select results |
-| `AllAsk` | All movies, ask user to select |
-| `AllSkip` | All movies, skip if no match |
-| `MissingAuto/Ask/Skip` | Movies missing data only |
-| `NewAuto/Ask/Skip` | Newly added movies only |
-| `MarkedAuto/Ask/Skip` | User-marked movies only |
-| `FilterAuto/Ask/Skip` | Current filter results only |
-| `SelectedAuto/Ask/Skip` | Selected movies only |
+| `AllAuto/Ask/Skip` | All movies |
+| `MissingAuto/Ask/Skip` | Movies missing data |
+| `NewAuto/Ask/Skip` | Newly added movies |
+| `MarkedAuto/Ask/Skip` | User-marked movies |
+| `FilterAuto/Ask/Skip` | Current filter results |
+| `SelectedAuto/Ask/Skip` | Selected movies |
 | `SingleScrape` | Single movie, manual selection |
 | `SingleAuto` | Single movie, auto-select |
 | `SingleField` | Single field update |
 
-### 6.2 ScrapeModifiers Structure
+### 8.2 ScrapeModifiers Structure
 
-Controls which data types to scrape:
+Controls **what content types** to scrape:
 
     Public Structure ScrapeModifiers
         Dim DoSearch As Boolean         ' Force search even if IDs exist
-        Dim MainActorthumbs As Boolean  ' Scrape actor thumbnails
-        Dim MainBanner As Boolean       ' Scrape banner image
-        Dim MainCharacterArt As Boolean ' Scrape character art
-        Dim MainClearArt As Boolean     ' Scrape clear art
-        Dim MainClearLogo As Boolean    ' Scrape clear logo
-        Dim MainDiscArt As Boolean      ' Scrape disc art
-        Dim MainExtrafanarts As Boolean ' Scrape extra fanarts
-        Dim MainExtrathumbs As Boolean  ' Scrape extra thumbs
-        Dim MainFanart As Boolean       ' Scrape fanart
-        Dim MainKeyart As Boolean       ' Scrape keyart
-        Dim MainLandscape As Boolean    ' Scrape landscape
-        Dim MainMeta As Boolean         ' Scrape MediaInfo
-        Dim MainNFO As Boolean          ' Scrape NFO data
-        Dim MainPoster As Boolean       ' Scrape poster
-        Dim MainSubtitles As Boolean    ' Scrape subtitles
-        Dim MainTheme As Boolean        ' Scrape theme music
-        Dim MainTrailer As Boolean      ' Scrape trailer
-        ' ... additional fields for TV content
+        Dim MainNFO As Boolean          ' Scrape metadata
+        Dim MainMeta As Boolean         ' MediaInfo scan
+        Dim MainPoster As Boolean
+        Dim MainFanart As Boolean
+        Dim MainBanner As Boolean
+        Dim MainClearArt As Boolean
+        Dim MainClearLogo As Boolean
+        Dim MainDiscArt As Boolean
+        Dim MainLandscape As Boolean
+        Dim MainKeyart As Boolean
+        Dim MainExtrafanarts As Boolean
+        Dim MainExtrathumbs As Boolean
+        Dim MainActorthumbs As Boolean
+        Dim MainTheme As Boolean
+        Dim MainTrailer As Boolean
     End Structure
 
-### 6.3 ScrapeOptions Structure
+### 8.3 ScrapeOptions Structure
 
-Controls which metadata fields to scrape:
+Controls **which metadata fields** to scrape:
 
     Public Structure ScrapeOptions
-        Dim bMainActors As Boolean
-        Dim bMainCertifications As Boolean
-        Dim bMainCollectionID As Boolean
-        Dim bMainCountries As Boolean
-        Dim bMainDirectors As Boolean
-        Dim bMainGenres As Boolean
-        Dim bMainMPAA As Boolean
+        Dim bMainTitle As Boolean
         Dim bMainOriginalTitle As Boolean
-        Dim bMainOutline As Boolean
         Dim bMainPlot As Boolean
-        Dim bMainPremiered As Boolean
+        Dim bMainOutline As Boolean
+        Dim bMainTagline As Boolean
+        Dim bMainActors As Boolean
+        Dim bMainDirectors As Boolean
+        Dim bMainWriters As Boolean
+        Dim bMainGenres As Boolean
+        Dim bMainStudios As Boolean
+        Dim bMainCountries As Boolean
+        Dim bMainCertifications As Boolean
+        Dim bMainMPAA As Boolean
         Dim bMainRating As Boolean
         Dim bMainRuntime As Boolean
-        Dim bMainStudios As Boolean
-        Dim bMainTagline As Boolean
-        Dim bMainTitle As Boolean
+        Dim bMainPremiered As Boolean
         Dim bMainTop250 As Boolean
         Dim bMainTrailer As Boolean
-        Dim bMainUserRating As Boolean
-        Dim bMainWriters As Boolean
-        ' ... additional fields for TV content
     End Structure
 
+### 8.4 Bulk Scraping Data Structures
+
+**Arguments** (passed to BackgroundWorker):
+
+    Public Class Arguments
+        Public ScrapeOptions As Structures.ScrapeOptions
+        Public ScrapeList As List(Of ScrapeItem)
+        Public ScrapeType As Enums.ScrapeType
+    End Class
+
+**ScrapeItem** (each movie in list):
+
+    Public Class ScrapeItem
+        Public DataRow As DataRow
+        Public ScrapeModifiers As Structures.ScrapeModifiers
+    End Class
+
+**Results** (returned from BackgroundWorker):
+
+    Public Class Results
+        Public DBElement As Database.DBElement
+        Public ScrapeType As Enums.ScrapeType
+        Public Cancelled As Boolean
+    End Class
+
 ---
 
-## Part 7: Data Flow Diagrams
+## Part 9: Data Flow Diagrams
 
-### 7.1 Complete Movie Scrape Flow
+### 9.1 Complete Movie Scrape Flow
 
-    User initiates scrape (UI/CommandLine)
-            |
-            v
-    CreateScrapeList_Movie() builds movie list
-            |
-            v
+    User initiates scrape
+            │
+            ▼
+    CreateScrapeList_Movie() → bwMovieScraper.RunWorkerAsync()
+            │
+            ▼
     For each movie in list:
-            |
-            +---> ScrapeData_Movie()
-            |           |
-            |           v
-            |       Get enabled Data scrapers in order
-            |           |
-            |           v
-            |       For each scraper (TMDB, IMDB, etc.):
-            |           |
-            |           v
-            |       Call Scraper_Movie()
-            |           |
-            |           v
-            |       Add result to ScrapedList
-            |           |
-            |           v
-            |       Pass IDs to next scraper
-            |           |
-            |           v
-            |       MergeDataScraperResults_Movie()
-            |
-            +---> ScrapeImage_Movie()
-            |           |
-            |           v
-            |       Get enabled Image scrapers
-            |           |
-            |           v
-            |       For each scraper (TMDB, FanartTV):
-            |           |
-            |           v
-            |       Aggregate image URLs into container
-            |           |
-            |           v
-            |       (Images NOT downloaded yet - only URLs collected)
-            |
-            +---> ScrapeTrailer_Movie() (if requested)
-            |
-            +---> Save_Movie() to database
-            |           |
-            |           v
-            |       Write NFO file
-            |           |
-            |           v
-            |       SaveAllImages() - DOWNLOADS images here (sequential)
-            |           |
-            |           v
-            |       Save actor thumbs
-            |           |
-            |           v
-            |       Save theme/trailer files
-            |           |
-            |           v
-            |       Write to database
-            |
-            +---> RunGeneric(ScraperMulti_Movie) - notify modules
-            |
-            v
-    Process complete
+            │
+            ├──► Load_Movie() from database
+            │
+            ├──► ScrapeData_Movie()
+            │         │
+            │         ├──► TMDB Scraper → Returns data + IMDB ID
+            │         ├──► IMDB Scraper → Uses IMDB ID, returns data
+            │         └──► MergeDataScraperResults_Movie()
+            │
+            ├──► UpdateMediaInfo() (if enabled)
+            │
+            ├──► ScrapeImage_Movie()
+            │         │
+            │         ├──► TMDB Image Scraper → Returns URLs
+            │         ├──► FanartTV Scraper → Returns URLs
+            │         └──► SetPreferredImages() (selects best)
+            │
+            ├──► ScrapeTheme_Movie() (if enabled)
+            │
+            ├──► ScrapeTrailer_Movie() (if enabled)
+            │
+            └──► Save_Movie()  ← *** DOWNLOADS HAPPEN HERE ***
+                      │
+                      ├──► Write NFO file
+                      ├──► SaveAllImages() → Downloads each image
+                      ├──► Save actor thumbs
+                      ├──► Save theme/trailer
+                      └──► Update database
 
-### 7.2 ID Propagation Flow
+### 9.2 ID Propagation Flow
 
     TMDB Scraper runs first
-            |
-            v
+            │
+            ▼
     Retrieves TMDB ID and IMDB ID
-            |
-            v
+            │
+            ▼
     IDs added to oDBMovie.Movie.UniqueIDs
-            |
-            v
+            │
+            ▼
     IMDB Scraper runs second
-            |
-            v
+            │
+            ▼
     Uses IMDB ID from UniqueIDs (no search needed)
-            |
-            v
-    Both results merged
+            │
+            ▼
+    Both results merged ("first wins")
 
 ---
 
-### 7.3 Database Save Points
+## Part 10: Settings Reference
 
-During movie scraping, `Save_Movie()` is called at multiple points:
+### 10.1 Scraper Settings
 
-| Location | File | When Called |
-|----------|------|-------------|
-| Scanner Load | `clsAPIScanner.vb` | After loading/scanning a movie file |
-| Task Manager | `clsAPITaskManager.vb` | During bulk edit operations |
-| Image Save | `clsAPIImages.vb` | After saving images to disk |
-| Edit Dialog | `dlgEdit_Movie.vb` | When user saves from edit dialog |
-| NFO Operations | `clsAPINFO.vb` | During NFO save operations |
-| Media Files | `clsAPIMediaFiles.vb` | After media file operations |
-| TMDB Scraper | `TMDB_Data.vb` | After collection ID update |
-| Trakt Sync | `clsAPITrakt.vb` | After Trakt synchronization |
-
-**During a typical scrape operation, saves occur:**
-1. After data scraping completes (metadata saved)
-2. After image processing completes (image paths updated)
-
-This explains why 50 movies result in ~100 `Save_Movie()` calls.
-
-### 7.4 Save_Movie Method Variants
-
-The database layer provides two save methods:
-
-| Method | Location | Purpose |
-|--------|----------|---------|
-| `Save_Movie()` | `clsAPIDatabase.vb` | Synchronous save with sequential image downloads |
-| `Save_MovieAsync()` | `clsAPIDatabase.vb` | Async save with parallel image downloads |
-
-**Save_Movie() - Synchronous (Current Default):**
-
-    Public Function Save_Movie(...) As DBElement
-        ' ... database operations ...
-        If toDisk Then
-            dbElement.ImagesContainer.SaveAllImages(dbElement, forceFileCleanup)  ' Sequential
-            dbElement.Movie.SaveAllActorThumbs(dbElement)
-            dbElement.Theme.Save(...)
-            dbElement.Trailer.Save(...)
-        End If
-        ' ... more database operations ...
-    End Function
-
-**Save_MovieAsync() - Asynchronous (For Bulk Operations):**
-
-    Public Async Function Save_MovieAsync(...) As Task(Of DBElement)
-        ' ... database operations ...
-        If toDisk Then
-            dbElement = Await dbElement.ImagesContainer.SaveAllImagesAsync(dbElement, forceFileCleanup)  ' Parallel
-            dbElement.Movie.SaveAllActorThumbs(dbElement)
-            dbElement.Theme.Save(...)
-            dbElement.Trailer.Save(...)
-        End If
-        ' ... more database operations ...
-    End Function
-
-The async version enables parallel image downloads during bulk scraping, significantly reducing total scrape time.
-
----
-
-## Part 8: Settings That Affect Scraping
-
-### 8.1 Scraper Enable/Order Settings
-
-| Setting Category | Effect |
-|-----------------|--------|
+| Category | Effect |
+|----------|--------|
 | Scraper Enable | Which scrapers run |
-| Scraper Order | Sequence of execution |
+| Scraper Order | Execution sequence |
 | Module Order | Priority for data merging |
 
-### 8.2 Field-Level Settings
+### 10.2 Field-Level Settings
 
-| Setting Pattern | Example | Effect |
-|-----------------|---------|--------|
-| `MovieScraper*` | `MovieScraperTitle` | Enable/disable field scraping |
-| `MovieLock*` | `MovieLockTitle` | Protect field from overwriting |
-| `MovieScraper*Limit` | `MovieScraperGenreLimit` | Limit count of list items |
+| Pattern | Example | Effect |
+|---------|---------|--------|
+| `MovieScraper*` | `MovieScraperTitle` | Enable/disable field |
+| `MovieLock*` | `MovieLockTitle` | Protect from overwrite |
+| `MovieScraper*Limit` | `MovieScraperGenreLimit` | Limit list count |
 
-### 8.3 Processing Settings
+### 10.3 Processing Settings
 
 | Setting | Effect |
 |---------|--------|
-| `MovieScraperCleanFields` | Clear fields when scraping disabled |
-| `MovieScraperCleanPlotOutline` | Remove brackets from plot/outline |
+| `MovieScraperCleanFields` | Clear fields when disabled |
 | `MovieScraperCertLang` | Certification language filter |
 | `MovieScraperCastWithImgOnly` | Only actors with images |
-| `MovieScraperStudioWithImgOnly` | Only studios with icons |
 | `MovieScraperOriginalTitleAsTitle` | Copy OriginalTitle to Title |
 | `MovieScraperPlotForOutline` | Generate Outline from Plot |
-| `MovieScraperXBMCTrailerFormat` | Convert YouTube URLs to Kodi format |
-| `MovieScraperTrailerFromTrailerScrapers` | Include trailer scraper results |
+| `MovieScraperXBMCTrailerFormat` | Convert YouTube to Kodi format |
 
 ---
 
-## Part 9: TV Show Overlap
+## Part 11: Performance Analysis
 
-### 9.1 Shared Architecture
-
-TV Show scraping uses the same architectural patterns:
-
-| Movie Component | TV Equivalent |
-|-----------------|---------------|
-| `ScrapeData_Movie()` | `ScrapeData_TV()` |
-| `ScrapeImage_Movie()` | `ScrapeImage_TV()` |
-| `ScrapeTrailer_Movie()` | N/A (no trailer scrapers for TV) |
-| `MergeDataScraperResults_Movie()` | `MergeDataScraperResults_TVShow()` |
-| `externalScrapersModules_Data_Movie` | `externalScrapersModules_Data_TV` |
-
-### 9.2 Shared Code
-
-| Component | Shared Between Movie/TV |
-|-----------|------------------------|
-| `ModulesManager` class | Yes - manages all module types |
-| Module loading logic | Yes - same reflection pattern |
-| Scraper ordering | Yes - same ModuleOrder property |
-| `ScrapeModifiers` structure | Yes - contains fields for both |
-| `ScrapeOptions` structure | Yes - contains fields for both |
-| `ScrapeType` enum | Yes - same values apply |
-
-### 9.3 Different Handling
-
-| Aspect | Movie | TV |
-|--------|-------|-----|
-| Content structure | Single `Movie` object | `TVShow` + `TVSeason` + `TVEpisode` hierarchy |
-| Episode handling | N/A | Episodes scraped individually or with show |
-| Season images | N/A | Separate season poster/banner scraping |
-| Episode guide | N/A | EpisodeGuide field for external sources |
-
----
-
-## Part 10: Performance Considerations
-
-### 10.1 Observed Metrics (50 Movie Baseline)
+### 11.1 Baseline Metrics (50 Movies - December 2025)
 
 | Operation | Count | Avg (ms) | Total (sec) |
 |-----------|-------|----------|-------------|
@@ -715,115 +767,233 @@ TV Show scraping uses the same architectural patterns:
 | Database.Save_Movie | 98 | 619 | 60.7 |
 | Database.Add_Actor | 2,400 | 1.73 | 4.1 |
 
-### 10.2 Key Observations
+### 11.2 Time Distribution Per Movie
 
-1. **Both scrapers run:** TMDB and IMDB both execute for each movie
-2. **Sequential processing:** Scrapers run one after another, not in parallel
-3. **Network dominates:** IMDB HTTP requests account for most of IMDB scrape time
-4. **Multiple saves:** ~2 database saves per movie during scrape process
-5. **Actor lookups:** ~48 actor lookups per movie (checking for existing actors)
-6. **Save points:** Database saves occur after data scraping AND after image processing (~2 per movie)
-7. **Image bottleneck:** Image downloads during `SaveAllImages()` are sequential
+| Phase | Avg Time | % |
+|-------|----------|---|
+| TMDB Scrape | 1,078 ms | 24% |
+| IMDB Scrape | 1,910 ms | 43% |
+| Image Download | 868 ms | 19% |
+| Database Save | 619 ms | 14% |
+| **Total** | ~4,475 ms | 100% |
 
-### 10.3 Performance Bottleneck Analysis
+### 11.3 SaveAllImages Breakdown
 
-**Where Time Is Spent During Save_Movie():**
+| Phase | Avg Time | % |
+|-------|----------|---|
+| Network Download | 815 ms | 94% |
+| Disk Write | 46 ms | 5% |
+| Overhead | 6 ms | 1% |
 
-| Phase | Operations | Bottleneck |
-|-------|------------|------------|
-| NFO Write | Write XML to disk | Fast (< 10ms) |
-| Image Save | Download + write each image | **SLOW - Sequential downloads** |
-| Actor Thumbs | Download actor images | Moderate |
-| Database Write | SQL operations | Fast with transactions |
+**Key Finding:** Network I/O dominates. Parallel downloads can reduce by ~64%.
 
-**Image Download Pattern (Current - Sequential):**
+### 11.4 Performance Bottleneck
+
+**Current (Sequential):**
 
     SaveAllImages():
-        Banner.Save()     -> Download if URL, write to disk (wait)
-        ClearArt.Save()   -> Download if URL, write to disk (wait)
-        ClearLogo.Save()  -> Download if URL, write to disk (wait)
-        ... (8+ image types, each waits for previous)
+        Banner.Save()     → Wait → Write
+        ClearArt.Save()   → Wait → Write
+        Poster.Save()     → Wait → Write
+        ... (8+ types, each waits)
 
-**With Parallel Downloads (SaveAllImagesAsync):**
+**With SaveAllImagesAsync (Parallel):**
 
     SaveAllImagesAsync():
-        Start all downloads concurrently
-        Await Task.WhenAll(allDownloadTasks)
+        Collect all images needing download
+        Download all concurrently (max 5)
         Write all to disk
 
-### 10.4 Optimization Opportunities
+### 11.5 Optimization Status
 
-| Area | Current Behavior | Potential Improvement | Status |
-|------|-----------------|----------------------|--------|
-| HTTP Clients | New instance per request | Shared HttpClient with connection pooling | Available |
-| Database | Individual actor lookups | Batch lookups with indices | Partial |
-| Image Downloads | Sequential in Save_Movie | Parallel via Save_MovieAsync | **Implemented** |
-| API Calls | Separate calls for related data | Consolidated append_to_response | Possible |
-| Bulk Scraping | Sequential movie processing | Parallel with throttling | Future |
+| Area | Status |
+|------|--------|
+| Shared HttpClient | ✅ Implemented |
+| Database Indices | ✅ Implemented |
+| Parallel Image Downloads | ✅ Infrastructure ready |
+| Bulk Scrape Integration | 🔄 In progress |
 
-### 10.5 Using Async Save for Bulk Operations
-
-To leverage parallel image downloads during bulk scraping, call `Save_MovieAsync()` instead of `Save_Movie()`:
-
-    ' In bulk scraping loop
-    For Each movie In movieList
-        ' ... scraping logic ...
-        Await Master.DB.Save_MovieAsync(dbElement, True, True, True, True, False)
-    Next
-
-Or use `Task.WhenAll` for true parallelism across movies:
-
-    Dim saveTasks = movieList.Select(Function(m) Master.DB.Save_MovieAsync(m, True, True, True, True, False))
-    Await Task.WhenAll(saveTasks)
+See [PerformanceImprovements-Phase1.md](../PerformanceImprovements-Phase1.md) for details.
 
 ---
 
-## Part 11: Performance Metrics
+## Part 12: Debugging Guide
 
-### 11.1 SaveAllImages Metrics (Implemented)
+### 12.1 Recommended Breakpoints
 
-The following metrics are captured during `SaveAllImages()` for Movie content type:
+| Priority | Line | File | Purpose |
+|----------|------|------|---------|
+| 1 | 12726 | `frmMain.vb` | Before `RunWorkerAsync` - see scrape list |
+| 2 | 1460 | `frmMain.vb` | Start of each movie iteration |
+| 3 | 1479 | `frmMain.vb` | Before `ScrapeData_Movie` |
+| 4 | 1543 | `frmMain.vb` | Before `ScrapeImage_Movie` |
+| **5** | **1610** | **`frmMain.vb`** | **Before `Save_Movie` - KEY LINE** |
+| 6 | ~3616 | `clsAPIDatabase.vb` | Inside `Save_Movie` |
 
-| Metric Name | Description |
-|-------------|-------------|
-| `SaveAllImages.Movie.Total` | Total time in SaveAllImages method |
-| `SaveAllImages.Movie.Download` | Aggregate time in LoadAndCache (network I/O) |
-| `SaveAllImages.Movie.DiskWrite` | Aggregate time writing to disk |
-| `SaveAllImages.Movie.ImageCount` | Number of images processed |
+### 12.2 Debug Session Setup
 
-### 11.2 Observed Performance (49 Movies Baseline - December 2025)
+1. Open `frmMain.vb` in Visual Studio
+2. Set breakpoints at lines 1460 and 1610
+3. Run debug (F5)
+4. Select 2 movies in movie list
+5. Right-click → "(Re)Scrape Selected Movies" → "Ask" → "All Items"
+6. Step through to observe flow
 
-| Phase | Avg Time | % of Total |
-|-------|----------|------------|
-| Download | 815.25 ms | 94% |
-| Disk Write | 46.42 ms | 5% |
-| Overhead | 6.18 ms | 1% |
-| **Total** | 867.85 ms | 100% |
+### 12.3 NLog Tracing
 
-**Key Finding:** Network I/O dominates image save time. Parallel downloads can reduce this by ~64%.
+Key log messages:
+
+    [Movie Scraper] [Start] Movies Count [X]
+    [Movie Scraper] [Start] Scraping {MovieTitle}
+    [Movie Scraper] [Done] Scraping {MovieTitle}
+
+Enable trace logging in `NLog.config` for detailed flow.
+
+### 12.4 Performance Metrics
+
+Metrics are logged on application shutdown to:
+- NLog output
+- CSV file in `Log` folder
+
+Key metrics to watch:
+- `SaveAllImages.Movie.Total`
+- `SaveAllImages.Movie.Download`
+- `TMDB.GetInfo_Movie`
+- `IMDB.GetMovieInfo`
+
+### 12.5 Cancel Scraper Mechanism
+
+The application uses `BackgroundWorker.CancelAsync()` pattern for cancellation. Each major component has its own cancel method.
+
+#### Cancel Method Locations
+
+| Component | BackgroundWorker | Cancel Method | File |
+|-----------|------------------|---------------|------|
+| **Scanner** | `bwPrelim` | `Scanner.Cancel()` | `clsAPIScanner.vb` line 49 |
+| **Scanner (wait)** | `bwPrelim` | `Scanner.CancelAndWait()` | `clsAPIScanner.vb` line 53 |
+| **Task Manager** | `bwTaskManager` | `TaskManager.Cancel()` | `clsAPITaskManager.vb` line 127 |
+| **Task Manager (wait)** | `bwTaskManager` | `TaskManager.CancelAndWait()` | `clsAPITaskManager.vb` line 131 |
+| **Movie Scraper** | `bwMovieScraper` | In `frmMain.vb` | Check for cancel button handler |
+| **TV Scraper** | `bwTVScraper` | In `frmMain.vb` | Check for cancel button handler |
+
+#### Cancel Implementation Pattern
+
+All cancel implementations follow this pattern:
+
+    ' Simple cancel - non-blocking
+    Public Sub Cancel()
+        If bwWorker.IsBusy Then bwWorker.CancelAsync()
+    End Sub
+    
+    ' Cancel and wait - blocking until complete
+    Public Sub CancelAndWait()
+        If bwWorker.IsBusy Then bwWorker.CancelAsync()
+        While bwWorker.IsBusy
+            Application.DoEvents()  ' or Threading.Thread.Sleep(50)
+            Threading.Thread.Sleep(50)
+        End While
+    End Sub
+
+#### DoWork Cancellation Check
+
+Inside each `BackgroundWorker.DoWork` handler, cancellation is checked:
+
+    Private Sub bwWorker_DoWork(sender As Object, e As DoWorkEventArgs)
+        For Each item In items
+            ' Check for cancellation at start of each iteration
+            If bwWorker.CancellationPending Then
+                e.Cancel = True
+                Exit For
+            End If
+            
+            ' ... process item ...
+        Next
+    End Sub
+
+#### Key Files for Cancel Logic
+
+| File | Contains |
+|------|----------|
+| `clsAPIScanner.vb` | Scanner `Cancel()` and `CancelAndWait()` methods |
+| `clsAPITaskManager.vb` | TaskManager `Cancel()` and `CancelAndWait()` methods |
+| `frmMain.vb` | Movie/TV scraper BackgroundWorkers and cancel handlers |
+| `dlgCustomScraper.vb` | Custom scraper dialog cancel button |
+
+#### Async Cancellation (Item 5)
+
+For async operations (like `SaveAllImagesAsync`), use `CancellationToken`:
+
+    ' Pass token through async chain
+    Await Images.DownloadImagesParallelAsync(
+        images,
+        contentType,
+        maxConcurrency:=5,
+        cancellationToken:=token  ' Wire to BackgroundWorker cancellation
+    )
+
+When integrating async into BackgroundWorker context, convert cancellation:
+
+    ' In BackgroundWorker.DoWork
+    Dim cts As New CancellationTokenSource()
+    
+    ' Check periodically and cancel token if needed
+    If bwWorker.CancellationPending Then
+        cts.Cancel()
+    End If
+
+## Part 13: TV Show Overlap
+
+### 13.1 Shared Architecture
+
+| Movie | TV Equivalent |
+|-------|---------------|
+| `ScrapeData_Movie()` | `ScrapeData_TV()` |
+| `ScrapeImage_Movie()` | `ScrapeImage_TV()` |
+| `MergeDataScraperResults_Movie()` | `MergeDataScraperResults_TVShow()` |
+| `externalScrapersModules_Data_Movie` | `externalScrapersModules_Data_TV` |
+
+### 13.2 Shared Code
+
+| Component | Shared |
+|-----------|--------|
+| `ModulesManager` class | Yes |
+| Module loading logic | Yes |
+| `ScrapeModifiers` structure | Yes |
+| `ScrapeOptions` structure | Yes |
+| `ScrapeType` enum | Yes |
+
+### 13.3 Different Handling
+
+| Aspect | Movie | TV |
+|--------|-------|-----|
+| Structure | Single `Movie` | `TVShow` + `TVSeason` + `TVEpisode` |
+| Season images | N/A | Separate season poster/banner |
+| Episode guide | N/A | EpisodeGuide field |
 
 ---
 
 ## Summary
 
-The Ember Media Manager scraping system is a flexible, addon-based architecture that:
+The Ember Media Manager movie scraping system:
 
-1. **Loads scrapers dynamically** from the Addons directory
-2. **Executes all enabled scrapers** in configured order
-3. **Passes IDs between scrapers** for efficient lookups
-4. **Merges results** using "first wins" logic with lock protection
-5. **Applies mappings and filters** during merge
-6. **Supports granular control** via ScrapeModifiers and ScrapeOptions
-7. **Shares architecture** between Movie and TV content types
-8. **Downloads images during Save_Movie()** not during scraping
-9. **Provides async save option** for parallel image downloads
+1. **Entry Points:** Context menu, Tools menu, command line
+2. **Orchestration:** `CreateScrapeList_Movie()` → `bwMovieScraper_DoWork()`
+3. **Data Scraping:** Multiple scrapers run sequentially, results merged
+4. **Image Scraping:** URLs collected only, **downloads happen during Save_Movie()**
+5. **Saving:** `Save_Movie()` writes NFO, downloads images, updates database
 
-The key insight for performance is that ALL enabled scrapers run for each movie, with results merged afterward. This means enabling both TMDB and IMDB scrapers doubles the scrape time but provides more comprehensive data coverage.
+**Critical Performance Path:**
 
-**Performance Critical Path:**
-1. Data scraping (network-bound, sequential per scraper)
-2. Image URL collection (fast)
-3. **Image download during save (network-bound, sequential by default)**
-4. Database write (fast)
+    Data scraping (network-bound) → Image URL collection (fast) → 
+    **Image download during Save_Movie() (BOTTLENECK)** → Database write (fast)
 
-The async `Save_MovieAsync()` method addresses the image download bottleneck by enabling parallel downloads
+**Key Code Locations:**
+
+| Operation | File | Line |
+|-----------|------|------|
+| Start scraping | `frmMain.vb` | 12726 |
+| Main loop | `frmMain.vb` | 1460 |
+| Save (downloads) | `frmMain.vb` | 1610 |
+| SaveAllImages | `clsAPIMediaContainers.vb` | ~3500 |
+
+**Performance Optimization:** Use `Save_MovieAsync()` for parallel image downloads (~64% improvement in image download phase).

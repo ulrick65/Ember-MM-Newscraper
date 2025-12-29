@@ -7,7 +7,7 @@
 | **Updated** | December 29, 2025 |
 | **Author** | Eric H. Anderson |
 | **Status** | In Progress |
-| **Reference** | [PerformanceAnalysis.md](PerformanceAnalysis.md) |
+| **Reference** | [PerformanceAnalysis.md](analysis-docs/PerformanceAnalysis.md), [ScrapingProcessMovies.md](process-docs/ScrapingProcessMovies.md), [ScrapingProcessTvShows.md](process-docs/ScrapingProcessTvShows.md) |
 
 ---I 
 
@@ -608,6 +608,8 @@ All async infrastructure has been implemented. What remains is wiring the async 
 ### Architecture Analysis (Step 5.4 Findings)
 
 **Completed:** 2025-12-28
+
+> **Reference:** See [ScrapingProcessMovies.md](process-docs/ScrapingProcessMovies.md) Part 2 (Bulk Scraping Orchestration) for the complete bulk scraping flow documentation.
 
 This analysis documents where `Save_Movie` is called and why integration is complex. **Do not re-analyze this in future sessions.**
 

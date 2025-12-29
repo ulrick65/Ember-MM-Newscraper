@@ -942,13 +942,23 @@ Public Class ModulesManager
     End Sub
 
     ''' <summary>
-    ''' Request that enabled movie scrapers perform their functions on the supplied movie
+    ''' Request that enabled movie scrapers perform their functions on the supplied movie.
     ''' </summary>
-    ''' <param name="DBElement">Movie to be scraped</param>
-    ''' <param name="ScrapeType">What kind of scrape is being requested, such as whether user-validation is desired</param>
-    ''' <param name="ScrapeOptions">What kind of data is being requested from the scrape</param>
-    ''' <returns><c>True</c> if one of the scrapers was cancelled</returns>
-    ''' <remarks>Note that if no movie scrapers are enabled, a silent warning is generated.</remarks>
+    ''' <param name="DBElement">Movie to be scraped.</param>
+    ''' <param name="ScrapeModifiers">What content types to scrape (NFO, images, etc.).</param>
+    ''' <param name="ScrapeType">What kind of scrape is being requested (Ask, Auto, Skip, etc.).</param>
+    ''' <param name="ScrapeOptions">Which metadata fields to scrape (Title, Plot, Actors, etc.).</param>
+    ''' <param name="showMessage">Whether to show offline message if movie is not available.</param>
+    ''' <returns><c>True</c> if one of the scrapers was cancelled.</returns>
+    ''' <remarks>
+    ''' PERFORMANCE CRITICAL METHOD - Called during bulk scraping (Phase 1 in bwMovieScraper_DoWork).
+    ''' Documentation: See docs/BulkScrapingDocumentation.md for complete flow analysis.
+    ''' Called at line ~1479 in frmMain.vb during bulk movie scraping.
+    ''' Iterates through all enabled data scrapers (TMDB, IMDB, etc.) sequentially.
+    ''' Each scraper makes HTTP requests to external APIs which adds latency.
+    ''' Results are merged via NFO.MergeDataScraperResults_Movie().
+    ''' Note: If no movie scrapers are enabled, a silent warning is generated.
+    ''' </remarks>
     Public Function ScrapeData_Movie(ByRef DBElement As Database.DBElement, ByRef ScrapeModifiers As Structures.ScrapeModifiers, ByVal ScrapeType As Enums.ScrapeType, ByVal ScrapeOptions As Structures.ScrapeOptions, ByVal showMessage As Boolean) As Boolean
         logger.Trace(String.Format("[ModulesManager] [ScrapeData_Movie] [Start] {0}", DBElement.Filename))
         If DBElement.IsOnline OrElse FileUtils.Common.CheckOnlineStatus_Movie(DBElement, showMessage) Then
@@ -1338,13 +1348,24 @@ Public Class ModulesManager
             Return True 'Cancelled
         End If
     End Function
+
     ''' <summary>
-    ''' Request that enabled movie image scrapers perform their functions on the supplied movie
+    ''' Request that enabled movie image scrapers perform their functions on the supplied movie.
     ''' </summary>
-    ''' <param name="DBElement">Movie to be scraped. Scraper will directly manipulate this structure</param>
-    ''' <param name="ImagesContainer">Container of images that the scraper should add to</param>
-    ''' <returns><c>True</c> if one of the scrapers was cancelled</returns>
-    ''' <remarks>Note that if no movie scrapers are enabled, a silent warning is generated.</remarks>
+    ''' <param name="DBElement">Movie to be scraped.</param>
+    ''' <param name="ImagesContainer">Container of images that the scraper should add to (URLs only, no downloads).</param>
+    ''' <param name="ScrapeModifiers">What image types to scrape (Poster, Fanart, Banner, etc.).</param>
+    ''' <param name="showMessage">Whether to show offline message if movie is not available.</param>
+    ''' <returns><c>True</c> if one of the scrapers was cancelled.</returns>
+    ''' <remarks>
+    ''' PERFORMANCE CRITICAL METHOD - Called during bulk scraping (Phase 3 in bwMovieScraper_DoWork).
+    ''' Documentation: See docs/BulkScrapingDocumentation.md for complete flow analysis.
+    ''' Called at line ~1543 in frmMain.vb during bulk movie scraping.
+    ''' IMPORTANT: This method only collects image URLs - it does NOT download images.
+    ''' Image downloads happen later in Save_Movie() via SaveAllImages().
+    ''' Results are sorted/filtered and cache paths are created.
+    ''' Note: If no movie image scrapers are enabled, a silent warning is generated.
+    ''' </remarks>
     Public Function ScrapeImage_Movie(ByRef DBElement As Database.DBElement, ByRef ImagesContainer As MediaContainers.SearchResultsContainer, ByVal ScrapeModifiers As Structures.ScrapeModifiers, ByVal showMessage As Boolean) As Boolean
         logger.Trace(String.Format("[ModulesManager] [ScrapeImage_Movie] [Start] {0}", DBElement.Filename))
         If DBElement.IsOnline OrElse FileUtils.Common.CheckOnlineStatus_Movie(DBElement, showMessage) Then
@@ -1537,14 +1558,20 @@ Public Class ModulesManager
             Return True 'Cancelled
         End If
     End Function
+
     ''' <summary>
-    ''' Request that enabled movie theme scrapers perform their functions on the supplied movie
+    ''' Request that enabled movie theme scrapers perform their functions on the supplied movie.
     ''' </summary>
-    ''' <param name="DBElement">Movie to be scraped. Scraper will directly manipulate this structure</param>
-    ''' <param name="Type">NOT ACTUALLY USED!</param>
+    ''' <param name="DBElement">Movie to be scraped.</param>
+    ''' <param name="Type">The modifier type (MainTheme).</param>
     ''' <param name="ThemeList">List of Theme objects that the scraper will append to.</param>
-    ''' <returns><c>True</c> if one of the scrapers was cancelled</returns>
-    ''' <remarks></remarks>
+    ''' <returns><c>True</c> if one of the scrapers was cancelled.</returns>
+    ''' <remarks>
+    ''' Called during bulk scraping (Phase 4 in bwMovieScraper_DoWork).
+    ''' Documentation: See docs/BulkScrapingDocumentation.md for complete flow analysis.
+    ''' Called at line ~1559 in frmMain.vb during bulk movie scraping.
+    ''' Iterates through all enabled theme scrapers sequentially.
+    ''' </remarks>
     Public Function ScrapeTheme_Movie(ByRef DBElement As Database.DBElement, ByVal Type As Enums.ModifierType, ByRef ThemeList As List(Of MediaContainers.MediaFile)) As Boolean
         logger.Trace(String.Format("[ModulesManager] [ScrapeTheme_Movie] [Start] {0}", DBElement.Filename))
         Dim modules As IEnumerable(Of _externalScraperModuleClass_Theme_Movie) = externalScrapersModules_Theme_Movie.Where(Function(e) e.ProcessorModule.ScraperEnabled).OrderBy(Function(e) e.ModuleOrder)
@@ -1613,15 +1640,20 @@ Public Class ModulesManager
         logger.Trace(String.Format("[ModulesManager] [ScrapeTheme_TVShow] [Done] {0}", DBElement.TVShow.Title))
         Return ret.Cancelled
     End Function
+
     ''' <summary>
-    ''' Request that enabled movie trailer scrapers perform their functions on the supplied movie
+    ''' Request that enabled movie trailer scrapers perform their functions on the supplied movie.
     ''' </summary>
-    ''' <param name="DBElement">Movie to be scraped. Scraper will directly manipulate this structure</param>
-    ''' <param name="Type">NOT ACTUALLY USED!</param>
-    ''' <param name="TrailerList">List of Trailer objects that the scraper will append to. Note that only the URL is returned, 
-    ''' not the full content of the trailer</param>
-    ''' <returns><c>True</c> if one of the scrapers was cancelled</returns>
-    ''' <remarks></remarks>
+    ''' <param name="DBElement">Movie to be scraped.</param>
+    ''' <param name="Type">The modifier type (MainTrailer).</param>
+    ''' <param name="TrailerList">List of Trailer objects that the scraper will append to. Note that only the URL is returned, not the full content of the trailer.</param>
+    ''' <returns><c>True</c> if one of the scrapers was cancelled.</returns>
+    ''' <remarks>
+    ''' Called during bulk scraping (Phase 5 in bwMovieScraper_DoWork).
+    ''' Documentation: See docs/BulkScrapingDocumentation.md for complete flow analysis.
+    ''' Called at line ~1583 in frmMain.vb during bulk movie scraping.
+    ''' Iterates through all enabled trailer scrapers sequentially.
+    ''' </remarks>
     Public Function ScrapeTrailer_Movie(ByRef DBElement As Database.DBElement, ByVal Type As Enums.ModifierType, ByRef TrailerList As List(Of MediaContainers.MediaFile)) As Boolean
         logger.Trace(String.Format("[ModulesManager] [ScrapeTrailer_Movie] [Start] {0}", DBElement.Filename))
         Dim modules As IEnumerable(Of _externalScraperModuleClass_Trailer_Movie) = externalScrapersModules_Trailer_Movie.Where(Function(e) e.ProcessorModule.ScraperEnabled).OrderBy(Function(e) e.ModuleOrder)
