@@ -7,7 +7,7 @@
 | **Updated** | December 29, 2025 |
 | **Author** | Eric H. Anderson |
 | **Status** | Complete |
-| **Reference** | [PerformanceAnalysis.md](analysis-docs/PerformanceAnalysis.md), [ScrapingProcessMovies.md](process-docs/ScrapingProcessMovies.md), [ScrapingProcessTvShows.md](process-docs/ScrapingProcessTvShows.md) |
+| **Reference** | [PerformanceAnalysis.md](../analysis-docs/PerformanceAnalysis.md), [ScrapingProcessMovies.md](../process-docs/ScrapingProcessMovies.md), [ScrapingProcessTvShows.md](../process-docs/ScrapingProcessTvShows.md), [PerformanceImprovements-Phase2.md](PerformanceImprovements-Phase2.md) |
 
 ---I 
 

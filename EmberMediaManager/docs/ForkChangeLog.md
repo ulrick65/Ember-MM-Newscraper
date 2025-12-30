@@ -391,17 +391,17 @@ The following documents provide detailed information about specific initiatives:
 
 | Document | Description |
 |----------|-------------|
-| [PackageUpdatePlan.md](PackageUpdatePlan.md) | Core NuGet package update tracking (Dec 22-23) |
-| [NuGetPackageUpdatePlan.md](NuGetPackageUpdatePlan.md) | System.* and Microsoft stack package updates (Dec 26-27) |
-| [FileCleanUpPlan.md](FileCleanUpPlan.md) | Solution cleanup and file removal tracking |
-| [BuildProcess.md](BuildProcess.md) | Build configuration and output documentation |
-| [NfoFileProcess.md](NfoFileProcess.md) | NFO file processing analysis |
-| [NfoFileImprovements.md](NfoFileImprovements.md) | Planned improvements for NFO processing |
-| [ReleaseNotes-v1.12.0.0.md](ReleaseNotes-v1.12.0.0.md) | Release notes for v1.12.0.0 |
-| [GenreMappingProcess.md](GenreMappingProcess.md) | Genre mapping system documentation |
-| [SolutionCleanupAnalysis.md](SolutionCleanupAnalysis.md) | Analysis of solution cleanup |
-| [PerformanceAnalysis.md](PerformanceAnalysis.md) | Performance analysis and optimization recommendations |
-| [PerformanceImprovements-Phase1.md](PerformanceImprovements-Phase1.md) | Phase 1 performance implementation plan and progress |
+| [PackageUpdatePlan.md](archived-docs/PackageUpdatePlan.md) | Core NuGet package update tracking (Dec 22-23) |
+| [NuGetPackageUpdatePlan.md](archived-docs/NuGetPackageUpdatePlan.md) | System.* and Microsoft stack package updates (Dec 26-27) |
+| [FileCleanUpPlan.md](archived-docs/FileCleanUpPlan.md) | Solution cleanup and file removal tracking |
+| [BuildProcess.md](process-docs/BuildProcess.md) | Build configuration and output documentation |
+| [NfoFileProcess.md](process-docs/NfoFileProcess.md) | NFO file processing analysis |
+| [NfoFileImprovements.md](improvements-docs/NfoFileImprovements.md) | Planned improvements for NFO processing |
+| [ReleaseNotes-v1.12.0.0.md](release-notes/ReleaseNotes-v1.12.0.0.md) | Release notes for v1.12.0.0 |
+| [GenreMappingProcess.md](process-docs/GenreMappingProcess.md) | Genre mapping system documentation |
+| [SolutionCleanupAnalysis.md](analysis-docs/SolutionCleanupAnalysis.md) | Analysis of solution cleanup |
+| [PerformanceAnalysis.md](analysis-docs/PerformanceAnalysis.md) | Performance analysis and optimization recommendations |
+| [PerformanceImprovements-Phase1.md](improvements-docs/PerformanceImprovements-Phase1.md) | Phase 1 performance implementation plan and progress |
 | [ScrapingProcessMovies.md](process-docs/ScrapingProcessMovies.md) | Movie scraping process architecture documentation |
 | [ScrapingProcessTvShows.md](process-docs/ScrapingProcessTvShows.md) | TV Show scraping process architecture documentation |
 

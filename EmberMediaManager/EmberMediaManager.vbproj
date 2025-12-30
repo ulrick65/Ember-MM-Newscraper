@@ -526,13 +526,14 @@
     <None Include="docs\archived-docs\BulkScrapingDocumentation.md" />
     <None Include="docs\analysis-docs\ImageThumbnailAnalysis.md" />
     <None Include="docs\analysis-docs\PerformanceAnalysis.md" />
-    <None Include="docs\AsyncImageDownloadAnalysis.md" />
-    <None Include="docs\PerformanceImprovements-Phase1.md" />
+    <None Include="docs\analysis-docs\AsyncImageDownloadAnalysis.md" />
+    <None Include="docs\improvements-docs\PerformanceImprovements-Phase1.md" />
+    <None Include="docs\improvements-docs\PerformanceImprovements-Phase2.md" />
     <None Include="docs\process-docs\BuildProcess.md" />
     <None Include="docs\process-docs\CertificationMappingProcess.md" />
     <None Include="docs\process-docs\CountryMappingProcess.md" />
     <None Include="docs\ForkChangeLog.md" />
-    <None Include="docs\NfoFileImprovements.md" />
+    <None Include="docs\improvements-docs\NfoFileImprovements.md" />
     <None Include="docs\process-docs\NfoFileProcess .md" />
     <None Include="docs\process-docs\ScrapingProcessMovies.md" />
     <None Include="docs\process-docs\ScrapingProcessTvShows.md" />
@@ -543,7 +544,7 @@
     <None Include="docs\process-docs\MediaInfoMappingProcess.md" />
     <None Include="docs\archived-docs\PackageUpdatePlan.md" />
     <None Include="docs\release-notes\ReleaseNotes-v1.12.1.0.md" />
-    <None Include="docs\archived-docs\SolutionCleanupAnalysis.md" />
+    <None Include="docs\analysis-docs\SolutionCleanupAnalysis.md" />
     <None Include="docs\process-docs\StatusMappingProcess.md" />
     <None Include="docs\process-docs\StudioMappingProcess.md" />
     <None Include="scripts\BuildCleanup.ps1" />

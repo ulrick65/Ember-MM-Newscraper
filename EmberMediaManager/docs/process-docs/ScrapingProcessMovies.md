@@ -1,8 +1,8 @@
 ﻿# Movie Scraping Process Analysis
 
 > **Document Version:** 2.1 (Updated December 29, 2025 - Phase 1 Performance Complete)
-> **Related Documentation:** For TV Show scraping, see [ScrapingProcessTvShows.md](ScrapingProcessTvShows.md). Both processes share architectural patterns through the `ModulesManager` class.
-> **Performance Documentation:** See [PerformanceImprovements-Phase1.md](../PerformanceImprovements-Phase1.md) for optimization details.
+> **Related Documentation:** For TV Show scraping, see [../process-docs/ScrapingProcessTvShows.md](ScrapingProcessTvShows.md). Both processes share architectural patterns through the `ModulesManager` class.
+> **Performance Documentation:** See [PerformanceImprovements-Phase1.md](../improvements-docs/PerformanceImprovements-Phase1.md) for optimization details.
 
 ---
 
