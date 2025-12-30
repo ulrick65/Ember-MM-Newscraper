@@ -2,7 +2,7 @@
 
 > **Document Version:** 2.0 (Updated December 29, 2025)
 > **Related Documentation:** For Movie scraping, see [ScrapingProcessMovies.md](../process-docs/ScrapingProcessMovies.md). Both processes share architectural patterns through the `ModulesManager` class.
-> **Performance Documentation:** See [PerformanceImprovements-Phase1.md](../improvements-docs/PerformanceImprovements-Phase1.md) for optimization details.
+> **Performance Documentation:** See [PerformanceImprovements-Phase1.md](../improvements-docs/PerformanceImprovements-Phase1.md) for Phase 1 optimizations and [PerformanceImprovements-Phase2.md](../improvements-docs/PerformanceImprovements-Phase2.md) for TV async image improvements.
 
 ---
 
@@ -995,8 +995,8 @@ For a show with 5 seasons and 100 episodes:
 
 | Area | Current | Potential |
 |------|---------|-----------|
-| Episode image downloads | Sequential | Parallel (like Movies) |
-| Season image downloads | Sequential | Parallel |
+| Episode image downloads | ✅ Parallel (Phase 2) | `SaveAllImagesAsync` |
+| Season image downloads | ✅ Parallel (Phase 2) | `SaveAllImagesAsync` |
 | Database batch mode | Individual saves | Transaction batching |
 | Episode matching | Linear search | Indexed lookup |
 

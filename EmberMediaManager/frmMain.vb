@@ -2051,7 +2051,10 @@ Public Class frmMain
                 If Not (Args.ScrapeType = Enums.ScrapeType.SingleScrape) Then
                     ModulesManager.Instance.RunGeneric(Enums.ModuleEventType.ScraperMulti_TVShow, Nothing, Nothing, False, DBScrapeShow)
                     bwTVScraper.ReportProgress(-3, String.Concat(Master.eLang.GetString(399, "Downloading and Saving Contents into Database"), ":"))
-                    Master.DB.Save_TVShow(DBScrapeShow, False, tScrapeItem.ScrapeModifiers.MainNFO OrElse tScrapeItem.ScrapeModifiers.MainMeta, True, tScrapeItem.ScrapeModifiers.withEpisodes)
+                    ' TODO: Debug log [ulrick65, 12/29/2025]
+                    logger.Trace($"[DEBUG TV] About to call Save_TVShowAsync for show: {DBScrapeShow.TVShow.Title}, toDisk=True")
+                    'Use Save_TVShowAsync for parallel image downloads (sync-over-async in BackgroundWorker context)
+                    DBScrapeShow = Master.DB.Save_TVShowAsync(DBScrapeShow, False, tScrapeItem.ScrapeModifiers.MainNFO OrElse tScrapeItem.ScrapeModifiers.MainMeta, True, tScrapeItem.ScrapeModifiers.withEpisodes).GetAwaiter().GetResult()
                     bwTVScraper.ReportProgress(-2, DBScrapeShow.ID)
                     bwTVScraper.ReportProgress(-1, If(Not OldTitle = NewTitle, String.Format(Master.eLang.GetString(812, "Old Title: {0} | New Title: {1}"), OldTitle, NewTitle), NewTitle))
                 End If
@@ -2226,7 +2229,8 @@ Public Class frmMain
                 If Not (Args.ScrapeType = Enums.ScrapeType.SingleScrape) Then
                     ModulesManager.Instance.RunGeneric(Enums.ModuleEventType.ScraperMulti_TVEpisode, Nothing, Nothing, False, DBScrapeEpisode)
                     bwTVEpisodeScraper.ReportProgress(-3, String.Concat(Master.eLang.GetString(399, "Downloading and Saving Contents into Database"), ":"))
-                    Master.DB.Save_TVEpisode(DBScrapeEpisode, False, tScrapeItem.ScrapeModifiers.EpisodeNFO OrElse tScrapeItem.ScrapeModifiers.EpisodeMeta, True, True, True)
+                    'Use Save_TVEpisodeAsync for parallel image downloads (sync-over-async in BackgroundWorker context)
+                    DBScrapeEpisode = Master.DB.Save_TVEpisodeAsync(DBScrapeEpisode, False, tScrapeItem.ScrapeModifiers.EpisodeNFO OrElse tScrapeItem.ScrapeModifiers.EpisodeMeta, True, True, True).GetAwaiter().GetResult()
                     bwTVEpisodeScraper.ReportProgress(-2, DBScrapeEpisode.ID)
                     bwTVEpisodeScraper.ReportProgress(-1, If(Not OldEpisodeTitle = NewEpisodeTitle, String.Format(Master.eLang.GetString(812, "Old Title: {0} | New Title: {1}"), OldEpisodeTitle, NewEpisodeTitle), NewEpisodeTitle))
                 End If
@@ -2374,7 +2378,8 @@ Public Class frmMain
                 If Not (Args.ScrapeType = Enums.ScrapeType.SingleScrape) Then
                     ModulesManager.Instance.RunGeneric(Enums.ModuleEventType.ScraperMulti_TVSeason, Nothing, Nothing, False, DBScrapeSeason)
                     bwTVSeasonScraper.ReportProgress(-3, String.Concat(Master.eLang.GetString(399, "Downloading and Saving Contents into Database"), ":"))
-                    Master.DB.Save_TVSeason(DBScrapeSeason, False, True, True)
+                    'Use Save_TVSeasonAsync for parallel image downloads (sync-over-async in BackgroundWorker context)
+                    DBScrapeSeason = Master.DB.Save_TVSeasonAsync(DBScrapeSeason, False, True, True).GetAwaiter().GetResult()
                     bwTVSeasonScraper.ReportProgress(-2, DBScrapeSeason.ID)
                 End If
             End If

@@ -528,6 +528,7 @@
     <None Include="docs\analysis-docs\PerformanceAnalysis.md" />
     <None Include="docs\analysis-docs\AsyncImageDownloadAnalysis.md" />
     <None Include="docs\improvements-docs\PerformanceImprovements-Phase1.md" />
+    <None Include="docs\improvements-docs\PerformanceImprovements-Phase2-2.md" />
     <None Include="docs\improvements-docs\PerformanceImprovements-Phase2.md" />
     <None Include="docs\process-docs\BuildProcess.md" />
     <None Include="docs\process-docs\CertificationMappingProcess.md" />

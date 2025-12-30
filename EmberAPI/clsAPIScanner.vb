@@ -603,7 +603,7 @@ Public Class Scanner
         Try
             For Each s As String In Master.DB.GetAll_ExcludedDirectories
                 If dInfo.FullName.ToLower = s.ToLower Then
-                    logger.Info(String.Format("[Sanner] [IsValidDir] [ExcludeDirs] Path ""{0}"" has been skipped (path is in ""exclude directory"" list)", dInfo.FullName, s))
+                    logger.Info(String.Format("[Scanner] [IsValidDir] [ExcludeDirs] Path ""{0}"" has been skipped (path is in ""exclude directory"" list)", dInfo.FullName, s))
                     Return False
                 End If
             Next
@@ -613,18 +613,18 @@ Public Class Scanner
             End If
             For Each s As String In AdvancedSettings.GetSetting("NotValidDirIs", ".actors|extrafanart|extrathumbs|video_ts|bdmv|audio_ts|recycler|subs|subtitles|.trashes").Split(New String() {"|"}, StringSplitOptions.RemoveEmptyEntries)
                 If dInfo.Name.ToLower = s.ToLower Then
-                    logger.Info(String.Format("[Sanner] [IsValidDir] [NotValidDirIs] Path ""{0}"" has been skipped (path name is ""{1}"")", dInfo.FullName, s))
+                    logger.Info(String.Format("[Scanner] [IsValidDir] [NotValidDirIs] Path ""{0}"" has been skipped (path name is ""{1}"")", dInfo.FullName, s))
                     Return False
                 End If
             Next
             For Each s As String In AdvancedSettings.GetSetting("NotValidDirContains", "-trailer|[trailer|temporary files|(noscan)|$recycle.bin|lost+found|system volume information|sample").Split(New String() {"|"}, StringSplitOptions.RemoveEmptyEntries)
                 If dInfo.Name.ToLower.Contains(s.ToLower) Then
-                    logger.Info(String.Format("[Sanner] [IsValidDir] [NotValidDirContains] Path ""{0}"" has been skipped (path contains ""{1}"")", dInfo.FullName, s))
+                    logger.Info(String.Format("[Scanner] [IsValidDir] [NotValidDirContains] Path ""{0}"" has been skipped (path contains ""{1}"")", dInfo.FullName, s))
                     Return False
                 End If
             Next
         Catch ex As Exception
-            logger.Error(String.Format("[Sanner] [IsValidDir] Path ""{0}"" has been skipped ({1})", dInfo.Name, ex.Message))
+            logger.Error(String.Format("[Scanner] [IsValidDir] Path ""{0}"" has been skipped ({1})", dInfo.Name, ex.Message))
             Return False
         End Try
         Return True 'This is the Else
@@ -1425,10 +1425,10 @@ Public Class Scanner
                     (Not Convert.ToInt32(Master.eSettings.TVSkipLessThan) > 0 OrElse lFile.Length >= Master.eSettings.TVSkipLessThan * 1048576) Then
                     tShow.Episodes.Add(New Database.DBElement(Enums.ContentType.TVEpisode) With {.Filename = lFile.FullName, .TVEpisode = New MediaContainers.EpisodeDetails})
                 ElseIf Regex.IsMatch(lFile.Name, AdvancedSettings.GetSetting("NotValidFileContains", "[^\w\s]\s?trailer|[^\w\s]\s?sample"), RegexOptions.IgnoreCase) AndAlso Master.eSettings.FileSystemValidExts.Contains(lFile.Extension.ToLower) Then
-                    logger.Info(String.Format("[Sanner] [ScanForFiles_TV] File ""{0}"" has been ignored (ignore list)", lFile.FullName))
+                    logger.Info(String.Format("[Scanner] [ScanForFiles_TV] File ""{0}"" has been ignored (ignore list)", lFile.FullName))
                 End If
             Catch ex As Exception
-                logger.Error(String.Format("[Sanner] [ScanForFiles_TV] File ""{0}"" has been skipped ({1})", lFile.Name, ex.Message))
+                logger.Error(String.Format("[Scanner] [ScanForFiles_TV] File ""{0}"" has been skipped ({1})", lFile.Name, ex.Message))
             End Try
         Next
     End Sub

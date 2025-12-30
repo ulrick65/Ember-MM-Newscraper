@@ -4706,72 +4706,52 @@ Namespace MediaContainers
         End Sub
 
         ''' <summary>
-        ''' Asynchronously saves all images for a Movie, using parallel downloads for better performance
+        ''' Asynchronously saves all images for a Movie, TV Show, TV Season, or TV Episode using parallel downloads for better performance
         ''' </summary>
-        ''' <param name="DBElement">Database element containing movie information</param>
+        ''' <param name="DBElement">Database element containing content information</param>
         ''' <param name="ForceFileCleanup">Whether to force cleanup of existing files</param>
         ''' <returns>Task containing the modified DBElement with updated paths</returns>
         ''' <remarks>
         ''' This method downloads all images in parallel before saving them sequentially.
-        ''' Only supports Movie content type - other content types should use synchronous SaveAllImages.
+        ''' Supports Movie, TVShow, TVSeason, and TVEpisode content types.
         ''' Note: Unlike SaveAllImages, this returns the modified DBElement since async methods cannot use ByRef.
         ''' </remarks>
         Public Async Function SaveAllImagesAsync(ByVal DBElement As Database.DBElement, ByVal ForceFileCleanup As Boolean) As Task(Of Database.DBElement)
-            ' Only Movie is supported for async - others should use sync version
-            If DBElement.ContentType <> Enums.ContentType.Movie Then
+            ' Check for unsupported content types
+            If DBElement.ContentType = Enums.ContentType.MovieSet Then
                 SaveAllImages(DBElement, ForceFileCleanup)
                 Return DBElement
             End If
 
-            If Not DBElement.FilenameSpecified Then Return DBElement
+            If Not DBElement.FilenameSpecified AndAlso (DBElement.ContentType = Enums.ContentType.Movie OrElse DBElement.ContentType = Enums.ContentType.TVEpisode) Then Return DBElement
 
-            Dim movieTitle As String = If(DBElement.Movie?.Title, "Unknown")
-            _logger.Trace($"[SaveAllImagesAsync] START for movie: {movieTitle}")
+            Dim contentTitle As String = GetContentTitle(DBElement)
+            Dim contentTypeName As String = DBElement.ContentType.ToString()
+            _logger.Trace($"[SaveAllImagesAsync] START for {contentTypeName}: {contentTitle}")
 
-            Using scope = PerformanceTracker.StartOperation("ImagesContainer.SaveAllImagesAsync")
+            Dim operationName As String = $"ImagesContainer.SaveAllImagesAsync.{contentTypeName}"
+            Using scope = PerformanceTracker.StartOperation(operationName)
                 Dim tContentType As Enums.ContentType = DBElement.ContentType
 
                 ' ============================================================
                 ' Phase 1: Collect all images that need downloading
                 ' ============================================================
-                _logger.Trace($"[SaveAllImagesAsync] Phase 1: Collecting images that need download")
+                _logger.Trace($"[SaveAllImagesAsync] Phase 1: Collecting images that need download for {contentTypeName}")
                 Dim imagesToDownload As New List(Of Image)
 
-                ' Log each image's state before NeedsDownload check
-                _logger.Trace($"[SaveAllImagesAsync] Banner: NeedsDownload={Banner.NeedsDownload()}, HasMemoryStream={Banner.ImageOriginal.HasMemoryStream}, URLOriginal={Not String.IsNullOrEmpty(Banner.URLOriginal)}, LocalFilePath={Banner.LocalFilePath}")
-                If Banner.NeedsDownload() Then imagesToDownload.Add(Banner)
+                Select Case DBElement.ContentType
+                    Case Enums.ContentType.Movie
+                        CollectMovieImages(imagesToDownload)
 
-                _logger.Trace($"[SaveAllImagesAsync] ClearArt: NeedsDownload={ClearArt.NeedsDownload()}, HasMemoryStream={ClearArt.ImageOriginal.HasMemoryStream}, URLOriginal={Not String.IsNullOrEmpty(ClearArt.URLOriginal)}, LocalFilePath={ClearArt.LocalFilePath}")
-                If ClearArt.NeedsDownload() Then imagesToDownload.Add(ClearArt)
+                    Case Enums.ContentType.TVShow
+                        CollectTVShowImages(imagesToDownload)
 
-                _logger.Trace($"[SaveAllImagesAsync] ClearLogo: NeedsDownload={ClearLogo.NeedsDownload()}, HasMemoryStream={ClearLogo.ImageOriginal.HasMemoryStream}, URLOriginal={Not String.IsNullOrEmpty(ClearLogo.URLOriginal)}, LocalFilePath={ClearLogo.LocalFilePath}")
-                If ClearLogo.NeedsDownload() Then imagesToDownload.Add(ClearLogo)
+                    Case Enums.ContentType.TVSeason
+                        CollectTVSeasonImages(imagesToDownload)
 
-                _logger.Trace($"[SaveAllImagesAsync] DiscArt: NeedsDownload={DiscArt.NeedsDownload()}, HasMemoryStream={DiscArt.ImageOriginal.HasMemoryStream}, URLOriginal={Not String.IsNullOrEmpty(DiscArt.URLOriginal)}, LocalFilePath={DiscArt.LocalFilePath}")
-                If DiscArt.NeedsDownload() Then imagesToDownload.Add(DiscArt)
-
-                _logger.Trace($"[SaveAllImagesAsync] Fanart: NeedsDownload={Fanart.NeedsDownload()}, HasMemoryStream={Fanart.ImageOriginal.HasMemoryStream}, URLOriginal={Not String.IsNullOrEmpty(Fanart.URLOriginal)}, LocalFilePath={Fanart.LocalFilePath}")
-                If Fanart.NeedsDownload() Then imagesToDownload.Add(Fanart)
-
-                _logger.Trace($"[SaveAllImagesAsync] Keyart: NeedsDownload={Keyart.NeedsDownload()}, HasMemoryStream={Keyart.ImageOriginal.HasMemoryStream}, URLOriginal={Not String.IsNullOrEmpty(Keyart.URLOriginal)}, LocalFilePath={Keyart.LocalFilePath}")
-                If Keyart.NeedsDownload() Then imagesToDownload.Add(Keyart)
-
-                _logger.Trace($"[SaveAllImagesAsync] Landscape: NeedsDownload={Landscape.NeedsDownload()}, HasMemoryStream={Landscape.ImageOriginal.HasMemoryStream}, URLOriginal={Not String.IsNullOrEmpty(Landscape.URLOriginal)}, LocalFilePath={Landscape.LocalFilePath}")
-                If Landscape.NeedsDownload() Then imagesToDownload.Add(Landscape)
-
-                _logger.Trace($"[SaveAllImagesAsync] Poster: NeedsDownload={Poster.NeedsDownload()}, HasMemoryStream={Poster.ImageOriginal.HasMemoryStream}, URLOriginal={Not String.IsNullOrEmpty(Poster.URLOriginal)}, LocalFilePath={Poster.LocalFilePath}")
-                If Poster.NeedsDownload() Then imagesToDownload.Add(Poster)
-
-                ' Add extrafanarts and extrathumbs
-                _logger.Trace($"[SaveAllImagesAsync] Extrafanarts count: {Extrafanarts.Count}")
-                For Each img In Extrafanarts
-                    If img.NeedsDownload() Then imagesToDownload.Add(img)
-                Next
-
-                _logger.Trace($"[SaveAllImagesAsync] Extrathumbs count: {Extrathumbs.Count}")
-                For Each img In Extrathumbs
-                    If img.NeedsDownload() Then imagesToDownload.Add(img)
-                Next
+                    Case Enums.ContentType.TVEpisode
+                        CollectTVEpisodeImages(imagesToDownload)
+                End Select
 
                 _logger.Trace($"[SaveAllImagesAsync] Phase 1 complete: {imagesToDownload.Count} images need downloading")
 
@@ -4780,7 +4760,7 @@ Namespace MediaContainers
                 ' ============================================================
                 If imagesToDownload.Count > 0 Then
                     _logger.Trace($"[SaveAllImagesAsync] Phase 2: Starting parallel download of {imagesToDownload.Count} images")
-                    Using downloadScope = PerformanceTracker.StartOperation("ImagesContainer.SaveAllImagesAsync.ParallelDownload")
+                    Using downloadScope = PerformanceTracker.StartOperation($"{operationName}.ParallelDownload")
                         Await Images.DownloadImagesParallelAsync(
                             imagesToDownload,
                             tContentType,
@@ -4790,17 +4770,7 @@ Namespace MediaContainers
                             progressCallback:=Nothing
                             ).ConfigureAwait(False)
                     End Using
-
-                    ' Log state after parallel download
-                    _logger.Trace($"[SaveAllImagesAsync] Phase 2 complete. Post-download state:")
-                    _logger.Trace($"[SaveAllImagesAsync] Banner.HasMemoryStream={Banner.ImageOriginal.HasMemoryStream}")
-                    _logger.Trace($"[SaveAllImagesAsync] ClearArt.HasMemoryStream={ClearArt.ImageOriginal.HasMemoryStream}")
-                    _logger.Trace($"[SaveAllImagesAsync] ClearLogo.HasMemoryStream={ClearLogo.ImageOriginal.HasMemoryStream}")
-                    _logger.Trace($"[SaveAllImagesAsync] DiscArt.HasMemoryStream={DiscArt.ImageOriginal.HasMemoryStream}")
-                    _logger.Trace($"[SaveAllImagesAsync] Fanart.HasMemoryStream={Fanart.ImageOriginal.HasMemoryStream}")
-                    _logger.Trace($"[SaveAllImagesAsync] Keyart.HasMemoryStream={Keyart.ImageOriginal.HasMemoryStream}")
-                    _logger.Trace($"[SaveAllImagesAsync] Landscape.HasMemoryStream={Landscape.ImageOriginal.HasMemoryStream}")
-                    _logger.Trace($"[SaveAllImagesAsync] Poster.HasMemoryStream={Poster.ImageOriginal.HasMemoryStream}")
+                    _logger.Trace($"[SaveAllImagesAsync] Phase 2 complete")
                 Else
                     _logger.Trace($"[SaveAllImagesAsync] Phase 2: Skipped - no images need downloading")
                 End If
@@ -4809,115 +4779,404 @@ Namespace MediaContainers
                 ' Phase 3: Save images sequentially (disk I/O)
                 ' ============================================================
                 _logger.Trace($"[SaveAllImagesAsync] Phase 3: Starting save to disk")
-                Using saveScope = PerformanceTracker.StartOperation("ImagesContainer.SaveAllImagesAsync.SaveToDisk")
-                    'Movie Banner
-                    _logger.Trace($"[SaveAllImagesAsync] Phase 3 - Banner: HasMemoryStream={Banner.ImageOriginal.HasMemoryStream} before LoadAndCache")
-                    If Banner.LoadAndCache(tContentType, True) Then
-                        _logger.Trace($"[SaveAllImagesAsync] Phase 3 - Banner: LoadAndCache returned True, HasMemoryStream={Banner.ImageOriginal.HasMemoryStream}")
-                        If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainBanner, ForceFileCleanup)
-                        Banner.LocalFilePath = Banner.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainBanner)
-                    Else
-                        _logger.Trace($"[SaveAllImagesAsync] Phase 3 - Banner: LoadAndCache returned False")
-                        Images.Delete_Movie(DBElement, Enums.ModifierType.MainBanner, ForceFileCleanup)
-                        Banner = New Image
-                    End If
+                Using saveScope = PerformanceTracker.StartOperation($"{operationName}.SaveToDisk")
+                    Select Case DBElement.ContentType
+                        Case Enums.ContentType.Movie
+                            SaveMovieImagesToDisk(DBElement, tContentType, ForceFileCleanup)
 
-                    'Movie ClearArt
-                    _logger.Trace($"[SaveAllImagesAsync] Phase 3 - ClearArt: HasMemoryStream={ClearArt.ImageOriginal.HasMemoryStream} before LoadAndCache")
-                    If ClearArt.LoadAndCache(tContentType, True) Then
-                        If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainClearArt, ForceFileCleanup)
-                        ClearArt.LocalFilePath = ClearArt.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainClearArt)
-                    Else
-                        Images.Delete_Movie(DBElement, Enums.ModifierType.MainClearArt, ForceFileCleanup)
-                        ClearArt = New Image
-                    End If
+                        Case Enums.ContentType.TVShow
+                            SaveTVShowImagesToDisk(DBElement, tContentType)
 
-                    'Movie ClearLogo
-                    _logger.Trace($"[SaveAllImagesAsync] Phase 3 - ClearLogo: HasMemoryStream={ClearLogo.ImageOriginal.HasMemoryStream} before LoadAndCache")
-                    If ClearLogo.LoadAndCache(tContentType, True) Then
-                        If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainClearLogo, ForceFileCleanup)
-                        ClearLogo.LocalFilePath = ClearLogo.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainClearLogo)
-                    Else
-                        Images.Delete_Movie(DBElement, Enums.ModifierType.MainClearLogo, ForceFileCleanup)
-                        ClearLogo = New Image
-                    End If
+                        Case Enums.ContentType.TVSeason
+                            SaveTVSeasonImagesToDisk(DBElement, tContentType)
 
-                    'Movie DiscArt
-                    _logger.Trace($"[SaveAllImagesAsync] Phase 3 - DiscArt: HasMemoryStream={DiscArt.ImageOriginal.HasMemoryStream} before LoadAndCache")
-                    If DiscArt.LoadAndCache(tContentType, True) Then
-                        If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainDiscArt, ForceFileCleanup)
-                        DiscArt.LocalFilePath = DiscArt.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainDiscArt)
-                    Else
-                        Images.Delete_Movie(DBElement, Enums.ModifierType.MainDiscArt, ForceFileCleanup)
-                        DiscArt = New Image
-                    End If
-
-                    'Movie Extrafanarts
-                    _logger.Trace($"[SaveAllImagesAsync] Phase 3 - Extrafanarts: Count={Extrafanarts.Count}")
-                    If Extrafanarts.Count > 0 Then
-                        DBElement.ExtrafanartsPath = Images.SaveMovieExtrafanarts(DBElement)
-                    Else
-                        Images.Delete_Movie(DBElement, Enums.ModifierType.MainExtrafanarts, ForceFileCleanup)
-                        Extrafanarts = New List(Of Image)
-                        DBElement.ExtrafanartsPath = String.Empty
-                    End If
-
-                    'Movie Extrathumbs
-                    _logger.Trace($"[SaveAllImagesAsync] Phase 3 - Extrathumbs: Count={Extrathumbs.Count}")
-                    If Extrathumbs.Count > 0 Then
-                        DBElement.ExtrathumbsPath = Images.SaveMovieExtrathumbs(DBElement)
-                    Else
-                        Images.Delete_Movie(DBElement, Enums.ModifierType.MainExtrathumbs, ForceFileCleanup)
-                        Extrathumbs = New List(Of Image)
-                        DBElement.ExtrathumbsPath = String.Empty
-                    End If
-
-                    'Movie Fanart
-                    _logger.Trace($"[SaveAllImagesAsync] Phase 3 - Fanart: HasMemoryStream={Fanart.ImageOriginal.HasMemoryStream} before LoadAndCache")
-                    If Fanart.LoadAndCache(tContentType, True) Then
-                        If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainFanart, ForceFileCleanup)
-                        Fanart.LocalFilePath = Fanart.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainFanart)
-                    Else
-                        Images.Delete_Movie(DBElement, Enums.ModifierType.MainFanart, ForceFileCleanup)
-                        Fanart = New Image
-                    End If
-
-                    'Movie Keyart
-                    _logger.Trace($"[SaveAllImagesAsync] Phase 3 - Keyart: HasMemoryStream={Keyart.ImageOriginal.HasMemoryStream} before LoadAndCache")
-                    If Keyart.LoadAndCache(tContentType, True) Then
-                        If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainKeyart, ForceFileCleanup)
-                        Keyart.LocalFilePath = Keyart.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainKeyart)
-                    Else
-                        Images.Delete_Movie(DBElement, Enums.ModifierType.MainKeyart, ForceFileCleanup)
-                        Keyart = New Image
-                    End If
-
-                    'Movie Landscape
-                    _logger.Trace($"[SaveAllImagesAsync] Phase 3 - Landscape: HasMemoryStream={Landscape.ImageOriginal.HasMemoryStream} before LoadAndCache")
-                    If Landscape.LoadAndCache(tContentType, True) Then
-                        If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainLandscape, ForceFileCleanup)
-                        Landscape.LocalFilePath = Landscape.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainLandscape)
-                    Else
-                        Images.Delete_Movie(DBElement, Enums.ModifierType.MainLandscape, ForceFileCleanup)
-                        Landscape = New Image
-                    End If
-
-                    'Movie Poster
-                    _logger.Trace($"[SaveAllImagesAsync] Phase 3 - Poster: HasMemoryStream={Poster.ImageOriginal.HasMemoryStream} before LoadAndCache")
-                    If Poster.LoadAndCache(tContentType, True) Then
-                        If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainPoster, ForceFileCleanup)
-                        Poster.LocalFilePath = Poster.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainPoster)
-                    Else
-                        Images.Delete_Movie(DBElement, Enums.ModifierType.MainPoster, ForceFileCleanup)
-                        Poster = New Image
-                    End If
+                        Case Enums.ContentType.TVEpisode
+                            SaveTVEpisodeImagesToDisk(DBElement, tContentType)
+                    End Select
                 End Using
                 _logger.Trace($"[SaveAllImagesAsync] Phase 3 complete")
             End Using
 
-            _logger.Trace($"[SaveAllImagesAsync] END for movie: {movieTitle}")
+            _logger.Trace($"[SaveAllImagesAsync] END for {contentTypeName}: {contentTitle}")
             Return DBElement
         End Function
+
+        ''' <summary>
+        ''' Gets a display title for logging based on content type
+        ''' </summary>
+        ''' <param name="DBElement">The database element to get the title from</param>
+        ''' <returns>A formatted title string appropriate for the content type</returns>
+        Private Function GetContentTitle(DBElement As Database.DBElement) As String
+            Select Case DBElement.ContentType
+                Case Enums.ContentType.Movie
+                    Return If(DBElement.Movie?.Title, "Unknown")
+                Case Enums.ContentType.TVShow
+                    Return If(DBElement.TVShow?.Title, "Unknown")
+                Case Enums.ContentType.TVSeason
+                    Return $"{If(DBElement.TVShow?.Title, "Unknown")} S{If(DBElement.TVSeason?.Season, 0):00}"
+                Case Enums.ContentType.TVEpisode
+                    Return $"{If(DBElement.TVShow?.Title, "Unknown")} S{If(DBElement.TVEpisode?.Season, 0):00}E{If(DBElement.TVEpisode?.Episode, 0):00}"
+                Case Else
+                    Return "Unknown"
+            End Select
+        End Function
+        ''' <summary>
+        ''' Collects Movie images that need downloading for parallel processing
+        ''' </summary>
+        ''' <param name="imagesToDownload">List to populate with images requiring download</param>
+        ''' <remarks>
+        ''' Checks Banner, ClearArt, ClearLogo, DiscArt, Fanart, Keyart, Landscape, Poster,
+        ''' plus Extrafanarts and Extrathumbs collections.
+        ''' </remarks>
+        Private Sub CollectMovieImages(imagesToDownload As List(Of Image))
+            If Banner.NeedsDownload() Then imagesToDownload.Add(Banner)
+            If ClearArt.NeedsDownload() Then imagesToDownload.Add(ClearArt)
+            If ClearLogo.NeedsDownload() Then imagesToDownload.Add(ClearLogo)
+            If DiscArt.NeedsDownload() Then imagesToDownload.Add(DiscArt)
+            If Fanart.NeedsDownload() Then imagesToDownload.Add(Fanart)
+            If Keyart.NeedsDownload() Then imagesToDownload.Add(Keyart)
+            If Landscape.NeedsDownload() Then imagesToDownload.Add(Landscape)
+            If Poster.NeedsDownload() Then imagesToDownload.Add(Poster)
+
+            For Each img In Extrafanarts
+                If img.NeedsDownload() Then imagesToDownload.Add(img)
+            Next
+            For Each img In Extrathumbs
+                If img.NeedsDownload() Then imagesToDownload.Add(img)
+            Next
+        End Sub
+
+        ''' <summary>
+        ''' Collects TV Show images that need downloading for parallel processing
+        ''' </summary>
+        ''' <param name="imagesToDownload">List to populate with images requiring download</param>
+        ''' <remarks>
+        ''' Checks Banner, CharacterArt, ClearArt, ClearLogo, Fanart, Keyart, Landscape, Poster,
+        ''' plus Extrafanarts collection.
+        ''' </remarks>
+        Private Sub CollectTVShowImages(imagesToDownload As List(Of Image))
+            If Banner.NeedsDownload() Then imagesToDownload.Add(Banner)
+            If CharacterArt.NeedsDownload() Then imagesToDownload.Add(CharacterArt)
+            If ClearArt.NeedsDownload() Then imagesToDownload.Add(ClearArt)
+            If ClearLogo.NeedsDownload() Then imagesToDownload.Add(ClearLogo)
+            If Fanart.NeedsDownload() Then imagesToDownload.Add(Fanart)
+            If Keyart.NeedsDownload() Then imagesToDownload.Add(Keyart)
+            If Landscape.NeedsDownload() Then imagesToDownload.Add(Landscape)
+            If Poster.NeedsDownload() Then imagesToDownload.Add(Poster)
+
+            For Each img In Extrafanarts
+                If img.NeedsDownload() Then imagesToDownload.Add(img)
+            Next
+        End Sub
+
+        ''' <summary>
+        ''' Collects TV Season images that need downloading for parallel processing
+        ''' </summary>
+        ''' <param name="imagesToDownload">List to populate with images requiring download</param>
+        ''' <remarks>Checks Banner, Fanart, Landscape, and Poster images.</remarks>
+        Private Sub CollectTVSeasonImages(imagesToDownload As List(Of Image))
+            If Banner.NeedsDownload() Then imagesToDownload.Add(Banner)
+            If Fanart.NeedsDownload() Then imagesToDownload.Add(Fanart)
+            If Landscape.NeedsDownload() Then imagesToDownload.Add(Landscape)
+            If Poster.NeedsDownload() Then imagesToDownload.Add(Poster)
+        End Sub
+
+        ''' <summary>
+        ''' Collects TV Episode images that need downloading for parallel processing
+        ''' </summary>
+        ''' <param name="imagesToDownload">List to populate with images requiring download</param>
+        ''' <remarks>Checks Fanart and Poster images only.</remarks>
+        Private Sub CollectTVEpisodeImages(imagesToDownload As List(Of Image))
+            If Fanart.NeedsDownload() Then imagesToDownload.Add(Fanart)
+            If Poster.NeedsDownload() Then imagesToDownload.Add(Poster)
+        End Sub
+
+        ''' <summary>
+        ''' Saves Movie images to disk after parallel download (Phase 3)
+        ''' </summary>
+        ''' <param name="DBElement">Database element containing movie information</param>
+        ''' <param name="tContentType">Content type for cache settings</param>
+        ''' <param name="ForceFileCleanup">Whether to force cleanup of existing files before saving</param>
+        ''' <remarks>
+        ''' Processes Banner, ClearArt, ClearLogo, DiscArt, Extrafanarts, Extrathumbs,
+        ''' Fanart, Keyart, Landscape, and Poster. Updates LocalFilePath properties.
+        ''' </remarks>
+        Private Sub SaveMovieImagesToDisk(DBElement As Database.DBElement, tContentType As Enums.ContentType, ForceFileCleanup As Boolean)
+            'Movie Banner
+            If Banner.LoadAndCache(tContentType, True) Then
+                If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainBanner, ForceFileCleanup)
+                Banner.LocalFilePath = Banner.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainBanner)
+            Else
+                Images.Delete_Movie(DBElement, Enums.ModifierType.MainBanner, ForceFileCleanup)
+                Banner = New Image
+            End If
+
+            'Movie ClearArt
+            If ClearArt.LoadAndCache(tContentType, True) Then
+                If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainClearArt, ForceFileCleanup)
+                ClearArt.LocalFilePath = ClearArt.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainClearArt)
+            Else
+                Images.Delete_Movie(DBElement, Enums.ModifierType.MainClearArt, ForceFileCleanup)
+                ClearArt = New Image
+            End If
+
+            'Movie ClearLogo
+            If ClearLogo.LoadAndCache(tContentType, True) Then
+                If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainClearLogo, ForceFileCleanup)
+                ClearLogo.LocalFilePath = ClearLogo.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainClearLogo)
+            Else
+                Images.Delete_Movie(DBElement, Enums.ModifierType.MainClearLogo, ForceFileCleanup)
+                ClearLogo = New Image
+            End If
+
+            'Movie DiscArt
+            If DiscArt.LoadAndCache(tContentType, True) Then
+                If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainDiscArt, ForceFileCleanup)
+                DiscArt.LocalFilePath = DiscArt.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainDiscArt)
+            Else
+                Images.Delete_Movie(DBElement, Enums.ModifierType.MainDiscArt, ForceFileCleanup)
+                DiscArt = New Image
+            End If
+
+            'Movie Extrafanarts
+            If Extrafanarts.Count > 0 Then
+                DBElement.ExtrafanartsPath = Images.SaveMovieExtrafanarts(DBElement)
+            Else
+                Images.Delete_Movie(DBElement, Enums.ModifierType.MainExtrafanarts, ForceFileCleanup)
+                Extrafanarts = New List(Of Image)
+                DBElement.ExtrafanartsPath = String.Empty
+            End If
+
+            'Movie Extrathumbs
+            If Extrathumbs.Count > 0 Then
+                DBElement.ExtrathumbsPath = Images.SaveMovieExtrathumbs(DBElement)
+            Else
+                Images.Delete_Movie(DBElement, Enums.ModifierType.MainExtrathumbs, ForceFileCleanup)
+                Extrathumbs = New List(Of Image)
+                DBElement.ExtrathumbsPath = String.Empty
+            End If
+
+            'Movie Fanart
+            If Fanart.LoadAndCache(tContentType, True) Then
+                If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainFanart, ForceFileCleanup)
+                Fanart.LocalFilePath = Fanart.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainFanart)
+            Else
+                Images.Delete_Movie(DBElement, Enums.ModifierType.MainFanart, ForceFileCleanup)
+                Fanart = New Image
+            End If
+
+            'Movie Keyart
+            If Keyart.LoadAndCache(tContentType, True) Then
+                If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainKeyart, ForceFileCleanup)
+                Keyart.LocalFilePath = Keyart.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainKeyart)
+            Else
+                Images.Delete_Movie(DBElement, Enums.ModifierType.MainKeyart, ForceFileCleanup)
+                Keyart = New Image
+            End If
+
+            'Movie Landscape
+            If Landscape.LoadAndCache(tContentType, True) Then
+                If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainLandscape, ForceFileCleanup)
+                Landscape.LocalFilePath = Landscape.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainLandscape)
+            Else
+                Images.Delete_Movie(DBElement, Enums.ModifierType.MainLandscape, ForceFileCleanup)
+                Landscape = New Image
+            End If
+
+            'Movie Poster
+            If Poster.LoadAndCache(tContentType, True) Then
+                If ForceFileCleanup Then Images.Delete_Movie(DBElement, Enums.ModifierType.MainPoster, ForceFileCleanup)
+                Poster.LocalFilePath = Poster.ImageOriginal.Save_Movie(DBElement, Enums.ModifierType.MainPoster)
+            Else
+                Images.Delete_Movie(DBElement, Enums.ModifierType.MainPoster, ForceFileCleanup)
+                Poster = New Image
+            End If
+        End Sub
+
+        ''' <summary>
+        ''' Saves TV Show images to disk after parallel download (Phase 3)
+        ''' </summary>
+        ''' <param name="DBElement">Database element containing TV show information</param>
+        ''' <param name="tContentType">Content type for cache settings</param>
+        ''' <remarks>
+        ''' Processes Banner, CharacterArt, ClearArt, ClearLogo, Extrafanarts,
+        ''' Fanart, Keyart, Landscape, and Poster. Updates LocalFilePath properties.
+        ''' </remarks>
+        Private Sub SaveTVShowImagesToDisk(DBElement As Database.DBElement, tContentType As Enums.ContentType)
+            'Show Banner
+            If Banner.LoadAndCache(tContentType, True) Then
+                Banner.LocalFilePath = Banner.ImageOriginal.Save_TVShow(DBElement, Enums.ModifierType.MainBanner)
+            Else
+                Images.Delete_TVShow(DBElement, Enums.ModifierType.MainBanner)
+                Banner = New Image
+            End If
+
+            'Show CharacterArt
+            If CharacterArt.LoadAndCache(tContentType, True) Then
+                CharacterArt.LocalFilePath = CharacterArt.ImageOriginal.Save_TVShow(DBElement, Enums.ModifierType.MainCharacterArt)
+            Else
+                Images.Delete_TVShow(DBElement, Enums.ModifierType.MainCharacterArt)
+                CharacterArt = New Image
+            End If
+
+            'Show ClearArt
+            If ClearArt.LoadAndCache(tContentType, True) Then
+                ClearArt.LocalFilePath = ClearArt.ImageOriginal.Save_TVShow(DBElement, Enums.ModifierType.MainClearArt)
+            Else
+                Images.Delete_TVShow(DBElement, Enums.ModifierType.MainClearArt)
+                ClearArt = New Image
+            End If
+
+            'Show ClearLogo
+            If ClearLogo.LoadAndCache(tContentType, True) Then
+                ClearLogo.LocalFilePath = ClearLogo.ImageOriginal.Save_TVShow(DBElement, Enums.ModifierType.MainClearLogo)
+            Else
+                Images.Delete_TVShow(DBElement, Enums.ModifierType.MainClearLogo)
+                ClearLogo = New Image
+            End If
+
+            'Show Extrafanarts
+            If Extrafanarts.Count > 0 Then
+                DBElement.ExtrafanartsPath = Images.SaveTVShowExtrafanarts(DBElement)
+            Else
+                Images.Delete_TVShow(DBElement, Enums.ModifierType.MainExtrafanarts)
+                Extrafanarts = New List(Of Image)
+                DBElement.ExtrafanartsPath = String.Empty
+            End If
+
+            'Show Fanart
+            If Fanart.LoadAndCache(tContentType, True) Then
+                Fanart.LocalFilePath = Fanart.ImageOriginal.Save_TVShow(DBElement, Enums.ModifierType.MainFanart)
+            Else
+                Images.Delete_TVShow(DBElement, Enums.ModifierType.MainFanart)
+                Fanart = New Image
+            End If
+
+            'Show Keyart
+            If Keyart.LoadAndCache(tContentType, True) Then
+                Keyart.LocalFilePath = Keyart.ImageOriginal.Save_TVShow(DBElement, Enums.ModifierType.MainKeyart)
+            Else
+                Images.Delete_TVShow(DBElement, Enums.ModifierType.MainKeyart)
+                Keyart = New Image
+            End If
+
+            'Show Landscape
+            If Landscape.LoadAndCache(tContentType, True) Then
+                Landscape.LocalFilePath = Landscape.ImageOriginal.Save_TVShow(DBElement, Enums.ModifierType.MainLandscape)
+            Else
+                Images.Delete_TVShow(DBElement, Enums.ModifierType.MainLandscape)
+                Landscape = New Image
+            End If
+
+            'Show Poster
+            If Poster.LoadAndCache(tContentType, True) Then
+                Poster.LocalFilePath = Poster.ImageOriginal.Save_TVShow(DBElement, Enums.ModifierType.MainPoster)
+            Else
+                Images.Delete_TVShow(DBElement, Enums.ModifierType.MainPoster)
+                Poster = New Image
+            End If
+        End Sub
+
+        ''' <summary>
+        ''' Saves TV Season images to disk after parallel download (Phase 3)
+        ''' </summary>
+        ''' <param name="DBElement">Database element containing TV season information</param>
+        ''' <param name="tContentType">Content type for cache settings</param>
+        ''' <remarks>
+        ''' Handles both regular seasons and "All Seasons" special case.
+        ''' Processes Banner, Fanart, Landscape, and Poster.
+        ''' </remarks>
+        Private Sub SaveTVSeasonImagesToDisk(DBElement As Database.DBElement, tContentType As Enums.ContentType)
+            Dim isAllSeasons As Boolean = DBElement.TVSeason.IsAllSeasons
+
+            'Season Banner
+            If Banner.LoadAndCache(tContentType, True) Then
+                If isAllSeasons Then
+                    Banner.LocalFilePath = Banner.ImageOriginal.Save_TVAllSeasons(DBElement, Enums.ModifierType.AllSeasonsBanner)
+                Else
+                    Banner.LocalFilePath = Banner.ImageOriginal.Save_TVSeason(DBElement, Enums.ModifierType.SeasonBanner)
+                End If
+            Else
+                If isAllSeasons Then
+                    Images.Delete_TVAllSeasons(DBElement, Enums.ModifierType.AllSeasonsBanner)
+                Else
+                    Images.Delete_TVSeason(DBElement, Enums.ModifierType.SeasonBanner)
+                End If
+                Banner = New Image
+            End If
+
+            'Season Fanart
+            If Fanart.LoadAndCache(tContentType, True) Then
+                If isAllSeasons Then
+                    Fanart.LocalFilePath = Fanart.ImageOriginal.Save_TVAllSeasons(DBElement, Enums.ModifierType.AllSeasonsFanart)
+                Else
+                    Fanart.LocalFilePath = Fanart.ImageOriginal.Save_TVSeason(DBElement, Enums.ModifierType.SeasonFanart)
+                End If
+            Else
+                If isAllSeasons Then
+                    Images.Delete_TVAllSeasons(DBElement, Enums.ModifierType.AllSeasonsFanart)
+                Else
+                    Images.Delete_TVSeason(DBElement, Enums.ModifierType.SeasonFanart)
+                End If
+                Fanart = New Image
+            End If
+
+            'Season Landscape
+            If Landscape.LoadAndCache(tContentType, True) Then
+                If isAllSeasons Then
+                    Landscape.LocalFilePath = Landscape.ImageOriginal.Save_TVAllSeasons(DBElement, Enums.ModifierType.AllSeasonsLandscape)
+                Else
+                    Landscape.LocalFilePath = Landscape.ImageOriginal.Save_TVSeason(DBElement, Enums.ModifierType.SeasonLandscape)
+                End If
+            Else
+                If isAllSeasons Then
+                    Images.Delete_TVAllSeasons(DBElement, Enums.ModifierType.AllSeasonsLandscape)
+                Else
+                    Images.Delete_TVSeason(DBElement, Enums.ModifierType.SeasonLandscape)
+                End If
+                Landscape = New Image
+            End If
+
+            'Season Poster
+            If Poster.LoadAndCache(tContentType, True) Then
+                If isAllSeasons Then
+                    Poster.LocalFilePath = Poster.ImageOriginal.Save_TVAllSeasons(DBElement, Enums.ModifierType.AllSeasonsPoster)
+                Else
+                    Poster.LocalFilePath = Poster.ImageOriginal.Save_TVSeason(DBElement, Enums.ModifierType.SeasonPoster)
+                End If
+            Else
+                If isAllSeasons Then
+                    Images.Delete_TVAllSeasons(DBElement, Enums.ModifierType.AllSeasonsPoster)
+                Else
+                    Images.Delete_TVSeason(DBElement, Enums.ModifierType.SeasonPoster)
+                End If
+                Poster = New Image
+            End If
+        End Sub
+
+        ''' <summary>
+        ''' Saves TV Episode images to disk after parallel download (Phase 3)
+        ''' </summary>
+        ''' <param name="DBElement">Database element containing TV episode information</param>
+        ''' <param name="tContentType">Content type for cache settings</param>
+        ''' <remarks>Processes Fanart and Poster images only.</remarks>
+        Private Sub SaveTVEpisodeImagesToDisk(DBElement As Database.DBElement, tContentType As Enums.ContentType)
+            'Episode Fanart
+            If Fanart.LoadAndCache(tContentType, True) Then
+                Fanart.LocalFilePath = Fanart.ImageOriginal.Save_TVEpisode(DBElement, Enums.ModifierType.EpisodeFanart)
+            Else
+                Images.Delete_TVEpisode(DBElement, Enums.ModifierType.EpisodeFanart)
+                Fanart = New Image
+            End If
+
+            'Episode Poster
+            If Poster.LoadAndCache(tContentType, True) Then
+                Poster.LocalFilePath = Poster.ImageOriginal.Save_TVEpisode(DBElement, Enums.ModifierType.EpisodePoster)
+            Else
+                Images.Delete_TVEpisode(DBElement, Enums.ModifierType.EpisodePoster)
+                Poster = New Image
+            End If
+        End Sub
 #End Region 'Save Methods
 
 #Region "Sort Methods"

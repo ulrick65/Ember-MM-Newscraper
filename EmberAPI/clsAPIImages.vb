@@ -414,9 +414,19 @@ Public Class Images
     ''' Stores the Image to the supplied <paramref name="sPath"/>
     ''' </summary>
     ''' <param name="sPath">Location to store the image</param>
-    ''' <remarks></remarks>
+    ''' <remarks>
+    ''' For cache files, if the file already exists or is locked by another thread,
+    ''' this is treated as acceptable since the image data remains in memory and
+    ''' can still be saved to the final destination.
+    ''' </remarks>
     Public Sub SaveToFile(ByVal sPath As String)
         If _ms.Length > 0 Then
+            ' Skip if file already exists (another thread may have written it during parallel download)
+            If File.Exists(sPath) Then
+                logger.Trace($"[SaveToFile] File already exists, skipping: {sPath}")
+                Return
+            End If
+
             Dim retSave() As Byte
             Try
                 retSave = _ms.ToArray
@@ -427,8 +437,15 @@ Public Class Images
                     Using fs As New FileStream(sPath, FileMode.Create, FileAccess.Write)
                         fs.Write(retSave, 0, retSave.Length)
                         fs.Flush()
-                        fs.Close()
                     End Using
+                End If
+            Catch ex As IOException
+                ' File may have been created/locked by another thread during parallel download
+                ' This is acceptable for cache files - the image data is still in memory
+                If File.Exists(sPath) Then
+                    logger.Trace($"[SaveToFile] File created by another thread (race condition), skipping: {sPath}")
+                Else
+                    logger.Warn(ex, $"[SaveToFile] IOException writing file: {sPath}")
                 End If
             Catch ex As Exception
                 logger.Error(ex, New StackFrame().GetMethod().Name)
@@ -437,6 +454,7 @@ Public Class Images
             Throw New ArgumentOutOfRangeException("Looks like MemoryStream is empty")
         End If
     End Sub
+
     ''' <summary>
     ''' Save the image as a Movie image
     ''' </summary>

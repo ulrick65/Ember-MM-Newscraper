@@ -70,38 +70,39 @@ Public Class StringUtils
             Return False
         End If
     End Function
+
     ''' <summary>
     ''' Cleans up a <c>String</c> name by applying the given list of regex filters.
+    ''' Invalid regex patterns are skipped and logged as warnings.
     ''' </summary>
     ''' <param name="name">The <c>String</c> to modify</param>
     ''' <param name="filters">The <c>List</c> of regex expressions to apply. Note that matches are replaced by <c>String.Empty</c>, with the exception to expressions containing [->] which replace values on the left by values on the right (such as ".[->]-" which would replace periods with dashes).</param>
     ''' <returns><c>String</c> name that has had the given regex entries applied. 
     ''' <c>String.Empty</c> is returned if the name is empty or Nothing.
     ''' The value of <paramref name="name"/> is returned if no filter is passed</returns>
-    ''' <remarks></remarks>
     Public Shared Function ApplyFilters(ByVal name As String, ByRef filters As Settings.ExtendedListOfString) As String
         If String.IsNullOrEmpty(name) Then Return String.Empty
         If filters Is Nothing OrElse filters.Count = 0 Then Return name
         Dim newName As String = name
-
         Dim strSplit() As String
-        Try
-            'run through each of the custom filters
-            For Each Str As String In filters
+        For Each Str As String In filters
+            Try
                 If Str.IndexOf("[->]") > 0 Then
                     strSplit = Str.Split(New String() {"[->]"}, StringSplitOptions.None)
                     newName = Regex.Replace(newName, strSplit.First, strSplit.Last)
                 Else
                     newName = Regex.Replace(newName, Str, String.Empty)
                 End If
-                'everything was already filtered out, return an empty string
-                If String.IsNullOrEmpty(newName) Then Return String.Empty
-            Next
-            Return newName.Trim
-        Catch ex As Exception
-            logger.Error(ex, New StackFrame().GetMethod().Name & Convert.ToChar(System.Windows.Forms.Keys.Tab) & "Name: " & name & " generated an error message")
-        End Try
-        Return name.Trim
+            Catch ex As ArgumentException
+                logger.Warn("Invalid regex pattern skipped in ApplyFilters: {0}", Str)
+                Continue For
+            Catch ex As RegexMatchTimeoutException
+                logger.Warn("Regex timeout skipped in ApplyFilters: {0}", Str)
+                Continue For
+            End Try
+            If String.IsNullOrEmpty(newName) Then Return String.Empty
+        Next
+        Return newName.Trim
     End Function
 
     Public Shared Function BuildGenericTitle_TVEpisode(ByVal tDBElement As Database.DBElement) As String
@@ -117,9 +118,10 @@ Public Class StringUtils
     ''' </summary>
     ''' <param name="directoryName"><c>String</c> directory name to clean</param>
     ''' <returns>Cleaned <c>String</c></returns>
-    ''' <remarks>Removes all invalid path characters)
-    ''' </remarks>
+    ''' <remarks>Removes all invalid path characters</remarks>
     Private Shared Function CleanDirectoryName(ByVal directoryName As String) As String
+        If String.IsNullOrEmpty(directoryName) Then Return String.Empty
+
         'Do specific replaces first
         directoryName = directoryName.Replace(":", " -")
         directoryName = directoryName.Replace("/", "-")
@@ -138,27 +140,24 @@ Public Class StringUtils
         End While
 
         'removes all leading dots in foldername (otherwise the folder will be hidden for OS)
-        While directoryName.First = "."
+        While directoryName.Length > 0 AndAlso directoryName.First = "."c
             directoryName = directoryName.Remove(0, 1).Trim
         End While
 
         ' removes all trailing dots in foldername (dots are not allowed)
-        While directoryName.Last = "."
+        While directoryName.Length > 0 AndAlso directoryName.Last = "."c
             directoryName = directoryName.Remove(directoryName.Length - 1).Trim
         End While
 
         'remove all leading and trailing spaces
-        directoryName.Trim()
-
-        Return directoryName
+        Return directoryName.Trim()
     End Function
     ''' <summary>
     ''' Removes invalid token from the given filename string
     ''' </summary>
     ''' <param name="fileName"><c>String</c> filename to clean</param>
     ''' <returns>Cleaned <c>String</c></returns>
-    ''' <remarks>Removes all invalid filename characters)
-    ''' </remarks>
+    ''' <remarks>Removes all invalid filename characters</remarks>
     Public Shared Function CleanFileName(ByVal fileName As String) As String
         If String.IsNullOrEmpty(fileName) Then Return String.Empty
 
@@ -174,21 +173,20 @@ Public Class StringUtils
             fileName = fileName.Replace(someChar, String.Empty)
         Next
 
-        ' removes all all leading dots in filename (otherwise the file will be hidden for OS)
-        While fileName.First = "."
+        ' removes all leading dots in filename (otherwise the file will be hidden for OS)
+        While fileName.Length > 0 AndAlso fileName.First = "."c
             fileName = fileName.Remove(0, 1).Trim
         End While
 
         ' removes all dots at the end of the filename (for accord with foldername)
-        While fileName.Last = "."
+        While fileName.Length > 0 AndAlso fileName.Last = "."c
             fileName = fileName.Remove(fileName.Length - 1).Trim
         End While
 
-        ' remove all leading And trailing spaces
-        fileName.Trim()
-
-        Return fileName
+        ' remove all leading and trailing spaces
+        Return fileName.Trim()
     End Function
+
     ''' <summary>
     ''' Removes invalid token from the given path string
     ''' </summary>
@@ -281,7 +279,15 @@ Public Class StringUtils
         Return sReturn.Trim
     End Function
 
+    ''' <summary>
+    ''' Converts a string to a valid filter string for use in database queries.
+    ''' </summary>
+    ''' <param name="strInput">The <c>String</c> to convert</param>
+    ''' <returns>A <c>String</c> with special characters escaped for use in LIKE clauses.
+    ''' Returns <c>String.Empty</c> if input is null or empty.</returns>
+    ''' <remarks>Escapes brackets, single quotes, and percent signs for SQL LIKE patterns.</remarks>
     Public Shared Function ConvertToValidFilterString(ByVal strInput As String) As String
+        If String.IsNullOrEmpty(strInput) Then Return String.Empty
         Return strInput.Replace("["c, "[[]").Replace("'"c, "''").Replace("%"c, "[%]")
     End Function
     ''' <summary>
@@ -372,31 +378,29 @@ Public Class StringUtils
         encText = Convert.ToBase64String(eByte)
         Return encText
     End Function
+
     ''' <summary>
-    ''' Convert String to SHA1
+    ''' Convert String to SHA1 hash
     ''' </summary>
     ''' <param name="inputstring">Input string to encrypt to SHA1</param>
+    ''' <returns>SHA1 hash as a lowercase hexadecimal <c>String</c>.
+    ''' Returns <c>String.Empty</c> if input is null or empty.</returns>
     ''' <remarks>
     ''' 2014/10/12 Cocotus - First implementation
     ''' Used for POST-Requests to trakt.tv (encrypt password)
     ''' </remarks>
-    ''' 
     Public Shared Function EncryptToSHA1(ByVal inputstring As String) As String
-        Dim strToHash As String = inputstring
-        Dim Result As String = String.Empty
-        Dim OSha1 As New Security.Cryptography.SHA1CryptoServiceProvider
+        If String.IsNullOrEmpty(inputstring) Then Return String.Empty
 
-        'Step 1
-        Dim bytesToHash() As Byte = Encoding.ASCII.GetBytes(strToHash)
-
-        'Step 2
-        bytesToHash = OSha1.ComputeHash(bytesToHash)
-
-        'Step 3
-        For Each item As Byte In bytesToHash
-            Result += item.ToString("x2")
-        Next
-        Return Result
+        Dim result As New StringBuilder()
+        Using sha1 As New Security.Cryptography.SHA1CryptoServiceProvider()
+            Dim bytesToHash() As Byte = Encoding.ASCII.GetBytes(inputstring)
+            Dim hashBytes() As Byte = sha1.ComputeHash(bytesToHash)
+            For Each item As Byte In hashBytes
+                result.Append(item.ToString("x2"))
+            Next
+        End Using
+        Return result.ToString()
     End Function
 
     Public Shared Function FilterSeasonTitle(ByVal SeasonTitle As String) As String
@@ -712,19 +716,26 @@ Public Class StringUtils
         'If we get here, something went wrong.
         Return String.Empty
     End Function
+
     ''' <summary>
     ''' Determine whether the language of the supplied string is english. 
     ''' </summary>
     ''' <param name="sToCheck"><c>String</c> to check</param>
-    ''' <returns><c>True</c> if the string is english, <c>False</c> otherwise (foreign language)</returns>
-    ''' <remarks>This is not a thoroughly exhaustive check, but it does the job for now and worked in my tests
+    ''' <returns><c>True</c> if the string appears to be English, <c>False</c> otherwise (foreign language or null/empty)</returns>
+    ''' <remarks>This is not a thoroughly exhaustive check, but it does the job for now and worked in my tests.
+    ''' Checks for common English words like "the", "this", "that", "by", "of", and "and".
     ''' </remarks>
     Public Shared Function isEnglishText(ByVal sToCheck As String) As Boolean
-        If sToCheck.ToLower.Contains("the ") OrElse sToCheck.ToLower.Contains("this ") OrElse sToCheck.ToLower.Contains("that ") OrElse sToCheck.ToLower.Contains(" by ") OrElse sToCheck.ToLower.Contains(" of ") OrElse sToCheck.ToLower.Contains(" and ") Then
-            Return True
-        End If
-        Return False
+        If String.IsNullOrEmpty(sToCheck) Then Return False
+        Dim lowerText As String = sToCheck.ToLower()
+        Return lowerText.Contains("the ") OrElse
+               lowerText.Contains("this ") OrElse
+               lowerText.Contains("that ") OrElse
+               lowerText.Contains(" by ") OrElse
+               lowerText.Contains(" of ") OrElse
+               lowerText.Contains(" and ")
     End Function
+
     ''' <summary>
     ''' Determine whether the format of the supplied URL is valid. No actual Internet query is made to see if
     ''' the URL is actually responsive.
@@ -779,25 +790,29 @@ Public Class StringUtils
             Return True
         End If
     End Function
+
     ''' <summary>
     ''' Cleans the given <paramref name="strText"/> such that it does no longer contain any bracket-sections and unwanted spaces.
     ''' </summary>
     ''' <param name="strText"><c>String</c> to remove brackets from</param>
-    ''' <returns><c>Sting</c> that contains no brackets and unwanted whitespaces</returns>
-    ''' <remarks>This one is used for cleaning scraped plots/outline, often actor names are provided in brackets which some might not like
+    ''' <returns><c>String</c> that contains no brackets and unwanted whitespaces.
+    ''' Returns <c>String.Empty</c> if input is null or empty.</returns>
+    ''' <remarks>This one is used for cleaning scraped plots/outline, often actor names are provided in brackets which some might not like.
     ''' 
-    ''' 2013/12/21 Cocotus - First implementation, it seem's there no method like this in Ember?
+    ''' 2013/12/21 Cocotus - First implementation
     ''' </remarks>
     Public Shared Function RemoveBrackets(ByVal strText As String) As String
+        If String.IsNullOrEmpty(strText) Then Return String.Empty
         'First 2 Regex to get rid of brackets, including string between brackets
-        strText = Regex.Replace(strText, "\[.+?\]", "")
-        strText = Regex.Replace(strText, "\(.+?\)", "")
+        strText = Regex.Replace(strText, "\[.+?\]", String.Empty)
+        strText = Regex.Replace(strText, "\(.+?\)", String.Empty)
         'After removing brackets unwanted spaces may be left - get rid of them
         strText = strText.Replace("  ", " ")
         strText = strText.Replace(" , ", ", ")
         strText = strText.Replace(" .", ".")
         Return strText.Trim()
     End Function
+
     ''' <summary>
     ''' Remove any non-word characters, and repace all whitespace with a simple single space
     ''' </summary>
@@ -988,14 +1003,17 @@ Public Class StringUtils
         'If you get here, something went wrong
         Return String.Empty
     End Function
+
     ''' <summary>
     ''' Transform the codified US movie certification value to MPAA certification
     ''' </summary>
     ''' <param name="strCert"><c>String</c> USA certification</param>
-    ''' <returns><c>String</c>MPAA certification, or String.Empty if <paramref name="strCert"/> was not recognized</returns>
+    ''' <returns><c>String</c> MPAA certification, or the original value if not recognized.
+    ''' Returns <c>String.Empty</c> if input is null or empty.</returns>
     ''' <remarks>Converts entries such as "usa:g" into "Rated G"</remarks>
     Public Shared Function USACertToMPAA(ByVal strCert As String) As String
-        Select Case strCert.ToLower
+        If String.IsNullOrEmpty(strCert) Then Return String.Empty
+        Select Case strCert.ToLower()
             Case "usa:g"
                 Return "Rated G"
             Case "usa:pg"

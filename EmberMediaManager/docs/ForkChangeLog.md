@@ -15,9 +15,9 @@ This document tracks all changes made to this fork of Ember Media Manager, start
 
 | Property | Value |
 |----------|-------|
-| **Document Version** | 1.0.5 |
+| **Document Version** | 1.0.6 |
 | **Created** | December 25, 2025 |
-| **Last Updated** | December 29, 2025 |
+| **Last Updated** | December 30, 2025 |
 | **Author** | Eric H. Anderson |
 
 ---
@@ -43,7 +43,7 @@ This document tracks all changes made to this fork of Ember Media Manager, start
 | 1.11.1.7 | Dec 21, 2025 | Upstream patch pulled (IMDB writer comparison fix) |
 | 1.12.0.0 | Dec 22, 2025 | Framework upgrade to .NET 4.8, package updates, all addons versioned |
 | 1.12.1.0 | Dec 23-28, 2025 | Bug fixes, cleanup, genre mapping fix, documentation, code organization, performance improvements, additional package updates |
-| 1.12.1.0 | Dec 23-29, 2025 | Bug fixes, cleanup, genre mapping fix, documentation, code organization, **Phase 1 performance complete (61% improvement)**, additional package updates |
+| 1.12.1.0 | Dec 29-30, 2025 | Bug fixes, cleanup, documentation, code organization, **Phase 1 performance complete (61% improvement)**, Phase 2 planning |
 
 ---
 
@@ -210,6 +210,8 @@ The following features are deprecated and slated for removal in a future version
 | Performance | Database indices: 63% faster actor lookups | `EmberAPI\clsAPIDatabase.vb`, `EmberAPI\DB\MyVideosDBSQL.txt` |
 | Performance | TMDB API calls: 47% faster with connection pooling | `EmberAPI\clsAPIHttpClientFactory.vb` |
 | Documentation | Updated PerformanceImprovements-Phase1.md to v3.2 - Phase 1 complete with final metrics | `EmberMediaManager\docs\PerformanceImprovements-Phase1.md` |
+| Documentation | Created Phase 2 Item 2 Parallel Movie Scraping design document | `EmberMediaManager\docs\improvements-docs\PerformanceImprovements-Phase2-2.md` |
+| Documentation | Updated Phase 2 plan with design document reference | `EmberMediaManager\docs\improvements-docs\PerformanceImprovements-Phase2.md` |
 
 **Version Updates:**
 
@@ -404,6 +406,7 @@ The following documents provide detailed information about specific initiatives:
 | [PerformanceImprovements-Phase1.md](improvements-docs/PerformanceImprovements-Phase1.md) | Phase 1 performance implementation plan and progress |
 | [ScrapingProcessMovies.md](process-docs/ScrapingProcessMovies.md) | Movie scraping process architecture documentation |
 | [ScrapingProcessTvShows.md](process-docs/ScrapingProcessTvShows.md) | TV Show scraping process architecture documentation |
+| [PerformanceImprovements-Phase2-2.md](improvements-docs/PerformanceImprovements-Phase2-2.md) | Parallel Movie Scraping detailed design document |
 
 ---
 
