@@ -212,6 +212,8 @@ The following features are deprecated and slated for removal in a future version
 | Documentation | Updated PerformanceImprovements-Phase1.md to v3.2 - Phase 1 complete with final metrics | `EmberMediaManager\docs\PerformanceImprovements-Phase1.md` |
 | Documentation | Created Phase 2 Item 2 Parallel Movie Scraping design document | `EmberMediaManager\docs\improvements-docs\PerformanceImprovements-Phase2-2.md` |
 | Documentation | Updated Phase 2 plan with design document reference | `EmberMediaManager\docs\improvements-docs\PerformanceImprovements-Phase2.md` |
+| Enhancement | Added styled tooltips for genre thumbnails with dark gradient background and custom owner-draw rendering | `EmberMediaManager\frmMain.vb` |
+| Enhancement | Added tooltips to both genre Panel and PictureBox controls for consistent hover behavior | `EmberMediaManager\frmMain.vb` |
 
 **Version Updates:**
 

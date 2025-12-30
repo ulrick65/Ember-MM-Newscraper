@@ -233,6 +233,63 @@ Each genre can have a custom image.
 Example:
 - Genre `science-fiction` matches `science-fiction.jpg` and stores `science-fiction.jpg`
 
+## Genre Display in Main UI
+
+### Genre Thumbnails (frmMain.vb)
+
+When a movie or TV show is selected, genre images are displayed as thumbnails in the info panel via the `createGenreThumbs` method.
+
+#### How It Works
+
+1. **Panel Creation**: For each genre, a `Panel` container is created with a nested `PictureBox`
+2. **Image Loading**: Genre images are retrieved via `APIXML.GetGenreImage(genreName)`
+3. **Tooltips**: The `ToolTips` component displays the genre name on hover
+
+#### Implementation Details
+
+The `createGenreThumbs` method in `frmMain.vb`:
+- Accepts a `List(Of String)` of genre names
+- Creates dynamically sized panels (68x100) with picture boxes (62x94)
+- Positions thumbnails horizontally from right to left in the info panel
+- Applies the current theme's `GenrePanelColor` for background styling
+
+#### Tooltip Configuration
+
+Because the `PictureBox` is nested inside a `Panel`, tooltips must be set on **both** controls to ensure consistent hover behavior:
+
+    ToolTips.SetToolTip(pbGenre(i), genres(i))
+    ToolTips.SetToolTip(pnlGenre(i), genres(i))
+
+This ensures the genre name tooltip appears whether the user hovers over the image or the panel border area.
+
+#### Styled Tooltip Rendering
+
+The `ToolTips` component uses custom owner-draw rendering for a modern dark-themed appearance:
+
+**Setup** (in `Setup` method):
+
+    With ToolTips
+        .OwnerDraw = True
+        .InitialDelay = 400
+        .ReshowDelay = 100
+    End With
+
+**Custom Draw Handler** (`ToolTips_Draw`):
+- Dark gradient background (RGB 70,70,74 → 45,45,48)
+- Gray border (RGB 100,100,100)
+- White centered text using Segoe UI font
+
+This provides a consistent dark UI appearance that matches the application theme, rather than the default Windows tooltip style.
+
+**Note:** The `IsBalloon` property is not used because it overrides custom `OwnerDraw` rendering and reverts to system colors.
+
+#### Related Components
+
+- **ToolTips**: Form-level `ToolTip` component declared in `frmMain.Designer.vb`
+- **pbGenre()**: Array of `PictureBox` controls for genre images
+- **pnlGenre()**: Array of `Panel` controls containing the picture boxes
+- **MoveGenres()**: Repositions genre thumbnails when the info panel is resized
+
 ## Data Persistence (XML Structure)
 
 All mappings are stored in `Core.Mapping.Genres.xml` in the settings directory.

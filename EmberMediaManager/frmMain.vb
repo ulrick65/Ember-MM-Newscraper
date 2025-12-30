@@ -5254,6 +5254,8 @@ Public Class frmMain
                 pnlGenre(i).BorderStyle = BorderStyle.FixedSingle
                 pbGenre(i).SizeMode = PictureBoxSizeMode.StretchImage
                 pbGenre(i).Image = APIXML.GetGenreImage(genres(i).Trim)
+                ToolTips.SetToolTip(pbGenre(i), genres(i))
+                ToolTips.SetToolTip(pnlGenre(i), genres(i))
                 pnlGenre(i).Left = ((pnlInfoPanel.Right) - (i * 73)) - 73
                 pbGenre(i).Left = 2
                 pnlGenre(i).Top = pnlInfoPanel.Top - 105
@@ -17478,6 +17480,15 @@ Public Class frmMain
     Private Sub Setup(ByVal doTheme As Boolean)
         MinimumSize = New Size(800, 600)
 
+        ' TODO: Set tooltip for genre display here [ulrick65, 12/30/2025]
+        ' Enable custom tooltip drawing with balloon style
+        With ToolTips
+            .OwnerDraw = True
+            .IsBalloon = False
+            .InitialDelay = 400
+            .ReshowDelay = 100
+        End With
+
         'Actor Thumbs Only
         Dim strActorThumbsOnly = Master.eLang.GetString(973, "Actor Thumbs Only")
         mnuScrapeModifierActorthumbs.Text = strActorThumbsOnly
@@ -18197,6 +18208,40 @@ Public Class frmMain
             Theme_Apply(currMainTabTag.ContentType)
         End If
     End Sub
+
+    ''' <summary>
+    ''' Custom draw handler for ToolTips to provide a styled appearance
+    ''' </summary>
+    Private Sub ToolTips_Draw(sender As Object, e As DrawToolTipEventArgs) Handles ToolTips.Draw
+        ' TODO: Tooltip setup here as well [ulrick65, 12/30/2025]
+        ' Draw gradient background
+        Using gradientBrush As New Drawing2D.LinearGradientBrush(
+            e.Bounds,
+            Color.FromArgb(70, 70, 74),
+            Color.FromArgb(45, 45, 48),
+            Drawing2D.LinearGradientMode.Vertical)
+            e.Graphics.FillRectangle(gradientBrush, e.Bounds)
+        End Using
+
+        ' Draw border
+        Using borderPen As New Pen(Color.FromArgb(100, 100, 100))
+            e.Graphics.DrawRectangle(borderPen, New Rectangle(
+                e.Bounds.X,
+                e.Bounds.Y,
+                e.Bounds.Width - 1,
+                e.Bounds.Height - 1))
+        End Using
+
+        ' Draw text centered
+        TextRenderer.DrawText(
+            e.Graphics,
+            e.ToolTipText,
+            New Font("Segoe UI", 9, FontStyle.Regular),
+            e.Bounds,
+            Color.White,
+            TextFormatFlags.HorizontalCenter Or TextFormatFlags.VerticalCenter)
+    End Sub
+
     ''' <summary>
     ''' Updates the label indicating there is no information for the current item.
     ''' </summary>
