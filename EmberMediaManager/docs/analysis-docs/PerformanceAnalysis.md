@@ -1,8 +1,24 @@
 ﻿# Ember Media Manager - Performance Analysis and Optimization Recommendations
 
 Created: December 27, 2025
-Updated: December 29, 2025
+Updated: December 30, 2025
 Author: Eric H. Anderson
+
+---
+
+## Project Performance Phases Overview
+
+| Phase     | Dates     | Focus Areas                                 | Status      | Key Results               | Details                                                                 |
+|-----------|-----------|---------------------------------------------|-------------|---------------------------|-------------------------------------------------------------------------|
+| Phase 1   | Dec 2025  | Async image downloads, DB indices, WAL      | ✅ Complete | 61% faster image ops      | See [PerformanceImprovements-Phase1.md](../improvements-docs/PerformanceImprovements-Phase1.md) |
+| Phase 2   | Dec 2025  | Parallel TV image scraping, styled tooltips | ✅ Complete | 44% faster TV image ops   | See [PerformanceImprovements-Phase2.md](../improvements-docs/PerformanceImprovements-Phase2.md) |
+| Phase 2-2 | Jan 2026  | Parallel movie scraping, doc updates        | ✅ Complete | Major bulk scrape speedup | See [PerformanceImprovements-Phase2-2.md](../improvements-docs/PerformanceImprovements-Phase2-2.md) |
+| Phase 3   | Jan 2026  | Progress bar, TV show parallel, tuning      | 📋 Planned  | -                         | See [PerformanceImprovements-Phase3.md](../improvements-docs/PerformanceImprovements-Phase3.md)   |
+| Phase 4   | TBD       | (Future)                                   | 📋 Planned  | -                         | (TBD)                                                                  |
+
+This table summarizes the major performance improvement phases for Ember Media Manager.  
+Each phase targeted specific bottlenecks or architectural improvements, with results validated by metrics and linked to detailed documentation.  
+For technical analysis, recommendations, and metrics, see the sections below.
 
 ---
 

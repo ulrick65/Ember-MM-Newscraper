@@ -15,7 +15,7 @@ This document tracks all changes made to this fork of Ember Media Manager, start
 
 | Property | Value |
 |----------|-------|
-| **Document Version** | 1.0.6 |
+| **Document Version** | 1.0.7 |
 | **Created** | December 25, 2025 |
 | **Last Updated** | December 30, 2025 |
 | **Author** | Eric H. Anderson |
@@ -44,6 +44,7 @@ This document tracks all changes made to this fork of Ember Media Manager, start
 | 1.12.0.0 | Dec 22, 2025 | Framework upgrade to .NET 4.8, package updates, all addons versioned |
 | 1.12.1.0 | Dec 23-28, 2025 | Bug fixes, cleanup, genre mapping fix, documentation, code organization, performance improvements, additional package updates |
 | 1.12.1.0 | Dec 29-30, 2025 | Bug fixes, cleanup, documentation, code organization, **Phase 1 performance complete (61% improvement)**, Phase 2 planning |
+| 1.12.1.0 | Dec 29-30, 2025 | Bug fixes, cleanup, documentation, **Phase 2-2 parallel scraping complete (60% improvement)** |
 
 ---
 
@@ -214,6 +215,14 @@ The following features are deprecated and slated for removal in a future version
 | Documentation | Updated Phase 2 plan with design document reference | `EmberMediaManager\docs\improvements-docs\PerformanceImprovements-Phase2.md` |
 | Enhancement | Added styled tooltips for genre thumbnails with dark gradient background and custom owner-draw rendering | `EmberMediaManager\frmMain.vb` |
 | Enhancement | Added tooltips to both genre Panel and PictureBox controls for consistent hover behavior | `EmberMediaManager\frmMain.vb` |
+| Feature | **Phase 2-2: Parallel Movie Scraping** - Implemented two-phase parallel architecture for bulk movie scraping | `EmberMediaManager\frmMain.vb` |
+| Feature | Added `ScrapedMovieResult` class for thread-safe result collection | `EmberMediaManager\frmMain.vb` |
+| Feature | Added `ProcessMovieScrape_Parallel` method for thread-safe movie scraping without UI interaction | `EmberMediaManager\frmMain.vb` |
+| Enhancement | Modified `bwMovieScraper_DoWork` with parallel scrape + sequential save pattern | `EmberMediaManager\frmMain.vb` |
+| Performance | **Phase 2-2 complete: 60% improvement** in bulk movie scraping (200s → 80s for 49 movies) | `EmberMediaManager\frmMain.vb` |
+| Performance | Parallel scraping with `MaxDegreeOfParallelism = Min(ProcessorCount, 4)` | `EmberMediaManager\frmMain.vb` |
+| Performance | Throughput increased from 15 movies/min to 37 movies/min (+147%) | `EmberMediaManager\frmMain.vb` |
+| Documentation | Created Phase 2-2 Parallel Movie Scraping design document v1.3 | `EmberMediaManager\docs\improvements-docs\PerformanceImprovements-Phase2-2.md` |
 
 **Version Updates:**
 
@@ -408,7 +417,7 @@ The following documents provide detailed information about specific initiatives:
 | [PerformanceImprovements-Phase1.md](improvements-docs/PerformanceImprovements-Phase1.md) | Phase 1 performance implementation plan and progress |
 | [ScrapingProcessMovies.md](process-docs/ScrapingProcessMovies.md) | Movie scraping process architecture documentation |
 | [ScrapingProcessTvShows.md](process-docs/ScrapingProcessTvShows.md) | TV Show scraping process architecture documentation |
-| [PerformanceImprovements-Phase2-2.md](improvements-docs/PerformanceImprovements-Phase2-2.md) | Parallel Movie Scraping detailed design document |
+| [PerformanceImprovements-Phase2-2.md](improvements-docs/PerformanceImprovements-Phase2-2.md) | Parallel Movie Scraping detailed design document (v1.3 - Complete) |
 
 ---
 
