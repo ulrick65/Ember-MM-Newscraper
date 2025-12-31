@@ -2,11 +2,11 @@
 
 | Document Info | |
 |---------------|---|
-| **Version** | 1.3 |
+| **Version** | 1.4 |
 | **Created** | December 29, 2025 |
 | **Updated** | December 30, 2025 |
 | **Author** | Eric H. Anderson |
-| **Status** | In Progress |
+| **Status** | Complete |
 | **Reference** | [PerformanceAnalysis.md](../analysis-docs/PerformanceAnalysis.md), [ScrapingProcessTvShows.md](../process-docs/ScrapingProcessTvShows.md), [ScrapingProcessMovies.md](../process-docs/ScrapingProcessMovies.md), [PerformanceImprovements-Phase1.md](PerformanceImprovements-Phase1.md) |
 
 ---
@@ -21,6 +21,7 @@
 - [Item 2: Parallel Movie Scraping](#item-2-parallel-movie-scraping)
 - [Item 3: Batch Actor Inserts](#item-3-batch-actor-inserts)
 - [Item 4: Response Caching](#item-4-response-caching)
+- [Phase 2 Summary](#phase-2-summary)
 - [Phase 2 Metrics](#phase-2-metrics)
 - [Testing Plan](#testing-plan)
 
@@ -34,6 +35,7 @@
 | 1.1 | 2025-12-29 | Eric H. Anderson | Item 1 (TV Show Async Support) completed |
 | 1.2 | 2025-12-30 | Eric H. Anderson | Added Item 1 performance results and metrics comparison |
 | 1.3 | 2025-12-30 | Eric H. Anderson | Added Item 2 design document reference |
+| 1.4 | 2025-12-30 | Eric H. Anderson | Phase 2 complete: Item 1 done, Item 2 moved to Phase 2-2, Items 3 & 4 deferred |
 
 ---
 
@@ -44,13 +46,14 @@ Phase 2 builds on the infrastructure created in Phase 1 to extend performance im
 **Phase 1 Achieved:** 61% improvement in bulk movie scraping image operations
 
 **Phase 2 Goals:**
-- Extend async image downloads to TV Shows, Seasons, and Episodes
-- Evaluate parallel movie scraping for additional gains
-- Optimize database batch operations
-- Implement response caching for repeat scrapes
+- ✅ Extend async image downloads to TV Shows, Seasons, and Episodes
+- ➡️ Parallel movie scraping moved to Phase 2-2 (separate branch)
+- ⏸️ Batch actor inserts deferred (minimal impact after Phase 1 optimizations)
+- ⏸️ Response caching deferred (only benefits repeat scrapes)
 
 **Total Estimated Effort:** 3-5 days
-**Expected Performance Gain:** 40-60% improvement in TV scraping; 20-40% in overall bulk scraping
+**Actual Effort:** ~1 day (Item 1 only)
+**Achieved Performance Gain:** 44% improvement in TV image operations
 
 ---
 
@@ -85,11 +88,11 @@ Phase 2 builds on the infrastructure created in Phase 1 to extend performance im
 | # | Item | Status | Completed |
 |---|------|--------|-----------|
 | 1 | TV Show Async Support | ✅ Complete | 2025-12-29 |
-| 2 | Parallel Movie Scraping | 🔄 In Progress | |
-| 3 | Batch Actor Inserts | ⬜ Not Started | |
-| 4 | Response Caching | ⬜ Not Started | |
+| 2 | Parallel Movie Scraping | ➡️ Moved to Phase 2-2 | - |
+| 3 | Batch Actor Inserts | ⏸️ Deferred | - |
+| 4 | Response Caching | ⏸️ Deferred | - |
 
-**Legend:** ⬜ Not Started | 🔄 In Progress | ✅ Complete | ⏸️ Deferred
+**Legend:** ⬜ Not Started | 🔄 In Progress | ✅ Complete | ⏸️ Deferred | ➡️ Moved
 
 ---
 
@@ -208,6 +211,10 @@ During testing, discovered file locking errors when parallel downloads tried to 
 **Effort:** 1-2 days | **Risk:** Medium | **Impact:** High
 **Design Document:** See [PerformanceImprovements-Phase2-2.md](PerformanceImprovements-Phase2-2.md) for detailed design, thread safety analysis, and implementation phases.
 
+**Status:** ➡️ Moved to Phase 2-2 (December 30, 2025)
+
+> **Note:** This item has been moved to a dedicated Phase 2-2 effort on a separate branch. The design document is complete and ready for implementation. This is the highest-impact remaining optimization (projected 60-65% improvement in bulk scraping).
+
 ### Objective
 
 Process multiple movies concurrently during bulk scraping, reducing overall scrape time by parallelizing the most time-consuming operations (TMDB + IMDB API calls).
@@ -311,7 +318,11 @@ With 3 concurrent scrapers:
 
 ## Item 3: Batch Actor Inserts
 
-**Effort:** 2-4 hours | **Risk:** Low | **Impact:** Medium
+**Effort:** 2-4 hours | **Risk:** Low | **Impact:** ~~Medium~~ **Low**
+
+**Status:** ⏸️ Deferred (December 30, 2025)
+
+> **Deferral Reason:** After Phase 1 index optimizations, actor operations are already fast (0.64 ms each). Total actor time for 49 movies is only ~1.5 seconds. Batching would save approximately 1 second out of a 200+ second bulk scrape (<1% improvement). Not worth the implementation effort.
 
 ### Objective
 
@@ -377,7 +388,16 @@ While actor lookups are now fast (0.64ms each), we're still making 2,400 individ
 
 ## Item 4: Response Caching
 
-**Effort:** 4-6 hours | **Risk:** Low | **Impact:** Medium (for repeat scrapes)
+**Effort:** 4-6 hours | **Risk:** Low | **Impact:** ~~Medium~~ **Situational**
+
+**Status:** ⏸️ Deferred (December 30, 2025)
+
+> **Deferral Reason:** Response caching only benefits repeat scrapes (re-scraping the same movies). For typical one-time bulk scrapes, this provides zero benefit. Use cases are limited to:
+> - Re-scraping after an error
+> - Development/testing scenarios
+> - Partial scrape followed by full scrape
+>
+> May be reconsidered if user feedback indicates frequent re-scraping patterns.
 
 ### Objective
 
@@ -465,14 +485,49 @@ For repeat scrapes:
 
 ### Success Criteria
 
-| Item | Target | Measurement |
-|------|--------|-------------|
-| TV Async | -60% TV image time | `SaveAllImages.TVShow.Total` |
-| Parallel Scraping | -50% bulk scrape time | Total time for 50 movies |
-| Batch Actors | -50% actor DB time | `Database.Add_Actor` total |
-| Response Cache | -50% repeat scrape time | Re-scrape same movies |
+| Item | Target | Result |
+|------|--------|--------|
+| TV Async | -60% TV image time | ✅ -44% achieved |
+| Parallel Scraping | -50% bulk scrape time | ➡️ Moved to Phase 2-2 |
+| Batch Actors | -50% actor DB time | ⏸️ Deferred (<1% impact) |
+| Response Cache | -50% repeat scrape time | ⏸️ Deferred (situational) |
 
 ---
+
+---
+
+## Phase 2 Summary
+
+### Completed
+
+| Item | Result | Impact |
+|------|--------|--------|
+| TV Show Async Support | 44% improvement in TV image operations | High |
+
+### Moved to Phase 2-2
+
+| Item | Reason | Expected Impact |
+|------|--------|-----------------|
+| Parallel Movie Scraping | Deserves dedicated branch/effort | 60-65% bulk scrape improvement |
+
+### Deferred (Not Worth Effort)
+
+| Item | Reason | Projected Impact |
+|------|--------|------------------|
+| Batch Actor Inserts | Already optimized in Phase 1 | <1% improvement |
+| Response Caching | Only helps repeat scrapes | Situational |
+
+### Key Learnings
+
+1. **Phase 1 optimizations were effective:** Actor lookups and image downloads are no longer bottlenecks
+2. **Scraping dominates:** TMDB + IMDB account for 73% of total time; parallel scraping (Phase 2-2) is the next big win
+3. **Diminishing returns:** Some optimizations look good on paper but provide minimal real-world benefit
+
+### Next Steps
+
+- Merge Phase 2 branch to main
+- Create new branch for Phase 2-2 (Parallel Movie Scraping)
+- Reference design document: [PerformanceImprovements-Phase2-2.md](PerformanceImprovements-Phase2-2.md)
 
 ## Testing Plan
 
@@ -505,6 +560,7 @@ For each item:
 
 ---
 
-*Document Version: 1.0*
+*Document Version: 1.4*
 *Created: December 29, 2025*
-*Author: Eric H. Anderson**
+*Completed: December 30, 2025*
+*Author: Eric H. Anderson*
