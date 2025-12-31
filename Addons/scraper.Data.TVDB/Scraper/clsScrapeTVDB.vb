@@ -35,6 +35,7 @@ Namespace TVDBs
     End Class
 
     Public Class Scraper
+        Implements IDisposable
 
 #Region "Fields"
 
@@ -46,6 +47,7 @@ Namespace TVDBs
         Private _PosterUrl As String
         Private _TVDBApi As TVDB.Web.WebInterface
         Private _TVDBMirror As TVDB.Model.Mirror
+        Private _uniqueTempPath As String
 
 
 #End Region 'Fields
@@ -78,8 +80,10 @@ Namespace TVDBs
             Try
                 _SpecialSettings = Settings
 
-                If Not Directory.Exists(Path.Combine(Master.TempPath, "Shows")) Then Directory.CreateDirectory(Path.Combine(Master.TempPath, "Shows"))
-                _TVDBApi = New TVDB.Web.WebInterface(_SpecialSettings.APIKey, Path.Combine(Master.TempPath, "Shows"))
+                ' Use a unique temp path per instance to avoid file collisions during parallel scraping
+                _uniqueTempPath = Path.Combine(Master.TempPath, "Shows", Guid.NewGuid().ToString("N"))
+                If Not Directory.Exists(_uniqueTempPath) Then Directory.CreateDirectory(_uniqueTempPath)
+                _TVDBApi = New TVDB.Web.WebInterface(_SpecialSettings.APIKey, _uniqueTempPath)
                 _TVDBMirror = New TVDB.Model.Mirror With {.Address = "http://thetvdb.com", .ContainsBannerFile = True, .ContainsXmlFile = True, .ContainsZipFile = False}
 
             Catch ex As Exception
@@ -638,7 +642,24 @@ Namespace TVDBs
             End Select
         End Sub
 
-
+        ''' <summary>
+        ''' Cleans up the unique temp directory used by this scraper instance.
+        ''' </summary>
+        ''' <remarks>
+        ''' Called automatically when using 'Using' blocks or manually via Dispose().
+        ''' Ensures temp files don't accumulate during large parallel scraping sessions.
+        ''' </remarks>
+        Public Sub Dispose() Implements IDisposable.Dispose
+            Try
+                If Not String.IsNullOrEmpty(_uniqueTempPath) AndAlso Directory.Exists(_uniqueTempPath) Then
+                    Directory.Delete(_uniqueTempPath, True)
+                    _Logger.Trace($"[TVDB Scraper] Cleaned up temp directory: {_uniqueTempPath}")
+                End If
+            Catch ex As Exception
+                ' Log but don't throw - cleanup failure shouldn't break the scraping process
+                _Logger.Warn(ex, $"[TVDB Scraper] Failed to clean up temp directory: {_uniqueTempPath}")
+            End Try
+        End Sub
 #End Region 'Methods
 
 #Region "Nested Types"

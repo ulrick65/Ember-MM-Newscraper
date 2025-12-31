@@ -527,6 +527,7 @@
     <None Include="docs\analysis-docs\ImageThumbnailAnalysis.md" />
     <None Include="docs\analysis-docs\PerformanceAnalysis.md" />
     <None Include="docs\analysis-docs\AsyncImageDownloadAnalysis.md" />
+    <None Include="docs\improvements-docs\PerformanceImprovements-Phase4.md" />
     <None Include="docs\improvements-docs\PerformanceImprovements-Phase1.md" />
     <None Include="docs\improvements-docs\PerformanceImprovements-Phase2-2.md" />
     <None Include="docs\improvements-docs\PerformanceImprovements-Phase2.md" />
@@ -536,6 +537,7 @@
     <None Include="docs\process-docs\CountryMappingProcess.md" />
     <None Include="docs\ForkChangeLog.md" />
     <None Include="docs\improvements-docs\NfoFileImprovements.md" />
+    <None Include="docs\process-docs\LanguageProcess.md" />
     <None Include="docs\process-docs\NfoFileProcess .md" />
     <None Include="docs\process-docs\ScrapingProcessMovies.md" />
     <None Include="docs\process-docs\ScrapingProcessTvShows.md" />

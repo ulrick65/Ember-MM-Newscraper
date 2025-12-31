@@ -25,6 +25,7 @@ Imports System.IO
 Namespace TVDBs
 
     Public Class Scraper
+        Implements IDisposable
 
 #Region "Fields"
 
@@ -34,6 +35,7 @@ Namespace TVDBs
 
         Private _TVDBApi As TVDB.Web.WebInterface
         Private _TVDBMirror As TVDB.Model.Mirror
+        Private _uniqueTempPath As String
 
 #End Region 'Fields
 
@@ -41,13 +43,28 @@ Namespace TVDBs
 
         Public Sub New(ByVal SpecialSettings As TVDB_Image.SpecialSettings)
             Try
-
-                If Not Directory.Exists(Path.Combine(Master.TempPath, "Shows")) Then Directory.CreateDirectory(Path.Combine(Master.TempPath, "Shows"))
-                _TVDBApi = New TVDB.Web.WebInterface(SpecialSettings.ApiKey, Path.Combine(Master.TempPath, "Shows"))
+                ' Use a unique temp path per instance to avoid file collisions during parallel scraping
+                _uniqueTempPath = Path.Combine(Master.TempPath, "Shows", Guid.NewGuid().ToString("N"))
+                If Not Directory.Exists(_uniqueTempPath) Then Directory.CreateDirectory(_uniqueTempPath)
+                _TVDBApi = New TVDB.Web.WebInterface(SpecialSettings.ApiKey, _uniqueTempPath)
                 _TVDBMirror = New TVDB.Model.Mirror With {.Address = "http://thetvdb.com", .ContainsBannerFile = True, .ContainsXmlFile = True, .ContainsZipFile = False}
 
             Catch ex As Exception
                 _Logger.Error(ex, New StackFrame().GetMethod().Name)
+            End Try
+        End Sub
+
+        ''' <summary>
+        ''' Cleans up the unique temp directory used by this scraper instance.
+        ''' </summary>
+        Public Sub Dispose() Implements IDisposable.Dispose
+            Try
+                If Not String.IsNullOrEmpty(_uniqueTempPath) AndAlso Directory.Exists(_uniqueTempPath) Then
+                    Directory.Delete(_uniqueTempPath, True)
+                    _Logger.Trace($"[TVDB Image Scraper] Cleaned up temp directory: {_uniqueTempPath}")
+                End If
+            Catch ex As Exception
+                _Logger.Warn(ex, $"[TVDB Image Scraper] Failed to clean up temp directory: {_uniqueTempPath}")
             End Try
         End Sub
 

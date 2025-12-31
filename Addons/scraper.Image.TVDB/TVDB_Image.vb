@@ -21,6 +21,7 @@
 Imports EmberAPI
 Imports NLog
 Imports ScraperModule.TVDBs
+Imports TVDB
 
 Public Class TVDB_Image
     Implements Interfaces.ScraperModule_Image_TV
@@ -199,34 +200,35 @@ Public Class TVDB_Image
         logger.Trace("[TVDB_Image] [Scraper] [Start]")
 
         LoadSettings()
-        Dim _scraper As New Scraper(_SpecialSettings)
 
         Dim FilteredModifiers As Structures.ScrapeModifiers = Functions.ScrapeModifiersAndAlso(ScrapeModifiers, ConfigModifier)
 
-        Select Case DBTV.ContentType
-            Case Enums.ContentType.TVEpisode
-                If DBTV.TVShow.UniqueIDs.TVDbIdSpecified Then
-                    ImagesContainer = _scraper.GetImages_TVEpisode(DBTV.TVShow.UniqueIDs.TVDbId, DBTV.TVEpisode.Season, DBTV.TVEpisode.Episode, DBTV.Ordering, FilteredModifiers)
-                    If FilteredModifiers.MainFanart Then
-                        ImagesContainer.MainFanarts = _scraper.GetAllImages_TV(DBTV.TVShow.UniqueIDs.TVDbId, FilteredModifiers, DBTV.Language_Main).MainFanarts
+        Using _scraper As New Scraper(_SpecialSettings)
+            Select Case DBTV.ContentType
+                Case Enums.ContentType.TVEpisode
+                    If DBTV.TVShow.UniqueIDs.TVDbIdSpecified Then
+                        ImagesContainer = _scraper.GetImages_TVEpisode(DBTV.TVShow.UniqueIDs.TVDbId, DBTV.TVEpisode.Season, DBTV.TVEpisode.Episode, DBTV.Ordering, FilteredModifiers)
+                        If FilteredModifiers.MainFanart Then
+                            ImagesContainer.MainFanarts = _scraper.GetAllImages_TV(DBTV.TVShow.UniqueIDs.TVDbId, FilteredModifiers, DBTV.Language_Main).MainFanarts
+                        End If
+                    Else
+                        logger.Trace(String.Concat("[TVDB_Image] [Scraper] [Abort] No TVDB ID exist to search: ", DBTV.TVEpisode.Title))
                     End If
-                Else
-                    logger.Trace(String.Concat("[TVDB_Image] [Scraper] [Abort] No TVDB ID exist to search: ", DBTV.TVEpisode.Title))
-                End If
-            Case Enums.ContentType.TVSeason
-                If DBTV.TVShow.UniqueIDs.TVDbIdSpecified Then
-                    ImagesContainer = _scraper.GetAllImages_TV(DBTV.TVShow.UniqueIDs.TVDbId, FilteredModifiers, DBTV.Language_Main)
-                Else
-                    logger.Trace(String.Concat("[TVDB_Image] [Scraper] [Abort] No TVDB ID exist to search: ", DBTV.TVSeason.Title))
-                End If
-            Case Enums.ContentType.TVShow
-                If DBTV.TVShow.UniqueIDs.TVDbIdSpecified Then
-                    ImagesContainer = _scraper.GetAllImages_TV(DBTV.TVShow.UniqueIDs.TVDbId, FilteredModifiers, DBTV.Language_Main)
-                Else
-                    logger.Trace(String.Concat("[TVDB_Image] [Scraper] [Abort] No TVDB ID exist to search: ", DBTV.TVShow.Title))
-                End If
-            Case Else
-        End Select
+                Case Enums.ContentType.TVSeason
+                    If DBTV.TVShow.UniqueIDs.TVDbIdSpecified Then
+                        ImagesContainer = _scraper.GetAllImages_TV(DBTV.TVShow.UniqueIDs.TVDbId, FilteredModifiers, DBTV.Language_Main)
+                    Else
+                        logger.Trace(String.Concat("[TVDB_Image] [Scraper] [Abort] No TVDB ID exist to search: ", DBTV.TVSeason.Title))
+                    End If
+                Case Enums.ContentType.TVShow
+                    If DBTV.TVShow.UniqueIDs.TVDbIdSpecified Then
+                        ImagesContainer = _scraper.GetAllImages_TV(DBTV.TVShow.UniqueIDs.TVDbId, FilteredModifiers, DBTV.Language_Main)
+                    Else
+                        logger.Trace(String.Concat("[TVDB_Image] [Scraper] [Abort] No TVDB ID exist to search: ", DBTV.TVShow.Title))
+                    End If
+                Case Else
+            End Select
+        End Using
 
         logger.Trace("[TVDB_Image] [Scraper] [Done]")
         Return New Interfaces.ModuleResult With {.breakChain = False}

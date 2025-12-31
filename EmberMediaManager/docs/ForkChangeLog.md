@@ -15,9 +15,9 @@ This document tracks all changes made to this fork of Ember Media Manager, start
 
 | Property | Value |
 |----------|-------|
-| **Document Version** | 1.0.7 |
+| **Document Version** | 1.0.8 |
 | **Created** | December 25, 2025 |
-| **Last Updated** | December 30, 2025 |
+| **Last Updated** | December 31, 2025 |
 | **Author** | Eric H. Anderson |
 
 ---
@@ -45,6 +45,8 @@ This document tracks all changes made to this fork of Ember Media Manager, start
 | 1.12.1.0 | Dec 23-28, 2025 | Bug fixes, cleanup, genre mapping fix, documentation, code organization, performance improvements, additional package updates |
 | 1.12.1.0 | Dec 29-30, 2025 | Bug fixes, cleanup, documentation, code organization, **Phase 1 performance complete (61% improvement)**, Phase 2 planning |
 | 1.12.1.0 | Dec 29-30, 2025 | Bug fixes, cleanup, documentation, **Phase 2-2 parallel scraping complete (60% improvement)** |
+| 1.12.1.0 | Dec 31, 2025 | **Phase 3: TV Show parallel scraping (50-60% improvement)**, TVDB file contention fix, cancellation bug fixes |
+
 
 ---
 
@@ -223,6 +225,18 @@ The following features are deprecated and slated for removal in a future version
 | Performance | Parallel scraping with `MaxDegreeOfParallelism = Min(ProcessorCount, 4)` | `EmberMediaManager\frmMain.vb` |
 | Performance | Throughput increased from 15 movies/min to 37 movies/min (+147%) | `EmberMediaManager\frmMain.vb` |
 | Documentation | Created Phase 2-2 Parallel Movie Scraping design document v1.3 | `EmberMediaManager\docs\improvements-docs\PerformanceImprovements-Phase2-2.md` |
+| Feature | **Phase 3: TV Show Parallel Scraping** - Implemented two-phase parallel architecture for bulk TV show scraping | `EmberMediaManager\frmMain.vb` |
+| Feature | Added `ScrapedTVShowResult` class for thread-safe TV show result collection | `EmberMediaManager\frmMain.vb` |
+| Feature | Added `ProcessTVShowScrape_Parallel` method for thread-safe TV show scraping without UI interaction | `EmberMediaManager\frmMain.vb` |
+| Enhancement | Modified `bwTVScraper_DoWork` with parallel scrape + sequential save pattern | `EmberMediaManager\frmMain.vb` |
+| Performance | **Phase 3 TV Shows complete: 50-60% improvement** in bulk TV show scraping | `EmberMediaManager\frmMain.vb` |
+| Bug Fix | Fixed missing NFO save in `Save_TVShowAsync` - TV Show NFO files now created correctly | `EmberAPI\clsAPIDatabase.vb` |
+| Bug Fix | Fixed TVDB file contention during parallel scraping - unique temp paths per scraper instance | `Addons\scraper.Data.TVDB\Scraper\clsScrapeTVDB.vb`, `Addons\scraper.Image.TVDB\Scraper\clsScrapeTVDB.vb` |
+| Enhancement | Added `IDisposable` implementation to TVDB scrapers for temp directory cleanup | `Addons\scraper.Data.TVDB\Scraper\clsScrapeTVDB.vb`, `Addons\scraper.Image.TVDB\Scraper\clsScrapeTVDB.vb` |
+| Enhancement | Wrapped TVDB scraper usage with `Using` blocks for automatic cleanup | `Addons\scraper.Data.TVDB\TVDB_Data.vb`, `Addons\scraper.Image.TVDB\TVDB_Image.vb` |
+| Bug Fix | Fixed cancellation crash during parallel scrape phase - added ID validation guards | `EmberMediaManager\frmMain.vb` |
+| Bug Fix | Fixed `ArgumentOutOfRangeException` when cancelling before any items saved | `EmberMediaManager\frmMain.vb` |
+| Documentation | Created Phase 3 Future Enhancements document v2.2 | `EmberMediaManager\docs\improvements-docs\PerformanceImprovements-Phase3.md` |
 
 **Version Updates:**
 
@@ -418,6 +432,7 @@ The following documents provide detailed information about specific initiatives:
 | [ScrapingProcessMovies.md](process-docs/ScrapingProcessMovies.md) | Movie scraping process architecture documentation |
 | [ScrapingProcessTvShows.md](process-docs/ScrapingProcessTvShows.md) | TV Show scraping process architecture documentation |
 | [PerformanceImprovements-Phase2-2.md](improvements-docs/PerformanceImprovements-Phase2-2.md) | Parallel Movie Scraping detailed design document (v1.3 - Complete) |
+| [PerformanceImprovements-Phase3.md](improvements-docs/PerformanceImprovements-Phase3.md) | Phase 3: TV Show Parallel Scraping, TVDB fixes, cancellation fixes (v2.2 - Complete) |
 
 ---
 

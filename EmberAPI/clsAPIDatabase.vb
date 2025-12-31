@@ -6382,6 +6382,7 @@ Public Class Database
             'First let's save it to NFO, even because we will need the NFO path
             'Also Save Images to get ExtrafanartsPath using async parallel downloads
             'art Table be be linked later
+            If toNFO Then NFO.SaveToNFO_TVShow(dbElement)
             If toDisk Then
                 ' TODO: Debug Log Event [ulrick65, 12/29/2025]
                 logger.Trace($"[DEBUG TV] Save_TVShowAsync calling SaveAllImagesAsync for: {dbElement.TVShow.Title}")
