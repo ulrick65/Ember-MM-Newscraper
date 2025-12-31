@@ -95,18 +95,21 @@ During Phase 1 (parallel scraping), users see no visible progress. The UI appear
 
 ### 2.2 Enhancement Options
 
-#### Option 1: Status Text Updates (Quick Fix) ⭐ Recommended First
+#### Option 1: Status Text Updates (Quick Fix) ⭐ Complete ✅
 
 **Description:** Update status bar text during scrape phase to show progress.
 
+**Status:**  
+✅ Complete — Status text now updates during the scrape phase, providing users with visible feedback as each movie is processed.
+
 **Implementation:**
-- Already partially implemented - reports every 5 movies: "Scraped 5 of 49 movies..."
-- Need to ensure `ReportProgress` calls are reaching the UI thread
-- Add more frequent updates (every movie or every 2-3 movies)
+- Status bar text is updated more frequently during the parallel scrape phase (every movie or every 2-3 movies).
+- `ReportProgress` calls are confirmed to reach the UI thread.
+- Users now see real-time progress messages such as "Scraped X of Y movies..." during scraping.
 
 **Pros:**
 - Minimal code changes
-- Already partially working
+- Now fully working
 - Low risk
 
 **Cons:**

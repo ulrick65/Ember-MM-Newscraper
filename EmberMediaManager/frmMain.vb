@@ -1531,9 +1531,10 @@ Public Class frmMain
                         ' Update progress (thread-safe increment)
                         Dim currentCount As Integer = Threading.Interlocked.Increment(processedCount)
 
-                        ' Report progress periodically (every 5 movies or at completion)
-                        If currentCount Mod 5 = 0 OrElse currentCount = totalCount Then
-                            bwMovieScraper.ReportProgress(0, String.Format(Master.eLang.GetString(1401, "Scraped {0} of {1} movies..."), currentCount, totalCount))
+                        ' Report progress every other movie (even count) or at completion
+                        If currentCount Mod 2 = 0 OrElse currentCount = totalCount Then
+                            Dim movieTitle As String = tScrapeItem.DataRow.Item("Title").ToString()
+                            bwMovieScraper.ReportProgress(-3, String.Format("Scraping ""{0}"" ({1} of {2})...", movieTitle, currentCount, totalCount))
                         End If
                     End Sub)
             Catch ex As AggregateException
@@ -1603,9 +1604,9 @@ Public Class frmMain
             ' SEQUENTIAL MODE (Original logic for single items)
             ' ============================================================
             Dim Cancelled As Boolean = False
-
+            ' TODO: Commenting out these unused variables [ulrick65, 12/30/2025]
             For Each tScrapeItem As ScrapeItem In Args.ScrapeList
-                Dim Theme As New MediaContainers.MediaFile
+                'Dim Theme As New MediaContainers.MediaFile
                 Dim tURL As String = String.Empty
                 Dim OldTitle As String = String.Empty
                 Dim NewTitle As String = String.Empty
@@ -2000,13 +2001,14 @@ Public Class frmMain
 
         logger.Trace(String.Format("[MovieSet Scraper] [Start] MovieSets Count [{0}]", Args.ScrapeList.Count.ToString))
 
+        ' TODO: Commenting out these unused variables [ulrick65, 12/30/2025]
         For Each tScrapeItem As ScrapeItem In Args.ScrapeList
-            Dim aContainer As New MediaContainers.SearchResultsContainer
+            'Dim aContainer As New MediaContainers.SearchResultsContainer
             Dim NewTitle As String = String.Empty
             Dim OldTMDBColID As String = String.Empty
             Dim OldTitle As String = String.Empty
-            Dim efList As New List(Of String)
-            Dim etList As New List(Of String)
+            'Dim efList As New List(Of String)
+            'Dim etList As New List(Of String)
             Dim tURL As String = String.Empty
 
             Cancelled = False
@@ -2195,9 +2197,9 @@ Public Class frmMain
         Dim DBScrapeShow As New Database.DBElement(Enums.ContentType.TVShow)
 
         logger.Trace(String.Format("[TVScraper] [Start] TV Shows Count [{0}]", Args.ScrapeList.Count.ToString))
-
+        ' TODO: Commenting out these unused variables [ulrick65, 12/30/2025]
         For Each tScrapeItem As ScrapeItem In Args.ScrapeList
-            Dim Theme As New MediaContainers.MediaFile
+            'Dim Theme As New MediaContainers.MediaFile
             Dim tURL As String = String.Empty
             Dim OldTitle As String = String.Empty
             Dim NewTitle As String = String.Empty
