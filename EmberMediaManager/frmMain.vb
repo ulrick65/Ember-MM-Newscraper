@@ -1463,59 +1463,366 @@ Public Class frmMain
             SetControlsEnabled(True)
         End If
     End Sub
+
     ''' <summary>
-    ''' Main bulk movie scraping loop - processes each movie in the scrape list sequentially.
+    ''' Background worker for movie scraping operations.
+    ''' Supports both sequential (single item) and parallel (bulk) scraping modes.
     ''' </summary>
-    ''' <param name="sender">The BackgroundWorker that raised the event.</param>
-    ''' <param name="e">Contains the Arguments structure with ScrapeList, ScrapeOptions, and ScrapeType.</param>
     ''' <remarks>
-    ''' PERFORMANCE CRITICAL METHOD - This is the main scraping loop for bulk operations.
-    ''' Documentation: See docs/BulkScrapingDocumentation.md for complete flow analysis.
-    ''' Processing Flow Per Movie:
-    ''' 1. Load movie from database via Master.DB.Load_Movie
-    ''' 2. ScrapeData_Movie - Run TMDB/IMDB scrapers
-    ''' 3. ScrapeImage_Movie - Collect image URLs (no download yet)
-    ''' 4. ScrapeTheme_Movie / ScrapeTrailer_Movie - Find themes and trailers
-    ''' 5. Save_Movie - Downloads images and saves to DB (PERFORMANCE BOTTLENECK)
-    ''' Performance Note: The Save_Movie call downloads images sequentially.
-    ''' Entry Points: Context menu, Tools menu, Command line (-scrapemovies)
+    ''' PERFORMANCE OPTIMIZATION - Phase 2-2: Parallel Movie Scraping
+    ''' Documentation: See docs/improvements-docs/PerformanceImprovements-Phase2-2.md
+    ''' 
+    ''' For bulk operations (more than 1 movie, non-SingleScrape types):
+    ''' - Phase 1: Parallel scraping using Parallel.ForEach with controlled concurrency
+    ''' - Phase 2: Sequential saves to avoid database contention
+    ''' 
+    ''' For single item operations (SingleScrape, SingleAuto, SingleField):
+    ''' - Uses original sequential logic with UI interaction support
     ''' </remarks>
     Private Sub bwMovieScraper_DoWork(ByVal sender As Object, ByVal e As System.ComponentModel.DoWorkEventArgs) Handles bwMovieScraper.DoWork
         Dim Args As Arguments = DirectCast(e.Argument, Arguments)
-        Dim Cancelled As Boolean = False
         Dim DBScrapeMovie As New Database.DBElement(Enums.ContentType.Movie)
 
         logger.Trace(String.Format("[Movie Scraper] [Start] Movies Count [{0}]", Args.ScrapeList.Count.ToString))
 
-        For Each tScrapeItem As ScrapeItem In Args.ScrapeList
-            Dim Theme As New MediaContainers.MediaFile
-            Dim tURL As String = String.Empty
-            Dim OldTitle As String = String.Empty
-            Dim NewTitle As String = String.Empty
+        ' Determine if this is a bulk operation that can benefit from parallel processing
+        Dim isBulkOperation As Boolean = Args.ScrapeList.Count > 1 AndAlso
+            Args.ScrapeType <> Enums.ScrapeType.SingleScrape AndAlso
+            Args.ScrapeType <> Enums.ScrapeType.SingleAuto AndAlso
+            Args.ScrapeType <> Enums.ScrapeType.SingleField
 
-            Cancelled = False
+        If isBulkOperation Then
+            ' ============================================================
+            ' PARALLEL BULK SCRAPING MODE (Phase 2-2 Optimization)
+            ' ============================================================
+            logger.Trace("[Movie Scraper] [Parallel Mode] Starting parallel bulk scrape")
 
-            If bwMovieScraper.CancellationPending Then Exit For
-            OldTitle = tScrapeItem.DataRow.Item("Title").ToString
-            bwMovieScraper.ReportProgress(1, OldTitle)
+            ' Thread-safe collection for scrape results
+            Dim scrapeResults As New Concurrent.ConcurrentBag(Of ScrapedMovieResult)
+            Dim processedCount As Integer = 0
+            Dim totalCount As Integer = Args.ScrapeList.Count
 
-            Dim dScrapeRow As DataRow = tScrapeItem.DataRow
+            ' Report initial progress
+            bwMovieScraper.ReportProgress(1, String.Format(Master.eLang.GetString(1400, "Scraping {0} movies in parallel..."), totalCount))
 
-            logger.Trace(String.Format("[Movie Scraper] [Start] Scraping {0}", OldTitle))
+            ' Configure parallel options - limit concurrency to avoid overwhelming APIs
+            Dim parallelOptions As New Threading.Tasks.ParallelOptions With {
+                .MaxDegreeOfParallelism = Math.Min(Environment.ProcessorCount, 4)
+            }
 
-            DBScrapeMovie = Master.DB.Load_Movie(Convert.ToInt64(tScrapeItem.DataRow.Item("idMovie")))
+            ' PHASE 1: Parallel Scraping
+            logger.Trace(String.Format("[Movie Scraper] [Parallel Mode] Phase 1: Scraping with MaxDegreeOfParallelism={0}", parallelOptions.MaxDegreeOfParallelism))
 
-            If tScrapeItem.ScrapeModifiers.MainNFO Then
-                If ModulesManager.Instance.ScrapeData_Movie(DBScrapeMovie, tScrapeItem.ScrapeModifiers, Args.ScrapeType, Args.ScrapeOptions, Args.ScrapeList.Count = 1) Then
-                    logger.Trace(String.Format("[Movie Scraper] [Cancelled] Scraping {0}", OldTitle))
-                    Cancelled = True
-                    If Args.ScrapeType = Enums.ScrapeType.SingleAuto OrElse Args.ScrapeType = Enums.ScrapeType.SingleField OrElse Args.ScrapeType = Enums.ScrapeType.SingleScrape Then
-                        bwMovieScraper.CancelAsync()
+            Try
+                Threading.Tasks.Parallel.ForEach(
+                    Args.ScrapeList,
+                    parallelOptions,
+                    Sub(tScrapeItem, loopState)
+                        ' Check for cancellation
+                        If bwMovieScraper.CancellationPending Then
+                            loopState.Stop()
+                            Return
+                        End If
+
+                        ' Scrape this movie using the thread-safe parallel method
+                        Dim result As ScrapedMovieResult = ProcessMovieScrape_Parallel(tScrapeItem, Args.ScrapeType, Args.ScrapeOptions)
+                        scrapeResults.Add(result)
+
+                        ' Update progress (thread-safe increment)
+                        Dim currentCount As Integer = Threading.Interlocked.Increment(processedCount)
+
+                        ' Report progress periodically (every 5 movies or at completion)
+                        If currentCount Mod 5 = 0 OrElse currentCount = totalCount Then
+                            bwMovieScraper.ReportProgress(0, String.Format(Master.eLang.GetString(1401, "Scraped {0} of {1} movies..."), currentCount, totalCount))
+                        End If
+                    End Sub)
+            Catch ex As AggregateException
+                For Each innerEx In ex.InnerExceptions
+                    logger.Error(innerEx, "[Movie Scraper] [Parallel Mode] Error during parallel scrape")
+                Next
+            End Try
+
+            If bwMovieScraper.CancellationPending Then
+                e.Result = New Results With {.DBElement = DBScrapeMovie, .ScrapeType = Args.ScrapeType, .Cancelled = True}
+                logger.Trace("[Movie Scraper] [Parallel Mode] Cancelled during scrape phase")
+                Return
+            End If
+
+            ' PHASE 2: Sequential Saves
+            logger.Trace(String.Format("[Movie Scraper] [Parallel Mode] Phase 2: Saving {0} scraped movies sequentially", scrapeResults.Count))
+            bwMovieScraper.ReportProgress(-3, String.Concat(Master.eLang.GetString(399, "Downloading and Saving Contents into Database"), ":"))
+
+            Dim saveCount As Integer = 0
+            For Each result As ScrapedMovieResult In scrapeResults
+                If bwMovieScraper.CancellationPending Then Exit For
+
+                ' Skip cancelled or errored results
+                If result.Cancelled OrElse result.HasError Then
+                    If result.HasError Then
+                        logger.Warn(String.Format("[Movie Scraper] [Parallel Mode] Skipping save for movie {0} due to error: {1}", result.MovieId, result.ErrorMessage))
+                    End If
+                    Continue For
+                End If
+
+                ' Skip if no DBElement
+                If result.DBElement Is Nothing Then Continue For
+
+                Try
+                    ' Run generic module event
+                    ModulesManager.Instance.RunGeneric(Enums.ModuleEventType.ScraperMulti_Movie, Nothing, Nothing, False, result.DBElement)
+
+                    ' Save to database with parallel image downloads
+                    DBScrapeMovie = Master.DB.Save_MovieAsync(
+                        result.DBElement,
+                        False,
+                        result.ScrapeModifiers.MainNFO OrElse result.ScrapeModifiers.MainMeta,
+                        True,
+                        True,
+                        False).GetAwaiter().GetResult()
+
+                    ' Report progress for UI update
+                    bwMovieScraper.ReportProgress(-2, DBScrapeMovie.ID)
+
+                    Dim displayTitle As String = If(Not result.OldTitle = result.NewTitle,
+                        String.Format(Master.eLang.GetString(812, "Old Title: {0} | New Title: {1}"), result.OldTitle, result.NewTitle),
+                        result.NewTitle)
+                    bwMovieScraper.ReportProgress(-1, displayTitle)
+
+                    saveCount += 1
+                    logger.Trace(String.Format("[Movie Scraper] [Parallel Mode] Saved movie {0}: {1}", saveCount, result.OldTitle))
+
+                Catch ex As Exception
+                    logger.Error(ex, String.Format("[Movie Scraper] [Parallel Mode] Error saving movie {0}", result.MovieId))
+                End Try
+            Next
+
+            logger.Trace(String.Format("[Movie Scraper] [Parallel Mode] Completed. Scraped: {0}, Saved: {1}", scrapeResults.Count, saveCount))
+
+        Else
+            ' ============================================================
+            ' SEQUENTIAL MODE (Original logic for single items)
+            ' ============================================================
+            Dim Cancelled As Boolean = False
+
+            For Each tScrapeItem As ScrapeItem In Args.ScrapeList
+                Dim Theme As New MediaContainers.MediaFile
+                Dim tURL As String = String.Empty
+                Dim OldTitle As String = String.Empty
+                Dim NewTitle As String = String.Empty
+
+                Cancelled = False
+
+                If bwMovieScraper.CancellationPending Then Exit For
+                OldTitle = tScrapeItem.DataRow.Item("Title").ToString
+                bwMovieScraper.ReportProgress(1, OldTitle)
+
+                Dim dScrapeRow As DataRow = tScrapeItem.DataRow
+
+                logger.Trace(String.Format("[Movie Scraper] [Start] Scraping {0}", OldTitle))
+
+                DBScrapeMovie = Master.DB.Load_Movie(Convert.ToInt64(tScrapeItem.DataRow.Item("idMovie")))
+
+                If tScrapeItem.ScrapeModifiers.MainNFO Then
+                    If ModulesManager.Instance.ScrapeData_Movie(DBScrapeMovie, tScrapeItem.ScrapeModifiers, Args.ScrapeType, Args.ScrapeOptions, Args.ScrapeList.Count = 1) Then
+                        logger.Trace(String.Format("[Movie Scraper] [Cancelled] Scraping {0}", OldTitle))
+                        Cancelled = True
+                        If Args.ScrapeType = Enums.ScrapeType.SingleAuto OrElse Args.ScrapeType = Enums.ScrapeType.SingleField OrElse Args.ScrapeType = Enums.ScrapeType.SingleScrape Then
+                            bwMovieScraper.CancelAsync()
+                        End If
+                    End If
+                Else
+                    ' if we do not have the movie ID we need to retrive it even if is just a Poster/Fanart/Trailer/Actors update
+                    If Not DBScrapeMovie.Movie.UniqueIDsSpecified AndAlso (
+                        tScrapeItem.ScrapeModifiers.MainActorthumbs Or
+                        tScrapeItem.ScrapeModifiers.MainBanner Or
+                        tScrapeItem.ScrapeModifiers.MainClearArt Or
+                        tScrapeItem.ScrapeModifiers.MainClearLogo Or
+                        tScrapeItem.ScrapeModifiers.MainDiscArt Or
+                        tScrapeItem.ScrapeModifiers.MainExtrafanarts Or
+                        tScrapeItem.ScrapeModifiers.MainExtrathumbs Or
+                        tScrapeItem.ScrapeModifiers.MainFanart Or
+                        tScrapeItem.ScrapeModifiers.MainKeyart Or
+                        tScrapeItem.ScrapeModifiers.MainLandscape Or
+                        tScrapeItem.ScrapeModifiers.MainPoster Or
+                        tScrapeItem.ScrapeModifiers.MainTheme Or
+                        tScrapeItem.ScrapeModifiers.MainTrailer) Then
+                        Dim tModifiers As New Structures.ScrapeModifiers With {.MainNFO = True}
+                        Dim tOptions As New Structures.ScrapeOptions 'set all values to false to not override any field. ID's are always determined.
+                        If ModulesManager.Instance.ScrapeData_Movie(DBScrapeMovie, tModifiers, Args.ScrapeType, tOptions, Args.ScrapeList.Count = 1) Then
+                            logger.Trace(String.Format("[Movie Scraper] [Cancelled] Scraping {0}", OldTitle))
+                            Cancelled = True
+                            If Args.ScrapeType = Enums.ScrapeType.SingleAuto OrElse Args.ScrapeType = Enums.ScrapeType.SingleField OrElse Args.ScrapeType = Enums.ScrapeType.SingleScrape Then
+                                bwMovieScraper.CancelAsync()
+                            End If
+                        End If
                     End If
                 End If
+
+                If bwMovieScraper.CancellationPending Then Exit For
+
+                If Not Cancelled Then
+                    If Master.eSettings.MovieScraperMetaDataScan AndAlso tScrapeItem.ScrapeModifiers.MainMeta Then
+                        bwMovieScraper.ReportProgress(-3, String.Concat(Master.eLang.GetString(140, "Scanning Meta Data"), ":"))
+                        MediaInfo.UpdateMediaInfo(DBScrapeMovie)
+                    End If
+                    If bwMovieScraper.CancellationPending Then Exit For
+
+                    NewTitle = DBScrapeMovie.Movie.Title
+
+                    If Not NewTitle = OldTitle Then
+                        bwMovieScraper.ReportProgress(0, String.Format(Master.eLang.GetString(812, "Old Title: {0} | New Title: {1}"), OldTitle, NewTitle))
+                    End If
+
+                    'get all images 
+                    If tScrapeItem.ScrapeModifiers.MainBanner OrElse
+                        tScrapeItem.ScrapeModifiers.MainClearArt OrElse
+                        tScrapeItem.ScrapeModifiers.MainClearLogo OrElse
+                        tScrapeItem.ScrapeModifiers.MainDiscArt OrElse
+                        tScrapeItem.ScrapeModifiers.MainExtrafanarts OrElse
+                        tScrapeItem.ScrapeModifiers.MainExtrathumbs OrElse
+                        tScrapeItem.ScrapeModifiers.MainFanart OrElse
+                        tScrapeItem.ScrapeModifiers.MainKeyart OrElse
+                        tScrapeItem.ScrapeModifiers.MainLandscape OrElse
+                        tScrapeItem.ScrapeModifiers.MainPoster Then
+
+                        Dim SearchResultsContainer As New MediaContainers.SearchResultsContainer
+                        bwMovieScraper.ReportProgress(-3, String.Concat(Master.eLang.GetString(254, "Scraping Images"), ":"))
+                        If Not ModulesManager.Instance.ScrapeImage_Movie(DBScrapeMovie, SearchResultsContainer, tScrapeItem.ScrapeModifiers, Args.ScrapeList.Count = 1) Then
+                            If Args.ScrapeType = Enums.ScrapeType.SingleScrape AndAlso Master.eSettings.MovieImagesDisplayImageSelect Then
+                                Using dImgSelect As New dlgImgSelect
+                                    If dImgSelect.ShowDialog(DBScrapeMovie, SearchResultsContainer, tScrapeItem.ScrapeModifiers) = DialogResult.OK Then
+                                        Images.SetPreferredImages(DBScrapeMovie, dImgSelect.Result)
+                                    End If
+                                End Using
+                            Else
+                                'autoscraping
+                                Images.SetPreferredImages(DBScrapeMovie, SearchResultsContainer, tScrapeItem.ScrapeModifiers, IsAutoScraper:=True)
+                            End If
+                        End If
+                    End If
+
+                    If bwMovieScraper.CancellationPending Then Exit For
+
+                    'Theme
+                    If tScrapeItem.ScrapeModifiers.MainTheme Then
+                        bwMovieScraper.ReportProgress(-3, String.Concat(Master.eLang.GetString(266, "Scraping Themes"), ":"))
+                        Dim SearchResults As New List(Of MediaContainers.MediaFile)
+                        If Not ModulesManager.Instance.ScrapeTheme_Movie(DBScrapeMovie, Enums.ModifierType.MainTheme, SearchResults) Then
+                            If Args.ScrapeType = Enums.ScrapeType.SingleScrape Then
+                                Using dThemeSelect As New dlgMediaFileSelect(Enums.ModifierType.MainTheme, True)
+                                    If dThemeSelect.ShowDialog(DBScrapeMovie, SearchResults) = DialogResult.OK Then
+                                        DBScrapeMovie.Theme = dThemeSelect.Result
+                                    End If
+                                End Using
+
+                                'autoscraping
+                            ElseIf Not Args.ScrapeType = Enums.ScrapeType.SingleScrape Then
+                                Dim newPreferredTheme As New MediaContainers.MediaFile
+                                If MediaFiles.GetPreferredMovieTheme(SearchResults, newPreferredTheme) Then
+                                    DBScrapeMovie.Theme = newPreferredTheme
+                                End If
+                            End If
+                        End If
+                    End If
+
+                    If bwMovieScraper.CancellationPending Then Exit For
+
+                    'Trailer
+                    If tScrapeItem.ScrapeModifiers.MainTrailer Then
+                        bwMovieScraper.ReportProgress(-3, String.Concat(Master.eLang.GetString(574, "Scraping Trailers"), ":"))
+                        Dim SearchResults As New List(Of MediaContainers.MediaFile)
+                        If Not ModulesManager.Instance.ScrapeTrailer_Movie(DBScrapeMovie, Enums.ModifierType.MainTrailer, SearchResults) Then
+                            If Args.ScrapeType = Enums.ScrapeType.SingleScrape Then
+                                Using dTrailerSelect As New dlgMediaFileSelect(Enums.ModifierType.MainTrailer, True)
+                                    If dTrailerSelect.ShowDialog(DBScrapeMovie, SearchResults) = DialogResult.OK Then
+                                        DBScrapeMovie.Trailer = dTrailerSelect.Result
+                                    End If
+                                End Using
+
+                                'autoscraping
+                            ElseIf Not Args.ScrapeType = Enums.ScrapeType.SingleScrape Then
+                                Dim newPreferredTrailer As New MediaContainers.MediaFile
+                                If MediaFiles.GetPreferredMovieTrailer(SearchResults, newPreferredTrailer) Then
+                                    DBScrapeMovie.Trailer = newPreferredTrailer
+                                End If
+                            End If
+                        End If
+                    End If
+
+                    If bwMovieScraper.CancellationPending Then Exit For
+
+                    If Not (Args.ScrapeType = Enums.ScrapeType.SingleScrape) Then
+                        ModulesManager.Instance.RunGeneric(Enums.ModuleEventType.ScraperMulti_Movie, Nothing, Nothing, False, DBScrapeMovie)
+                        bwMovieScraper.ReportProgress(-3, String.Concat(Master.eLang.GetString(399, "Downloading and Saving Contents into Database"), ":"))
+                        'Use Save_MovieAsync for parallel image downloads (sync-over-async in BackgroundWorker context)
+                        DBScrapeMovie = Master.DB.Save_MovieAsync(DBScrapeMovie, False, tScrapeItem.ScrapeModifiers.MainNFO OrElse tScrapeItem.ScrapeModifiers.MainMeta, True, True, False).GetAwaiter().GetResult()
+                        bwMovieScraper.ReportProgress(-2, DBScrapeMovie.ID)
+                        bwMovieScraper.ReportProgress(-1, If(Not OldTitle = NewTitle, String.Format(Master.eLang.GetString(812, "Old Title: {0} | New Title: {1}"), OldTitle, NewTitle), NewTitle))
+                    End If
+                    logger.Trace(String.Format("[Movie Scraper] [Done] Scraping {0}", OldTitle))
+                Else
+                    logger.Trace(String.Format("[Movie Scraper] [Cancelled] Scraping {0}", OldTitle))
+                End If
+            Next
+        End If
+
+        e.Result = New Results With {.DBElement = DBScrapeMovie, .ScrapeType = Args.ScrapeType, .Cancelled = bwMovieScraper.CancellationPending}
+        logger.Trace(String.Format("[Movie Scraper] [Done] Scraping"))
+    End Sub
+
+    ''' <summary>
+    ''' Thread-safe method to scrape a single movie without UI interaction.
+    ''' Used by parallel bulk scraping to process multiple movies concurrently.
+    ''' </summary>
+    ''' <param name="tScrapeItem">The movie item to scrape.</param>
+    ''' <param name="scrapeType">The type of scrape operation.</param>
+    ''' <param name="scrapeOptions">Field-level scrape options.</param>
+    ''' <returns>A ScrapedMovieResult containing the scraped data or error information.</returns>
+    ''' <remarks>
+    ''' PERFORMANCE OPTIMIZATION - Phase 2-2: Parallel Movie Scraping
+    ''' Documentation: See docs/improvements-docs/PerformanceImprovements-Phase2-2.md
+    ''' 
+    ''' Key differences from bwMovieScraper_DoWork:
+    ''' - No UI interactions (no ReportProgress calls)
+    ''' - No event handler registration (not thread-safe)
+    ''' - No dialog displays (auto-scrape only)
+    ''' - All errors captured in result object
+    ''' - Designed for parallel execution with Parallel.ForEach
+    ''' </remarks>
+    Private Function ProcessMovieScrape_Parallel(
+        ByVal tScrapeItem As ScrapeItem,
+        ByVal scrapeType As Enums.ScrapeType,
+        ByVal scrapeOptions As Structures.ScrapeOptions
+    ) As ScrapedMovieResult
+
+        Dim result As New ScrapedMovieResult()
+
+        Try
+            ' Get movie ID and title from DataRow
+            Dim movieId As Long = Convert.ToInt64(tScrapeItem.DataRow.Item("idMovie"))
+            Dim oldTitle As String = tScrapeItem.DataRow.Item("Title").ToString()
+
+            result.MovieId = movieId
+            result.OldTitle = oldTitle
+            result.ScrapeModifiers = tScrapeItem.ScrapeModifiers
+
+            logger.Trace(String.Format("[Movie Scraper Parallel] [Start] Scraping {0} (ID: {1})", oldTitle, movieId))
+
+            ' Load movie from database (thread-safe with WAL mode)
+            Dim dbScrapeMovie As Database.DBElement = Master.DB.Load_Movie(movieId)
+
+            ' --- DATA SCRAPING ---
+            If tScrapeItem.ScrapeModifiers.MainNFO Then
+                ' Scrape data without event handlers (passing False for single-item to skip events)
+                If ModulesManager.Instance.ScrapeData_Movie(dbScrapeMovie, tScrapeItem.ScrapeModifiers, scrapeType, scrapeOptions, False) Then
+                    logger.Trace(String.Format("[Movie Scraper Parallel] [Cancelled] Scraping {0}", oldTitle))
+                    result.Cancelled = True
+                    result.DBElement = dbScrapeMovie
+                    Return result
+                End If
             Else
-                ' if we do not have the movie ID we need to retrive it even if is just a Poster/Fanart/Trailer/Actors update
-                If Not DBScrapeMovie.Movie.UniqueIDsSpecified AndAlso (
+                ' If no NFO scrape but need IDs for images/trailers
+                If Not dbScrapeMovie.Movie.UniqueIDsSpecified AndAlso (
                     tScrapeItem.ScrapeModifiers.MainActorthumbs Or
                     tScrapeItem.ScrapeModifiers.MainBanner Or
                     tScrapeItem.ScrapeModifiers.MainClearArt Or
@@ -1529,128 +1836,79 @@ Public Class frmMain
                     tScrapeItem.ScrapeModifiers.MainPoster Or
                     tScrapeItem.ScrapeModifiers.MainTheme Or
                     tScrapeItem.ScrapeModifiers.MainTrailer) Then
+
                     Dim tModifiers As New Structures.ScrapeModifiers With {.MainNFO = True}
-                    Dim tOptions As New Structures.ScrapeOptions 'set all values to false to not override any field. ID's are always determined.
-                    If ModulesManager.Instance.ScrapeData_Movie(DBScrapeMovie, tModifiers, Args.ScrapeType, tOptions, Args.ScrapeList.Count = 1) Then
-                        logger.Trace(String.Format("[Movie Scraper] [Cancelled] Scraping {0}", OldTitle))
-                        Cancelled = True
-                        If Args.ScrapeType = Enums.ScrapeType.SingleAuto OrElse Args.ScrapeType = Enums.ScrapeType.SingleField OrElse Args.ScrapeType = Enums.ScrapeType.SingleScrape Then
-                            bwMovieScraper.CancelAsync()
-                        End If
+                    Dim tOptions As New Structures.ScrapeOptions
+                    If ModulesManager.Instance.ScrapeData_Movie(dbScrapeMovie, tModifiers, scrapeType, tOptions, False) Then
+                        logger.Trace(String.Format("[Movie Scraper Parallel] [Cancelled] Scraping {0}", oldTitle))
+                        result.Cancelled = True
+                        result.DBElement = dbScrapeMovie
+                        Return result
                     End If
                 End If
             End If
 
-            If bwMovieScraper.CancellationPending Then Exit For
-
-            If Not Cancelled Then
-                If Master.eSettings.MovieScraperMetaDataScan AndAlso tScrapeItem.ScrapeModifiers.MainMeta Then
-                    bwMovieScraper.ReportProgress(-3, String.Concat(Master.eLang.GetString(140, "Scanning Meta Data"), ":"))
-                    MediaInfo.UpdateMediaInfo(DBScrapeMovie)
-                End If
-                If bwMovieScraper.CancellationPending Then Exit For
-
-                NewTitle = DBScrapeMovie.Movie.Title
-
-                If Not NewTitle = OldTitle Then
-                    bwMovieScraper.ReportProgress(0, String.Format(Master.eLang.GetString(812, "Old Title: {0} | New Title: {1}"), OldTitle, NewTitle))
-                End If
-
-                'get all images 
-                If tScrapeItem.ScrapeModifiers.MainBanner OrElse
-                    tScrapeItem.ScrapeModifiers.MainClearArt OrElse
-                    tScrapeItem.ScrapeModifiers.MainClearLogo OrElse
-                    tScrapeItem.ScrapeModifiers.MainDiscArt OrElse
-                    tScrapeItem.ScrapeModifiers.MainExtrafanarts OrElse
-                    tScrapeItem.ScrapeModifiers.MainExtrathumbs OrElse
-                    tScrapeItem.ScrapeModifiers.MainFanart OrElse
-                    tScrapeItem.ScrapeModifiers.MainKeyart OrElse
-                    tScrapeItem.ScrapeModifiers.MainLandscape OrElse
-                    tScrapeItem.ScrapeModifiers.MainPoster Then
-
-                    Dim SearchResultsContainer As New MediaContainers.SearchResultsContainer
-                    bwMovieScraper.ReportProgress(-3, String.Concat(Master.eLang.GetString(254, "Scraping Images"), ":"))
-                    If Not ModulesManager.Instance.ScrapeImage_Movie(DBScrapeMovie, SearchResultsContainer, tScrapeItem.ScrapeModifiers, Args.ScrapeList.Count = 1) Then
-                        If Args.ScrapeType = Enums.ScrapeType.SingleScrape AndAlso Master.eSettings.MovieImagesDisplayImageSelect Then
-                            Using dImgSelect As New dlgImgSelect
-                                If dImgSelect.ShowDialog(DBScrapeMovie, SearchResultsContainer, tScrapeItem.ScrapeModifiers) = DialogResult.OK Then
-                                    Images.SetPreferredImages(DBScrapeMovie, dImgSelect.Result)
-                                End If
-                            End Using
-                        Else
-                            'autoscraping
-                            Images.SetPreferredImages(DBScrapeMovie, SearchResultsContainer, tScrapeItem.ScrapeModifiers, IsAutoScraper:=True)
-                        End If
-                    End If
-                End If
-
-                If bwMovieScraper.CancellationPending Then Exit For
-
-                'Theme
-                If tScrapeItem.ScrapeModifiers.MainTheme Then
-                    bwMovieScraper.ReportProgress(-3, String.Concat(Master.eLang.GetString(266, "Scraping Themes"), ":"))
-                    Dim SearchResults As New List(Of MediaContainers.MediaFile)
-                    If Not ModulesManager.Instance.ScrapeTheme_Movie(DBScrapeMovie, Enums.ModifierType.MainTheme, SearchResults) Then
-                        If Args.ScrapeType = Enums.ScrapeType.SingleScrape Then
-                            Using dThemeSelect As New dlgMediaFileSelect(Enums.ModifierType.MainTheme, True)
-                                If dThemeSelect.ShowDialog(DBScrapeMovie, SearchResults) = DialogResult.OK Then
-                                    DBScrapeMovie.Theme = dThemeSelect.Result
-                                End If
-                            End Using
-
-                            'autoscraping
-                        ElseIf Not Args.ScrapeType = Enums.ScrapeType.SingleScrape Then
-                            Dim newPreferredTheme As New MediaContainers.MediaFile
-                            If MediaFiles.GetPreferredMovieTheme(SearchResults, newPreferredTheme) Then
-                                DBScrapeMovie.Theme = newPreferredTheme
-                            End If
-                        End If
-                    End If
-                End If
-
-                If bwMovieScraper.CancellationPending Then Exit For
-
-                'Trailer
-                If tScrapeItem.ScrapeModifiers.MainTrailer Then
-                    bwMovieScraper.ReportProgress(-3, String.Concat(Master.eLang.GetString(574, "Scraping Trailers"), ":"))
-                    Dim SearchResults As New List(Of MediaContainers.MediaFile)
-                    If Not ModulesManager.Instance.ScrapeTrailer_Movie(DBScrapeMovie, Enums.ModifierType.MainTrailer, SearchResults) Then
-                        If Args.ScrapeType = Enums.ScrapeType.SingleScrape Then
-                            Using dTrailerSelect As New dlgMediaFileSelect(Enums.ModifierType.MainTrailer, True)
-                                If dTrailerSelect.ShowDialog(DBScrapeMovie, SearchResults) = DialogResult.OK Then
-                                    DBScrapeMovie.Trailer = dTrailerSelect.Result
-                                End If
-                            End Using
-
-                            'autoscraping
-                        ElseIf Not Args.ScrapeType = Enums.ScrapeType.SingleScrape Then
-                            Dim newPreferredTrailer As New MediaContainers.MediaFile
-                            If MediaFiles.GetPreferredMovieTrailer(SearchResults, newPreferredTrailer) Then
-                                DBScrapeMovie.Trailer = newPreferredTrailer
-                            End If
-                        End If
-                    End If
-                End If
-
-                If bwMovieScraper.CancellationPending Then Exit For
-
-                If Not (Args.ScrapeType = Enums.ScrapeType.SingleScrape) Then
-                    ModulesManager.Instance.RunGeneric(Enums.ModuleEventType.ScraperMulti_Movie, Nothing, Nothing, False, DBScrapeMovie)
-                    bwMovieScraper.ReportProgress(-3, String.Concat(Master.eLang.GetString(399, "Downloading and Saving Contents into Database"), ":"))
-                    'Use Save_MovieAsync for parallel image downloads (sync-over-async in BackgroundWorker context)
-                    DBScrapeMovie = Master.DB.Save_MovieAsync(DBScrapeMovie, False, tScrapeItem.ScrapeModifiers.MainNFO OrElse tScrapeItem.ScrapeModifiers.MainMeta, True, True, False).GetAwaiter().GetResult()
-                    bwMovieScraper.ReportProgress(-2, DBScrapeMovie.ID)
-                    bwMovieScraper.ReportProgress(-1, If(Not OldTitle = NewTitle, String.Format(Master.eLang.GetString(812, "Old Title: {0} | New Title: {1}"), OldTitle, NewTitle), NewTitle))
-                End If
-                logger.Trace(String.Format("[Movie Scraper] [Done] Scraping {0}", OldTitle))
-            Else
-                logger.Trace(String.Format("[Movie Scraper] [Cancelled] Scraping {0}", OldTitle))
+            ' --- METADATA SCAN ---
+            If Master.eSettings.MovieScraperMetaDataScan AndAlso tScrapeItem.ScrapeModifiers.MainMeta Then
+                MediaInfo.UpdateMediaInfo(dbScrapeMovie)
             End If
-        Next
 
-        e.Result = New Results With {.DBElement = DBScrapeMovie, .ScrapeType = Args.ScrapeType, .Cancelled = bwMovieScraper.CancellationPending}
-        logger.Trace(String.Format("[Movie Scraper] [Done] Scraping"))
-    End Sub
+            result.NewTitle = dbScrapeMovie.Movie.Title
+
+            ' --- IMAGE SCRAPING ---
+            If tScrapeItem.ScrapeModifiers.MainBanner OrElse
+                tScrapeItem.ScrapeModifiers.MainClearArt OrElse
+                tScrapeItem.ScrapeModifiers.MainClearLogo OrElse
+                tScrapeItem.ScrapeModifiers.MainDiscArt OrElse
+                tScrapeItem.ScrapeModifiers.MainExtrafanarts OrElse
+                tScrapeItem.ScrapeModifiers.MainExtrathumbs OrElse
+                tScrapeItem.ScrapeModifiers.MainFanart OrElse
+                tScrapeItem.ScrapeModifiers.MainKeyart OrElse
+                tScrapeItem.ScrapeModifiers.MainLandscape OrElse
+                tScrapeItem.ScrapeModifiers.MainPoster Then
+
+                Dim searchResultsContainer As New MediaContainers.SearchResultsContainer
+                ' Scrape images without event handlers (passing False for single-item)
+                If Not ModulesManager.Instance.ScrapeImage_Movie(dbScrapeMovie, searchResultsContainer, tScrapeItem.ScrapeModifiers, False) Then
+                    ' Auto-scrape mode only - no image selection dialog
+                    Images.SetPreferredImages(dbScrapeMovie, searchResultsContainer, tScrapeItem.ScrapeModifiers, IsAutoScraper:=True)
+                End If
+            End If
+
+            ' --- THEME SCRAPING ---
+            If tScrapeItem.ScrapeModifiers.MainTheme Then
+                Dim searchResults As New List(Of MediaContainers.MediaFile)
+                If Not ModulesManager.Instance.ScrapeTheme_Movie(dbScrapeMovie, Enums.ModifierType.MainTheme, searchResults) Then
+                    ' Auto-scrape mode only - select preferred theme automatically
+                    Dim newPreferredTheme As New MediaContainers.MediaFile
+                    If MediaFiles.GetPreferredMovieTheme(searchResults, newPreferredTheme) Then
+                        dbScrapeMovie.Theme = newPreferredTheme
+                    End If
+                End If
+            End If
+
+            ' --- TRAILER SCRAPING ---
+            If tScrapeItem.ScrapeModifiers.MainTrailer Then
+                Dim searchResults As New List(Of MediaContainers.MediaFile)
+                If Not ModulesManager.Instance.ScrapeTrailer_Movie(dbScrapeMovie, Enums.ModifierType.MainTrailer, searchResults) Then
+                    ' Auto-scrape mode only - select preferred trailer automatically
+                    Dim newPreferredTrailer As New MediaContainers.MediaFile
+                    If MediaFiles.GetPreferredMovieTrailer(searchResults, newPreferredTrailer) Then
+                        dbScrapeMovie.Trailer = newPreferredTrailer
+                    End If
+                End If
+            End If
+
+            result.DBElement = dbScrapeMovie
+            logger.Trace(String.Format("[Movie Scraper Parallel] [Done] Scraping {0}", oldTitle))
+
+        Catch ex As Exception
+            result.ErrorMessage = ex.Message
+            logger.Error(ex, String.Format("[Movie Scraper Parallel] [Error] MovieId: {0}", result.MovieId))
+        End Try
+
+        Return result
+    End Function
 
     ''' <summary>
     ''' Handles progress updates from the bulk movie scraping background worker.
@@ -19175,6 +19433,161 @@ Public Class frmMain
 #End Region 'Fields
 
     End Structure
+
+    ''' <summary>
+    ''' Holds the result of a parallel movie scrape operation.
+    ''' Thread-safe container for passing data between scrape and save phases.
+    ''' </summary>
+    ''' <remarks>
+    ''' PERFORMANCE OPTIMIZATION - Phase 2-2: Parallel Movie Scraping
+    ''' Documentation: See docs/improvements-docs/PerformanceImprovements-Phase2-2.md
+    ''' This class stores scraped movie data during the parallel scrape phase,
+    ''' allowing sequential saves in the second phase to avoid database contention.
+    ''' </remarks>
+    Private Class ScrapedMovieResult
+
+#Region "Fields"
+
+        Private _dbElement As Database.DBElement
+        Private _oldTitle As String
+        Private _newTitle As String
+        Private _cancelled As Boolean
+        Private _scrapeModifiers As Structures.ScrapeModifiers
+        Private _errorMessage As String
+        Private _movieId As Long
+
+#End Region 'Fields
+
+#Region "Properties"
+
+        ''' <summary>
+        ''' The scraped movie database element containing all metadata and image references.
+        ''' </summary>
+        Public Property DBElement As Database.DBElement
+            Get
+                Return _dbElement
+            End Get
+            Set(value As Database.DBElement)
+                _dbElement = value
+            End Set
+        End Property
+
+        ''' <summary>
+        ''' The original title of the movie before scraping.
+        ''' Used for progress reporting and logging.
+        ''' </summary>
+        Public Property OldTitle As String
+            Get
+                Return _oldTitle
+            End Get
+            Set(value As String)
+                _oldTitle = value
+            End Set
+        End Property
+
+        ''' <summary>
+        ''' The new title after scraping (may differ from OldTitle if metadata was updated).
+        ''' </summary>
+        Public Property NewTitle As String
+            Get
+                Return _newTitle
+            End Get
+            Set(value As String)
+                _newTitle = value
+            End Set
+        End Property
+
+        ''' <summary>
+        ''' Indicates whether the scrape operation was cancelled by the user.
+        ''' </summary>
+        Public Property Cancelled As Boolean
+            Get
+                Return _cancelled
+            End Get
+            Set(value As Boolean)
+                _cancelled = value
+            End Set
+        End Property
+
+        ''' <summary>
+        ''' The scrape modifiers that were used for this movie.
+        ''' Needed during the save phase to determine what content to save.
+        ''' </summary>
+        Public Property ScrapeModifiers As Structures.ScrapeModifiers
+            Get
+                Return _scrapeModifiers
+            End Get
+            Set(value As Structures.ScrapeModifiers)
+                _scrapeModifiers = value
+            End Set
+        End Property
+
+        ''' <summary>
+        ''' Contains error message if scraping failed for this movie.
+        ''' Empty string indicates successful scrape.
+        ''' </summary>
+        Public Property ErrorMessage As String
+            Get
+                Return _errorMessage
+            End Get
+            Set(value As String)
+                _errorMessage = value
+            End Set
+        End Property
+
+        ''' <summary>
+        ''' The database ID of the movie being scraped.
+        ''' Used for logging and progress tracking.
+        ''' </summary>
+        Public Property MovieId As Long
+            Get
+                Return _movieId
+            End Get
+            Set(value As Long)
+                _movieId = value
+            End Set
+        End Property
+
+        ''' <summary>
+        ''' Returns True if an error occurred during scraping.
+        ''' </summary>
+        Public ReadOnly Property HasError As Boolean
+            Get
+                Return Not String.IsNullOrEmpty(_errorMessage)
+            End Get
+        End Property
+
+#End Region 'Properties
+
+#Region "Methods"
+
+        ''' <summary>
+        ''' Creates a new instance of ScrapedMovieResult with default values.
+        ''' </summary>
+        Public Sub New()
+            _dbElement = Nothing
+            _oldTitle = String.Empty
+            _newTitle = String.Empty
+            _cancelled = False
+            _scrapeModifiers = New Structures.ScrapeModifiers
+            _errorMessage = String.Empty
+            _movieId = -1
+        End Sub
+
+        ''' <summary>
+        ''' Creates a new instance of ScrapedMovieResult with the specified movie ID and title.
+        ''' </summary>
+        ''' <param name="movieId">The database ID of the movie.</param>
+        ''' <param name="oldTitle">The original title of the movie.</param>
+        Public Sub New(movieId As Long, oldTitle As String)
+            Me.New()
+            _movieId = movieId
+            _oldTitle = oldTitle
+        End Sub
+
+#End Region 'Methods
+
+    End Class
 
     Class MovieInSetPoster
 
