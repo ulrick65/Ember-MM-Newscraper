@@ -527,11 +527,15 @@
     <None Include="docs\analysis-docs\ImageThumbnailAnalysis.md" />
     <None Include="docs\analysis-docs\PerformanceAnalysis.md" />
     <None Include="docs\analysis-docs\AsyncImageDownloadAnalysis.md" />
+    <None Include="docs\improvements-docs\AddonRemovalPlan.md" />
+    <None Include="docs\analysis-docs\IMDBScraperAnalysis.md" />
+    <None Include="docs\improvements-docs\IntegratedAddonRemoval.md" />
     <None Include="docs\improvements-docs\PerformanceImprovements-Phase4.md" />
     <None Include="docs\improvements-docs\PerformanceImprovements-Phase1.md" />
     <None Include="docs\improvements-docs\PerformanceImprovements-Phase2-2.md" />
     <None Include="docs\improvements-docs\PerformanceImprovements-Phase2.md" />
     <None Include="docs\improvements-docs\PerformanceImprovements-Phase3.md" />
+    <None Include="docs\performance-data\IMDB-Baseline-2025-12-31.md" />
     <None Include="docs\process-docs\BuildProcess.md" />
     <None Include="docs\process-docs\CertificationMappingProcess.md" />
     <None Include="docs\process-docs\CountryMappingProcess.md" />
