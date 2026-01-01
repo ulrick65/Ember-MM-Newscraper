@@ -15,7 +15,7 @@ This document tracks all changes made to this fork of Ember Media Manager, start
 
 | Property | Value |
 |----------|-------|
-| **Document Version** | 1.0.8 |
+| **Document Version** | 1.0.9 |
 | **Created** | December 25, 2025 |
 | **Last Updated** | December 31, 2025 |
 | **Author** | Eric H. Anderson |
@@ -46,6 +46,7 @@ This document tracks all changes made to this fork of Ember Media Manager, start
 | 1.12.1.0 | Dec 29-30, 2025 | Bug fixes, cleanup, documentation, code organization, **Phase 1 performance complete (61% improvement)**, Phase 2 planning |
 | 1.12.1.0 | Dec 29-30, 2025 | Bug fixes, cleanup, documentation, **Phase 2-2 parallel scraping complete (60% improvement)** |
 | 1.12.1.0 | Dec 31, 2025 | **Phase 3: TV Show parallel scraping (50-60% improvement)**, TVDB file contention fix, cancellation bug fixes |
+| 1.12.1.0 | Dec 31, 2025 | **Phase 4: Comprehensive performance tracking** for all scrapers (Movies + TV), performance data documentation |
 
 
 ---
@@ -237,6 +238,12 @@ The following features are deprecated and slated for removal in a future version
 | Bug Fix | Fixed cancellation crash during parallel scrape phase - added ID validation guards | `EmberMediaManager\frmMain.vb` |
 | Bug Fix | Fixed `ArgumentOutOfRangeException` when cancelling before any items saved | `EmberMediaManager\frmMain.vb` |
 | Documentation | Created Phase 3 Future Enhancements document v2.2 | `EmberMediaManager\docs\improvements-docs\PerformanceImprovements-Phase3.md` |
+| Enhancement | **Phase 4: Performance Tracking** - Added comprehensive tracking to all scraper methods | Multiple scraper files |
+| Enhancement | Added `IMDB.SearchMovie` + `IMDB.SearchMovie.HttpRequest` tracking | `Addons\scraper.IMDB.Data\Scraper\clsScrapeIMDB.vb` |
+| Enhancement | Added `TMDB.SearchMovie` + `TMDB.SearchMovie.APICall` tracking | `Addons\scraper.TMDB.Data\Scraper\clsScrapeTMDB.vb` |
+| Enhancement | Added `TVDB.GetTVShowInfo` + `TVDB.GetTVShowInfo.APICall` tracking | `Addons\scraper.Data.TVDB\Scraper\clsScrapeTVDB.vb` |
+| Documentation | Created PerformanceData-Tv.md for TV scraping baseline metrics | `EmberMediaManager\docs\performance-data\PerformanceData-Tv.md` |
+| Documentation | Created PerformanceData-Movies.md for Movie scraping baseline metrics | `EmberMediaManager\docs\performance-data\PerformanceData-Movies.md` |
 
 **Version Updates:**
 
@@ -302,6 +309,7 @@ The following features are deprecated and slated for removal in a future version
 | Documentation | Created PerformanceImprovements-Phase1.md | `EmberMediaManager\docs\PerformanceImprovements-Phase1.md` |
 | Documentation | Created ScrapingProcessMovies.md | `EmberMediaManager\docs\process-docs\ScrapingProcessMovies.md` |
 | Documentation | Created ScrapingProcessTvShows.md | `EmberMediaManager\docs\process-docs\ScrapingProcessTvShows.md` |
+
 
 **Build and Scripts:**
 
@@ -433,6 +441,8 @@ The following documents provide detailed information about specific initiatives:
 | [ScrapingProcessTvShows.md](process-docs/ScrapingProcessTvShows.md) | TV Show scraping process architecture documentation |
 | [PerformanceImprovements-Phase2-2.md](improvements-docs/PerformanceImprovements-Phase2-2.md) | Parallel Movie Scraping detailed design document (v1.3 - Complete) |
 | [PerformanceImprovements-Phase3.md](improvements-docs/PerformanceImprovements-Phase3.md) | Phase 3: TV Show Parallel Scraping, TVDB fixes, cancellation fixes (v2.2 - Complete) |
+| [PerformanceData-Tv.md](performance-data/PerformanceData-Tv.md) | TV scraping performance baseline metrics and analysis |
+| [PerformanceData-Movies.md](performance-data/PerformanceData-Movies.md) | Movie scraping performance baseline metrics and analysis |
 
 ---
 

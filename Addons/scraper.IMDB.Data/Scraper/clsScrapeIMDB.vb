@@ -434,184 +434,269 @@ Public Class Scraper
         End Using
     End Function
 
-    Public Function GetTVEpisodeInfo(ByVal id As String, ByRef filteredoptions As Structures.ScrapeOptions) As MediaContainers.EpisodeDetails
-        If String.IsNullOrEmpty(id) Then Return Nothing
+    Private Function SearchMovie(ByVal title As String, ByVal year As String) As SearchResults_Movie
+        Using scopeTotal = EmberAPI.PerformanceTracker.StartOperation("IMDB.SearchMovie")
+            Dim R As New SearchResults_Movie
+
+            Dim strTitle As String = String.Concat(title, " ", If(Not String.IsNullOrEmpty(year), String.Concat("(", year, ")"), String.Empty)).Trim
+
+            Dim htmldResultsPartialTitles As HtmlDocument = Nothing
+            Dim htmldResultsPopularTitles As HtmlDocument = Nothing
+            Dim htmldResultsShortTitles As HtmlDocument = Nothing
+            Dim htmldResultsTvTitles As HtmlDocument = Nothing
+            Dim htmldResultsVideoTitles As HtmlDocument = Nothing
+
+            Dim webParsing As New HtmlWeb
+            Dim htmldResultsExact As HtmlDocument
+
+            Using scopeHttp = EmberAPI.PerformanceTracker.StartOperation("IMDB.SearchMovie.HttpRequest")
+                htmldResultsExact = webParsing.Load(String.Concat("https://www.imdb.com/find/?q=", HttpUtility.UrlEncode(strTitle), "&s=ttexact=true"))
+            End Using
+
+            Dim strResponseUri = webParsing.ResponseUri.ToString
+
+            If _SpecialSettings.SearchTvTitles Then
+                htmldResultsTvTitles = webParsing.Load(String.Concat("https://www.imdb.com/find/?q=", HttpUtility.UrlEncode(strTitle), "&title_type=tv_movie"))
+            End If
+            If _SpecialSettings.SearchVideoTitles Then
+                htmldResultsVideoTitles = webParsing.Load(String.Concat("https://www.imdb.com/find/?q=", HttpUtility.UrlEncode(strTitle), "&title_type=video"))
+            End If
+            If _SpecialSettings.SearchShortTitles Then
+                htmldResultsShortTitles = webParsing.Load(String.Concat("https://www.imdb.com/find/?q=", HttpUtility.UrlEncode(strTitle), "&title_type=short"))
+            End If
+            If _SpecialSettings.SearchPartialTitles Then
+                htmldResultsPartialTitles = webParsing.Load(String.Concat("https://www.imdb.com/find/?q=", HttpUtility.UrlEncode(strTitle), "&s=tt&ttype=ft&ref_=fn_ft"))
+            End If
+            If _SpecialSettings.SearchPopularTitles Then
+                htmldResultsPopularTitles = webParsing.Load(String.Concat("https://www.imdb.com/find/?q=", HttpUtility.UrlEncode(strTitle), "&s=tt"))
+            End If
+
+            If webParsing.StatusCode <> 200 Then
+                logger.Trace(String.Format("[IMDB] [SearchMovie] failed to retrieve imdb search pages"))
+            End If
+
+            'Check if we've been redirected straight to the movie page
+            If Regex.IsMatch(strResponseUri, REGEX_IMDBID) Then
+                Return R
+            End If
+
+            'Exact titles
+            If htmldResultsExact IsNot Nothing Then
+                json_IMDB_Search_Results_next_data = DeserializeJsonObject(Of IMDBSearchResultsJson)(htmldResultsExact.DocumentNode.SelectSingleNode("//script[@id='__NEXT_DATA__']").InnerHtml)
+
+                If json_IMDB_Search_Results_next_data.props.pageProps.titleResults IsNot Nothing AndAlso json_IMDB_Search_Results_next_data.props.pageProps.titleResults.results IsNot Nothing Then
+                    Dim searchResults As List(Of Result)
+                    searchResults = json_IMDB_Search_Results_next_data.props.pageProps.titleResults.results
+
+                    For Each nResult In searchResults
+                        If nResult.listItem IsNot Nothing Then
+                            R.PopularTitles.Add(New MediaContainers.Movie With {
+                                .Lev = StringUtils.ComputeLevenshtein(StringUtils.FilterYear(strTitle).ToLower, nResult.listItem.originalTitleText),
+                                .title = nResult.listItem.originalTitleText,
+                                .UniqueIDs = New MediaContainers.UniqueidContainer(Enums.ContentType.Movie) With {.IMDbId = nResult.listItem.titleId},
+                                .year = nResult.listItem.releaseYear
+                                })
+                        End If
+                    Next
+                End If
+            End If
+
+            'Popular titles
+            If htmldResultsPopularTitles IsNot Nothing Then
+                json_IMDB_Search_Results_next_data = DeserializeJsonObject(Of IMDBSearchResultsJson)(htmldResultsPopularTitles.DocumentNode.SelectSingleNode("//script[@id='__NEXT_DATA__']").InnerHtml)
+
+                If json_IMDB_Search_Results_next_data.props.pageProps.titleResults IsNot Nothing AndAlso json_IMDB_Search_Results_next_data.props.pageProps.titleResults.results IsNot Nothing Then
+                    Dim searchResults As List(Of Result)
+                    searchResults = json_IMDB_Search_Results_next_data.props.pageProps.titleResults.results
+
+                    For Each nResult In searchResults
+                        If nResult.listItem IsNot Nothing Then
+                            R.PopularTitles.Add(New MediaContainers.Movie With {
+                                .Lev = StringUtils.ComputeLevenshtein(StringUtils.FilterYear(strTitle).ToLower, nResult.listItem.originalTitleText),
+                                .title = nResult.listItem.originalTitleText,
+                                .UniqueIDs = New MediaContainers.UniqueidContainer(Enums.ContentType.Movie) With {.IMDbId = nResult.listItem.titleId},
+                                .year = nResult.listItem.releaseYear
+                                })
+                        End If
+                    Next
+                End If
+            End If
+
+            'Partial titles
+            If htmldResultsPartialTitles IsNot Nothing Then
+                json_IMDB_Search_Results_next_data = DeserializeJsonObject(Of IMDBSearchResultsJson)(htmldResultsPartialTitles.DocumentNode.SelectSingleNode("//script[@id='__NEXT_DATA__']").InnerHtml)
+
+                If json_IMDB_Search_Results_next_data.props.pageProps.titleResults.results IsNot Nothing AndAlso json_IMDB_Search_Results_next_data.props.pageProps.titleResults.results IsNot Nothing Then
+                    Dim searchResults As List(Of Result)
+                    searchResults = json_IMDB_Search_Results_next_data.props.pageProps.titleResults.results
+
+                    For Each nResult In searchResults
+                        If nResult.listItem IsNot Nothing Then
+                            R.PartialMatches.Add(New MediaContainers.Movie With {
+                                 .Lev = StringUtils.ComputeLevenshtein(StringUtils.FilterYear(strTitle).ToLower, nResult.listItem.originalTitleText),
+                                 .title = nResult.listItem.originalTitleText,
+                                 .UniqueIDs = New MediaContainers.UniqueidContainer(Enums.ContentType.Movie) With {.IMDbId = nResult.listItem.titleId},
+                                 .year = nResult.listItem.releaseYear
+                                 })
+                        End If
+                    Next
+                End If
+
+            End If
+
+            'tv titles
+            If htmldResultsTvTitles IsNot Nothing Then
+                json_IMDB_Search_Results_next_data = DeserializeJsonObject(Of IMDBSearchResultsJson)(htmldResultsTvTitles.DocumentNode.SelectSingleNode("//script[@id='__NEXT_DATA__']").InnerHtml)
+
+                If json_IMDB_Search_Results_next_data.props.pageProps.titleResults IsNot Nothing AndAlso json_IMDB_Search_Results_next_data.props.pageProps.titleResults.results IsNot Nothing Then
+                    Dim searchResults As List(Of Result)
+                    searchResults = json_IMDB_Search_Results_next_data.props.pageProps.titleResults.results
+
+                    For Each nResult In searchResults
+                        If nResult.listItem IsNot Nothing Then
+                            R.TvTitles.Add(New MediaContainers.Movie With {
+                                 .Lev = StringUtils.ComputeLevenshtein(StringUtils.FilterYear(strTitle).ToLower, nResult.listItem.originalTitleText),
+                                 .title = nResult.listItem.originalTitleText,
+                                 .UniqueIDs = New MediaContainers.UniqueidContainer(Enums.ContentType.Movie) With {.IMDbId = nResult.listItem.titleId},
+                                 .year = nResult.listItem.releaseYear
+                                 })
+                        End If
+                    Next
+                End If
+            End If
+
+            'video titles
+            If htmldResultsVideoTitles IsNot Nothing Then
+                json_IMDB_Search_Results_next_data = DeserializeJsonObject(Of IMDBSearchResultsJson)(htmldResultsVideoTitles.DocumentNode.SelectSingleNode("//script[@id='__NEXT_DATA__']").InnerHtml)
+
+                If json_IMDB_Search_Results_next_data.props.pageProps.titleResults IsNot Nothing AndAlso json_IMDB_Search_Results_next_data.props.pageProps.titleResults.results IsNot Nothing Then
+                    Dim searchResults As List(Of Result)
+                    searchResults = json_IMDB_Search_Results_next_data.props.pageProps.titleResults.results
+
+                    For Each nResult In searchResults
+                        If nResult.listItem IsNot Nothing Then
+                            R.VideoTitles.Add(New MediaContainers.Movie With {
+                                 .Lev = StringUtils.ComputeLevenshtein(StringUtils.FilterYear(strTitle).ToLower, nResult.listItem.originalTitleText),
+                                 .title = nResult.listItem.originalTitleText,
+                                 .UniqueIDs = New MediaContainers.UniqueidContainer(Enums.ContentType.Movie) With {.IMDbId = nResult.listItem.titleId},
+                                 .year = nResult.listItem.releaseYear
+                                 })
+                        End If
+                    Next
+                End If
+            End If
+
+            'short titles
+            If htmldResultsShortTitles IsNot Nothing Then
+                json_IMDB_Search_Results_next_data = DeserializeJsonObject(Of IMDBSearchResultsJson)(htmldResultsShortTitles.DocumentNode.SelectSingleNode("//script[@id='__NEXT_DATA__']").InnerHtml)
+
+                If json_IMDB_Search_Results_next_data.props.pageProps.titleResults IsNot Nothing AndAlso json_IMDB_Search_Results_next_data.props.pageProps.titleResults.results IsNot Nothing Then
+                    Dim searchResults As List(Of Result)
+                    searchResults = json_IMDB_Search_Results_next_data.props.pageProps.titleResults.results
+
+                    For Each nResult In searchResults
+                        If nResult.listItem IsNot Nothing Then
+                            R.ShortTitles.Add(New MediaContainers.Movie With {
+                                    .Lev = StringUtils.ComputeLevenshtein(StringUtils.FilterYear(strTitle).ToLower, nResult.listItem.originalTitleText),
+                                    .title = nResult.listItem.originalTitleText,
+                                    .UniqueIDs = New MediaContainers.UniqueidContainer(Enums.ContentType.Movie) With {.IMDbId = nResult.listItem.titleId},
+                                    .year = nResult.listItem.releaseYear
+                                    })
+                        End If
+                    Next
+                End If
+            End If
+
+            Return R
+        End Using
+    End Function
+
+    Public Sub SearchMovieAsync(ByVal title As String, ByVal year As String, ByVal filteredoptions As Structures.ScrapeOptions)
+        Try
+            If Not bwIMDB.IsBusy Then
+                bwIMDB.WorkerReportsProgress = False
+                bwIMDB.WorkerSupportsCancellation = True
+                bwIMDB.RunWorkerAsync(New Arguments With {.Search = SearchType.Movies, .Parameter = title, .Year = year, .Options_Movie = filteredoptions})
+            End If
+        Catch ex As Exception
+            logger.Error(ex, New StackFrame().GetMethod().Name)
+        End Try
+    End Sub
+
+    Public Function GetSearchMovieInfo(ByVal title As String,
+                                           ByVal year As String,
+                                           ByRef oDBElement As Database.DBElement,
+                                           ByVal scrapetype As Enums.ScrapeType,
+                                           ByVal filteredoptions As Structures.ScrapeOptions) As MediaContainers.Movie
+        Dim r As SearchResults_Movie = SearchMovie(title, year)
 
         Try
-            If bwIMDB.CancellationPending Then Return Nothing
-
-            Dim bIsScraperLanguage As Boolean = _SpecialSettings.PrefLanguage.ToLower.StartsWith("en")
-            strPosterURL = String.Empty
-
-            Dim nTVEpisode As New MediaContainers.EpisodeDetails With {
-                .Scrapersource = "IMDB",
-                .UniqueIDs = New MediaContainers.UniqueidContainer(Enums.ContentType.TVEpisode) With {.IMDbId = id}
-            }
-
-            Dim webParsingSeasons As New HtmlWeb
-            Dim htmldReference As HtmlDocument = webParsingSeasons.Load(String.Concat("https://www.imdb.com/title/", id, "/reference/"))
-
-            If webParsingSeasons.StatusCode <> 200 Then
-                logger.Trace(String.Format("[IMDB] [GetTVShowInfo] [ID:""{0}""] failed to retrieve imdb page", id))
-                Return Nothing
-            End If
-
-            'Get our React JSON next_data
-            json_IMBD_next_data = DeserializeJsonObject(Of IMDBJson)(htmldReference.DocumentNode.SelectSingleNode("//script[@id='__NEXT_DATA__']").InnerHtml)
-
-            If json_IMBD_next_data IsNot Nothing Then
-
-                'Get season and episode number
-                If json_IMBD_next_data.props.PageProps.MainColumnData.Series IsNot Nothing AndAlso json_IMBD_next_data.props.PageProps.MainColumnData.Series.episodeNumber IsNot Nothing Then
-                    nTVEpisode.Episode = json_IMBD_next_data.props.PageProps.MainColumnData.Series.episodeNumber.episodeNumber
-                    nTVEpisode.Season = json_IMBD_next_data.props.PageProps.MainColumnData.Series.episodeNumber.seasonNumber
-                Else
-                    logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] can't parse Episode number", id))
-                End If
-
-                'Original Title
-                If filteredoptions.bEpisodeOriginalTitle Then
-                    nTVEpisode.OriginalTitle = json_IMBD_next_data.props.PageProps.MainColumnData.OriginalTitleText.Text
-                End If
-
-                'Title
-                If filteredoptions.bEpisodeTitle Then
-                    If Not String.IsNullOrEmpty(_SpecialSettings.ForceTitleLanguage) Then
-                        'Translated English title
-                        nTVEpisode.Title = json_IMBD_next_data.props.PageProps.MainColumnData.TitleText.Text
+            Select Case scrapetype
+                Case Enums.ScrapeType.AllAsk, Enums.ScrapeType.FilterAsk, Enums.ScrapeType.MarkedAsk, Enums.ScrapeType.MissingAsk, Enums.ScrapeType.NewAsk, Enums.ScrapeType.SelectedAsk, Enums.ScrapeType.SingleField
+                    If r.ExactMatches.Count = 1 Then
+                        Return GetMovieInfo(r.ExactMatches.Item(0).UniqueIDs.IMDbId, False, filteredoptions)
+                    ElseIf r.PopularTitles.Count = 1 AndAlso r.PopularTitles(0).Lev <= 5 Then
+                        Return GetMovieInfo(r.PopularTitles.Item(0).UniqueIDs.IMDbId, False, filteredoptions)
+                    ElseIf r.ExactMatches.Count = 1 AndAlso r.ExactMatches(0).Lev <= 5 Then
+                        Return GetMovieInfo(r.ExactMatches.Item(0).UniqueIDs.IMDbId, False, filteredoptions)
                     Else
-                        nTVEpisode.Title = json_IMBD_next_data.props.PageProps.MainColumnData.OriginalTitleText.Text
+                        Using dlgSearch As New dlgIMDBSearchResults_Movie(_SpecialSettings, Me)
+                            If dlgSearch.ShowDialog(r, title, oDBElement.Filename) = DialogResult.OK Then
+                                If Not String.IsNullOrEmpty(dlgSearch.Result.UniqueIDs.IMDbId) Then
+                                    Return GetMovieInfo(dlgSearch.Result.UniqueIDs.IMDbId, False, filteredoptions)
+                                End If
+                            End If
+                        End Using
                     End If
-                End If
 
-                'Actors
-                If filteredoptions.bEpisodeActors Then
-                    Dim lstActors = ParseActors(json_IMBD_next_data)
-                    If lstActors IsNot Nothing Then
-                        nTVEpisode.Actors = lstActors
-                    Else
-                        logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] can't parse Actors", id))
+                Case Enums.ScrapeType.AllSkip, Enums.ScrapeType.FilterSkip, Enums.ScrapeType.MarkedSkip, Enums.ScrapeType.MissingSkip, Enums.ScrapeType.NewSkip, Enums.ScrapeType.SelectedSkip
+                    If r.ExactMatches.Count = 1 Then
+                        Return GetMovieInfo(r.ExactMatches.Item(0).UniqueIDs.IMDbId, False, filteredoptions)
                     End If
-                End If
 
-                'AiredDate
-                If filteredoptions.bEpisodeAired Then
-                    If json_IMBD_next_data.props.PageProps.MainColumnData.ReleaseDate IsNot Nothing Then
-                        nTVEpisode.Aired = json_IMBD_next_data.props.PageProps.MainColumnData.ReleaseDate.GetFullReleaseDate()
+                Case Enums.ScrapeType.AllAuto, Enums.ScrapeType.FilterAuto, Enums.ScrapeType.MarkedAuto, Enums.ScrapeType.MissingAuto, Enums.ScrapeType.NewAuto, Enums.ScrapeType.SelectedAuto, Enums.ScrapeType.SingleScrape
+                    'check if ALL results are over lev value
+                    Dim useAnyway As Boolean = False
+                    If ((r.PopularTitles.Count > 0 AndAlso r.PopularTitles(0).Lev > 5) OrElse r.PopularTitles.Count = 0) AndAlso
+                        ((r.ExactMatches.Count > 0 AndAlso r.ExactMatches(0).Lev > 5) OrElse r.ExactMatches.Count = 0) AndAlso
+                        ((r.PartialMatches.Count > 0 AndAlso r.PartialMatches(0).Lev > 5) OrElse r.PartialMatches.Count = 0) Then
+                        useAnyway = True
                     End If
-                End If
-
-                'Credits (writers)
-                If filteredoptions.bEpisodeCredits Then
-                    Dim lstCredits = ParseCredits(json_IMBD_next_data)
-                    If lstCredits IsNot Nothing Then
-                        nTVEpisode.Credits = lstCredits
-                    Else
-                        logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] can't parse Credits (Writers)", id))
+                    Dim exactHaveYear As Integer = FindYear(oDBElement.Filename, r.ExactMatches)
+                    Dim popularHaveYear As Integer = FindYear(oDBElement.Filename, r.PopularTitles)
+                    If r.ExactMatches.Count = 1 Then
+                        Return GetMovieInfo(r.ExactMatches.Item(0).UniqueIDs.IMDbId, False, filteredoptions)
+                    ElseIf r.ExactMatches.Count > 1 AndAlso exactHaveYear >= 0 Then
+                        Return GetMovieInfo(r.ExactMatches.Item(exactHaveYear).UniqueIDs.IMDbId, False, filteredoptions)
+                    ElseIf r.PopularTitles.Count > 0 AndAlso popularHaveYear >= 0 Then
+                        Return GetMovieInfo(r.PopularTitles.Item(popularHaveYear).UniqueIDs.IMDbId, False, filteredoptions)
+                    ElseIf r.ExactMatches.Count > 0 AndAlso (r.ExactMatches(0).Lev <= 5 OrElse useAnyway) Then
+                        Return GetMovieInfo(r.ExactMatches.Item(0).UniqueIDs.IMDbId, False, filteredoptions)
+                    ElseIf r.PopularTitles.Count > 0 AndAlso (r.PopularTitles(0).Lev <= 5 OrElse useAnyway) Then
+                        Return GetMovieInfo(r.PopularTitles.Item(0).UniqueIDs.IMDbId, False, filteredoptions)
+                    ElseIf r.PartialMatches.Count > 0 AndAlso (r.PartialMatches(0).Lev <= 5 OrElse useAnyway) Then
+                        Return GetMovieInfo(r.PartialMatches.Item(0).UniqueIDs.IMDbId, False, filteredoptions)
                     End If
-                End If
+            End Select
 
-                'Directors
-                If filteredoptions.bEpisodeDirectors Then
-                    Dim lstDirectors = ParseDirectors(json_IMBD_next_data)
-                    If lstDirectors IsNot Nothing Then
-                        nTVEpisode.Directors = lstDirectors
-                    Else
-                        logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] can't parse Directors", id))
-                    End If
-                End If
-
-                'Plot
-                If filteredoptions.bEpisodePlot AndAlso bIsScraperLanguage Then
-                    Dim strPlot = ParsePlot(json_IMBD_next_data)
-
-                    If Not String.IsNullOrEmpty(strPlot) Then
-                        nTVEpisode.Plot = strPlot
-                    Else
-                        strPlot = ParseOutline(json_IMBD_next_data)
-                        If Not String.IsNullOrEmpty(strPlot) Then
-                            nTVEpisode.Plot = strPlot
-                        Else
-                            logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] no result from ""plotsummary"" page for Plot", id))
-                        End If
-                    End If
-                End If
-
-                'Rating
-                If filteredoptions.bEpisodeRating Then
-                    Dim nRating = ParseRating(json_IMBD_next_data)
-                    If nRating IsNot Nothing Then
-                        nTVEpisode.Ratings.Add(nRating)
-                    Else
-                        logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] can't parse Rating", id))
-                    End If
-                End If
-
-                Return nTVEpisode
-            Else
-                Return Nothing
-            End If
+            Return Nothing
         Catch ex As Exception
             logger.Error(ex, New StackFrame().GetMethod().Name)
             Return Nothing
         End Try
     End Function
 
-    Public Function GetTVEpisodeInfo(ByVal showid As String, ByVal season As Integer, ByVal episode As Integer, ByRef filteredoptions As Structures.ScrapeOptions) As MediaContainers.EpisodeDetails
-        If String.IsNullOrEmpty(showid) OrElse season = -1 OrElse episode = -1 Then Return Nothing
-
-        Dim webParsingSeasons As New HtmlWeb
-        Dim htmldEpisodes As HtmlDocument = webParsingSeasons.Load(String.Concat("https://www.imdb.com/title/", showid, "/episodes/?season=", season))
-
-        If webParsingSeasons.StatusCode <> 200 Then
-            logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] failed to retrieve imdb episode/seasons page", showid))
-        Else
-            'Get our React JSON next_data
-            json_IMBD_next_data = DeserializeJsonObject(Of IMDBJson)(htmldEpisodes.DocumentNode.SelectSingleNode("//script[@id='__NEXT_DATA__']").InnerHtml)
-
-            If json_IMBD_next_data IsNot Nothing Then
-                Dim EpisodeItems As List(Of EpisodeItem)
-
-                EpisodeItems = json_IMBD_next_data.props.PageProps.ContentData.Section.Episodes.items
-                For Each EpisodeItem In EpisodeItems
-                    If (Convert.ToInt32(EpisodeItem.episode) = episode) Then
-                        Dim nEpisode As MediaContainers.EpisodeDetails = GetTVEpisodeInfo(EpisodeItem.id, filteredoptions)
-
-                        If nEpisode IsNot Nothing Then
-                            Return nEpisode
-                        End If
-                    End If
-                Next
+    Public Sub GetSearchMovieInfoAsync(ByVal imdbID As String, ByVal FilteredOptions As Structures.ScrapeOptions)
+        Try
+            If Not bwIMDB.IsBusy Then
+                bwIMDB.WorkerReportsProgress = False
+                bwIMDB.WorkerSupportsCancellation = True
+                bwIMDB.RunWorkerAsync(New Arguments With {.Search = SearchType.SearchDetails_Movie,
+                                           .Parameter = imdbID, .Options_Movie = FilteredOptions})
             End If
-        End If
-
-        Return Nothing
-    End Function
-
-    Public Sub GetTVSeasonInfo(ByRef nTVShow As MediaContainers.TVShow, ByVal showid As String, ByVal season As Integer, ByRef scrapemodifiers As Structures.ScrapeModifiers, ByRef filteredoptions As Structures.ScrapeOptions)
-        Dim webParsingSeasons As New HtmlWeb
-        Dim htmldEpisodes As HtmlDocument = webParsingSeasons.Load(String.Concat("https://www.imdb.com/title/", showid, "/episodes/?season=", season))
-
-        If webParsingSeasons.StatusCode <> 200 Then
-            logger.Trace(String.Format("[IMDB] [GetTVSeasonInfo] [ID:""{0}""] failed to retrieve imdb episode/seasons page", showid))
-        Else
-            'Get our React JSON next_data
-            json_IMBD_next_data = DeserializeJsonObject(Of IMDBJson)(htmldEpisodes.DocumentNode.SelectSingleNode("//script[@id='__NEXT_DATA__']").InnerHtml)
-
-            If json_IMBD_next_data IsNot Nothing Then
-                Dim EpisodeItems As List(Of EpisodeItem)
-
-                EpisodeItems = json_IMBD_next_data.props.PageProps.ContentData.Section.Episodes.items
-                For Each EpisodeItem In EpisodeItems
-                    Dim nEpisode As MediaContainers.EpisodeDetails = GetTVEpisodeInfo(EpisodeItem.id, filteredoptions)
-
-                    If nEpisode IsNot Nothing Then
-                        nTVShow.KnownEpisodes.Add(nEpisode)
-                    End If
-                Next
-            End If
-
-        End If
+        Catch ex As Exception
+            logger.Error(ex, New StackFrame().GetMethod().Name)
+        End Try
     End Sub
 
     Public Function GetTVShowInfo(ByVal id As String, ByVal scrapemodifier As Structures.ScrapeModifiers, ByVal filteredoptions As Structures.ScrapeOptions, ByVal getposter As Boolean) As MediaContainers.TVShow
@@ -836,102 +921,46 @@ Public Class Scraper
         End Using
     End Function
 
-    Public Function GetMovieStudios(ByVal id As String) As List(Of String)
-        Dim webParsingSeasons As New HtmlWeb
-        Dim htmldReference As HtmlDocument = webParsingSeasons.Load(String.Concat("http://www.imdb.com/title/", id, "/reference"))
+    Private Function SearchTVShow(ByVal title As String) As SearchResults_TVShow
+        Dim R As New SearchResults_TVShow
 
-        If webParsingSeasons.StatusCode <> 200 Then
-            logger.Trace(String.Format("[IMDB] [GetMovieStudios] [ID:""{0}""] failed to retrieve imdb reference page", id))
+        Dim webParsing As New HtmlWeb
+        Dim htmldSearchResults As HtmlDocument = webParsing.Load(String.Concat("https://www.imdb.com/find/?q=", HttpUtility.UrlEncode(title), "&s=tt&ttype=tv"))
+
+        If webParsing.StatusCode <> 200 Then
+            logger.Trace(String.Format("[IMDB] [SearchTVShow] failed to retrieve imdb find page"))
+            'Do nothing
         Else
-            'Get our React JSON next_data
-            json_IMBD_next_data = DeserializeJsonObject(Of IMDBJson)(htmldReference.DocumentNode.SelectSingleNode("//script[@id='__NEXT_DATA__']").InnerHtml)
+            If htmldSearchResults IsNot Nothing Then
+                json_IMDB_Search_Results_next_data = DeserializeJsonObject(Of IMDBSearchResultsJson)(htmldSearchResults.DocumentNode.SelectSingleNode("//script[@id='__NEXT_DATA__']").InnerHtml)
+            End If
 
-            If json_IMBD_next_data IsNot Nothing Then
-                Dim lstStudios = ParseStudios(json_IMBD_next_data)
+            If json_IMDB_Search_Results_next_data.props.pageProps.titleResults IsNot Nothing AndAlso json_IMDB_Search_Results_next_data.props.pageProps.titleResults.results IsNot Nothing Then
+                Dim searchResults As List(Of Result)
+                searchResults = json_IMDB_Search_Results_next_data.props.pageProps.titleResults.results
 
-                If lstStudios IsNot Nothing Then
-                    Return lstStudios
-                End If
+                For Each nResult In searchResults
+                    If nResult.listItem IsNot Nothing Then
+                        R.Matches.Add(New MediaContainers.TVShow With {
+                          .title = nResult.listItem.originalTitleText,
+                          .UniqueIDs = New MediaContainers.UniqueidContainer(Enums.ContentType.TVShow) With {.IMDbId = nResult.listItem.titleId}
+                          })
+                    End If
+                Next
             End If
         End If
 
-        Return New List(Of String)
+        Return R
     End Function
 
-    Public Function GetSearchMovieInfo(ByVal title As String,
-                                           ByVal year As String,
-                                           ByRef oDBElement As Database.DBElement,
-                                           ByVal scrapetype As Enums.ScrapeType,
-                                           ByVal filteredoptions As Structures.ScrapeOptions) As MediaContainers.Movie
-        Dim r As SearchResults_Movie = SearchMovie(title, year)
+    Public Sub SearchTVShowAsync(ByVal title As String, ByVal scrapemodifiers As Structures.ScrapeModifiers, ByVal filteredoptions As Structures.ScrapeOptions)
 
-        Try
-            Select Case scrapetype
-                Case Enums.ScrapeType.AllAsk, Enums.ScrapeType.FilterAsk, Enums.ScrapeType.MarkedAsk, Enums.ScrapeType.MissingAsk, Enums.ScrapeType.NewAsk, Enums.ScrapeType.SelectedAsk, Enums.ScrapeType.SingleField
-                    If r.ExactMatches.Count = 1 Then
-                        Return GetMovieInfo(r.ExactMatches.Item(0).UniqueIDs.IMDbId, False, filteredoptions)
-                    ElseIf r.PopularTitles.Count = 1 AndAlso r.PopularTitles(0).Lev <= 5 Then
-                        Return GetMovieInfo(r.PopularTitles.Item(0).UniqueIDs.IMDbId, False, filteredoptions)
-                    ElseIf r.ExactMatches.Count = 1 AndAlso r.ExactMatches(0).Lev <= 5 Then
-                        Return GetMovieInfo(r.ExactMatches.Item(0).UniqueIDs.IMDbId, False, filteredoptions)
-                    Else
-                        Using dlgSearch As New dlgIMDBSearchResults_Movie(_SpecialSettings, Me)
-                            If dlgSearch.ShowDialog(r, title, oDBElement.Filename) = DialogResult.OK Then
-                                If Not String.IsNullOrEmpty(dlgSearch.Result.UniqueIDs.IMDbId) Then
-                                    Return GetMovieInfo(dlgSearch.Result.UniqueIDs.IMDbId, False, filteredoptions)
-                                End If
-                            End If
-                        End Using
-                    End If
-
-                Case Enums.ScrapeType.AllSkip, Enums.ScrapeType.FilterSkip, Enums.ScrapeType.MarkedSkip, Enums.ScrapeType.MissingSkip, Enums.ScrapeType.NewSkip, Enums.ScrapeType.SelectedSkip
-                    If r.ExactMatches.Count = 1 Then
-                        Return GetMovieInfo(r.ExactMatches.Item(0).UniqueIDs.IMDbId, False, filteredoptions)
-                    End If
-
-                Case Enums.ScrapeType.AllAuto, Enums.ScrapeType.FilterAuto, Enums.ScrapeType.MarkedAuto, Enums.ScrapeType.MissingAuto, Enums.ScrapeType.NewAuto, Enums.ScrapeType.SelectedAuto, Enums.ScrapeType.SingleScrape
-                    'check if ALL results are over lev value
-                    Dim useAnyway As Boolean = False
-                    If ((r.PopularTitles.Count > 0 AndAlso r.PopularTitles(0).Lev > 5) OrElse r.PopularTitles.Count = 0) AndAlso
-                        ((r.ExactMatches.Count > 0 AndAlso r.ExactMatches(0).Lev > 5) OrElse r.ExactMatches.Count = 0) AndAlso
-                        ((r.PartialMatches.Count > 0 AndAlso r.PartialMatches(0).Lev > 5) OrElse r.PartialMatches.Count = 0) Then
-                        useAnyway = True
-                    End If
-                    Dim exactHaveYear As Integer = FindYear(oDBElement.Filename, r.ExactMatches)
-                    Dim popularHaveYear As Integer = FindYear(oDBElement.Filename, r.PopularTitles)
-                    If r.ExactMatches.Count = 1 Then
-                        Return GetMovieInfo(r.ExactMatches.Item(0).UniqueIDs.IMDbId, False, filteredoptions)
-                    ElseIf r.ExactMatches.Count > 1 AndAlso exactHaveYear >= 0 Then
-                        Return GetMovieInfo(r.ExactMatches.Item(exactHaveYear).UniqueIDs.IMDbId, False, filteredoptions)
-                    ElseIf r.PopularTitles.Count > 0 AndAlso popularHaveYear >= 0 Then
-                        Return GetMovieInfo(r.PopularTitles.Item(popularHaveYear).UniqueIDs.IMDbId, False, filteredoptions)
-                    ElseIf r.ExactMatches.Count > 0 AndAlso (r.ExactMatches(0).Lev <= 5 OrElse useAnyway) Then
-                        Return GetMovieInfo(r.ExactMatches.Item(0).UniqueIDs.IMDbId, False, filteredoptions)
-                    ElseIf r.PopularTitles.Count > 0 AndAlso (r.PopularTitles(0).Lev <= 5 OrElse useAnyway) Then
-                        Return GetMovieInfo(r.PopularTitles.Item(0).UniqueIDs.IMDbId, False, filteredoptions)
-                    ElseIf r.PartialMatches.Count > 0 AndAlso (r.PartialMatches(0).Lev <= 5 OrElse useAnyway) Then
-                        Return GetMovieInfo(r.PartialMatches.Item(0).UniqueIDs.IMDbId, False, filteredoptions)
-                    End If
-            End Select
-
-            Return Nothing
-        Catch ex As Exception
-            logger.Error(ex, New StackFrame().GetMethod().Name)
-            Return Nothing
-        End Try
-    End Function
-
-    Public Sub GetSearchMovieInfoAsync(ByVal imdbID As String, ByVal FilteredOptions As Structures.ScrapeOptions)
-        Try
-            If Not bwIMDB.IsBusy Then
-                bwIMDB.WorkerReportsProgress = False
-                bwIMDB.WorkerSupportsCancellation = True
-                bwIMDB.RunWorkerAsync(New Arguments With {.Search = SearchType.SearchDetails_Movie,
-                                           .Parameter = imdbID, .Options_Movie = FilteredOptions})
-            End If
-        Catch ex As Exception
-            logger.Error(ex, New StackFrame().GetMethod().Name)
-        End Try
+        If Not bwIMDB.IsBusy Then
+            bwIMDB.WorkerReportsProgress = False
+            bwIMDB.WorkerSupportsCancellation = True
+            bwIMDB.RunWorkerAsync(New Arguments With {.Search = SearchType.TVShows,
+                  .Parameter = title, .Options_TV = filteredoptions, .ScrapeModifiers = scrapemodifiers})
+        End If
     End Sub
 
     Public Function GetSearchTVShowInfo(ByVal title As String, ByRef oDBElement As Database.DBElement, ByVal scrapetype As Enums.ScrapeType, ByVal scrapemodifier As Structures.ScrapeModifiers, ByVal FilteredOptions As Structures.ScrapeOptions) As MediaContainers.TVShow
@@ -977,6 +1006,232 @@ Public Class Scraper
             logger.Error(ex, New StackFrame().GetMethod().Name)
         End Try
     End Sub
+
+    ''' <summary>
+    ''' Retrieves TV season information including all episodes sequentially.
+    ''' </summary>
+    ''' <param name="nTVShow">The TVShow container to populate with episode data.</param>
+    ''' <param name="showid">The IMDB ID of the TV show.</param>
+    ''' <param name="season">The season number to scrape.</param>
+    ''' <param name="scrapemodifiers">Scrape modifiers controlling what data to retrieve.</param>
+    ''' <param name="filteredoptions">Filtered scrape options for episode data fields.</param>
+    Public Sub GetTVSeasonInfo(ByRef nTVShow As MediaContainers.TVShow, ByVal showid As String, ByVal season As Integer, ByRef scrapemodifiers As Structures.ScrapeModifiers, ByRef filteredoptions As Structures.ScrapeOptions)
+        Using scopeTotal = EmberAPI.PerformanceTracker.StartOperation("IMDB.GetTVSeasonInfo")
+            Dim webParsingSeasons As New HtmlWeb
+            Dim htmldEpisodes As HtmlDocument
+
+            Using scopeHttp = EmberAPI.PerformanceTracker.StartOperation("IMDB.GetTVSeasonInfo.HttpRequest.SeasonPage")
+                htmldEpisodes = webParsingSeasons.Load(String.Concat("https://www.imdb.com/title/", showid, "/episodes/?season=", season))
+            End Using
+
+            If webParsingSeasons.StatusCode <> 200 Then
+                logger.Trace(String.Format("[IMDB] [GetTVSeasonInfo] [ID:""{0}""] failed to retrieve imdb episode/seasons page", showid))
+            Else
+                'Get our React JSON next_data
+                json_IMBD_next_data = DeserializeJsonObject(Of IMDBJson)(htmldEpisodes.DocumentNode.SelectSingleNode("//script[@id='__NEXT_DATA__']").InnerHtml)
+
+                If json_IMBD_next_data IsNot Nothing Then
+                    Dim EpisodeItems As List(Of EpisodeItem)
+
+                    EpisodeItems = json_IMBD_next_data.props.PageProps.ContentData.Section.Episodes.items
+
+                    If EpisodeItems IsNot Nothing AndAlso EpisodeItems.Count > 0 Then
+                        Using scopeEpisodes = EmberAPI.PerformanceTracker.StartOperation("IMDB.GetTVSeasonInfo.Episodes")
+                            For Each EpisodeItem In EpisodeItems
+                                Dim nEpisode As MediaContainers.EpisodeDetails = GetTVEpisodeInfo(EpisodeItem.id, filteredoptions)
+
+                                If nEpisode IsNot Nothing Then
+                                    nTVShow.KnownEpisodes.Add(nEpisode)
+                                End If
+                            Next
+                        End Using
+                    End If
+                End If
+            End If
+        End Using
+    End Sub
+
+    Public Function GetTVEpisodeInfo(ByVal id As String, ByRef filteredoptions As Structures.ScrapeOptions) As MediaContainers.EpisodeDetails
+        Using scopeTotal = EmberAPI.PerformanceTracker.StartOperation("IMDB.GetTVEpisodeInfo")
+            If String.IsNullOrEmpty(id) Then Return Nothing
+
+            Try
+                If bwIMDB.CancellationPending Then Return Nothing
+
+                Dim bIsScraperLanguage As Boolean = _SpecialSettings.PrefLanguage.ToLower.StartsWith("en")
+                strPosterURL = String.Empty
+
+                Dim nTVEpisode As New MediaContainers.EpisodeDetails With {
+                    .Scrapersource = "IMDB",
+                    .UniqueIDs = New MediaContainers.UniqueidContainer(Enums.ContentType.TVEpisode) With {.IMDbId = id}
+                }
+
+                Dim webParsingSeasons As New HtmlWeb
+                Dim htmldReference As HtmlDocument
+
+                Using scopeHttp = EmberAPI.PerformanceTracker.StartOperation("IMDB.GetTVEpisodeInfo.HttpRequest")
+                    htmldReference = webParsingSeasons.Load(String.Concat("https://www.imdb.com/title/", id, "/reference/"))
+                End Using
+
+                If webParsingSeasons.StatusCode <> 200 Then
+                    logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] failed to retrieve imdb page", id))
+                    Return Nothing
+                End If
+
+                'Get our React JSON next_data
+                json_IMBD_next_data = DeserializeJsonObject(Of IMDBJson)(htmldReference.DocumentNode.SelectSingleNode("//script[@id='__NEXT_DATA__']").InnerHtml)
+
+                If json_IMBD_next_data IsNot Nothing Then
+
+                    'Get season and episode number
+                    If json_IMBD_next_data.props.PageProps.MainColumnData.Series IsNot Nothing AndAlso json_IMBD_next_data.props.PageProps.MainColumnData.Series.episodeNumber IsNot Nothing Then
+                        nTVEpisode.Episode = json_IMBD_next_data.props.PageProps.MainColumnData.Series.episodeNumber.episodeNumber
+                        nTVEpisode.Season = json_IMBD_next_data.props.PageProps.MainColumnData.Series.episodeNumber.seasonNumber
+                    Else
+                        logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] can't parse Episode number", id))
+                    End If
+
+                    'Original Title
+                    If filteredoptions.bEpisodeOriginalTitle Then
+                        nTVEpisode.OriginalTitle = json_IMBD_next_data.props.PageProps.MainColumnData.OriginalTitleText.Text
+                    End If
+
+                    'Title
+                    If filteredoptions.bEpisodeTitle Then
+                        If Not String.IsNullOrEmpty(_SpecialSettings.ForceTitleLanguage) Then
+                            'Translated English title
+                            nTVEpisode.Title = json_IMBD_next_data.props.PageProps.MainColumnData.TitleText.Text
+                        Else
+                            nTVEpisode.Title = json_IMBD_next_data.props.PageProps.MainColumnData.OriginalTitleText.Text
+                        End If
+                    End If
+
+                    'Actors
+                    If filteredoptions.bEpisodeActors Then
+                        Dim lstActors = ParseActors(json_IMBD_next_data)
+                        If lstActors IsNot Nothing Then
+                            nTVEpisode.Actors = lstActors
+                        Else
+                            logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] can't parse Actors", id))
+                        End If
+                    End If
+
+                    'AiredDate
+                    If filteredoptions.bEpisodeAired Then
+                        If json_IMBD_next_data.props.PageProps.MainColumnData.ReleaseDate IsNot Nothing Then
+                            nTVEpisode.Aired = json_IMBD_next_data.props.PageProps.MainColumnData.ReleaseDate.GetFullReleaseDate()
+                        End If
+                    End If
+
+                    'Credits (writers)
+                    If filteredoptions.bEpisodeCredits Then
+                        Dim lstCredits = ParseCredits(json_IMBD_next_data)
+                        If lstCredits IsNot Nothing Then
+                            nTVEpisode.Credits = lstCredits
+                        Else
+                            logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] can't parse Credits (Writers)", id))
+                        End If
+                    End If
+
+                    'Directors
+                    If filteredoptions.bEpisodeDirectors Then
+                        Dim lstDirectors = ParseDirectors(json_IMBD_next_data)
+                        If lstDirectors IsNot Nothing Then
+                            nTVEpisode.Directors = lstDirectors
+                        Else
+                            logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] can't parse Directors", id))
+                        End If
+                    End If
+
+                    'Plot
+                    If filteredoptions.bEpisodePlot AndAlso bIsScraperLanguage Then
+                        Dim strPlot = ParsePlot(json_IMBD_next_data)
+
+                        If Not String.IsNullOrEmpty(strPlot) Then
+                            nTVEpisode.Plot = strPlot
+                        Else
+                            strPlot = ParseOutline(json_IMBD_next_data)
+                            If Not String.IsNullOrEmpty(strPlot) Then
+                                nTVEpisode.Plot = strPlot
+                            Else
+                                logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] no result from ""plotsummary"" page for Plot", id))
+                            End If
+                        End If
+                    End If
+
+                    'Rating
+                    If filteredoptions.bEpisodeRating Then
+                        Dim nRating = ParseRating(json_IMBD_next_data)
+                        If nRating IsNot Nothing Then
+                            nTVEpisode.Ratings.Add(nRating)
+                        Else
+                            logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] can't parse Rating", id))
+                        End If
+                    End If
+
+                    Return nTVEpisode
+                Else
+                    Return Nothing
+                End If
+            Catch ex As Exception
+                logger.Error(ex, New StackFrame().GetMethod().Name)
+                Return Nothing
+            End Try
+        End Using
+    End Function
+
+    Public Function GetTVEpisodeInfo(ByVal showid As String, ByVal season As Integer, ByVal episode As Integer, ByRef filteredoptions As Structures.ScrapeOptions) As MediaContainers.EpisodeDetails
+        If String.IsNullOrEmpty(showid) OrElse season = -1 OrElse episode = -1 Then Return Nothing
+
+        Dim webParsingSeasons As New HtmlWeb
+        Dim htmldEpisodes As HtmlDocument = webParsingSeasons.Load(String.Concat("https://www.imdb.com/title/", showid, "/episodes/?season=", season))
+
+        If webParsingSeasons.StatusCode <> 200 Then
+            logger.Trace(String.Format("[IMDB] [GetTVEpisodeInfo] [ID:""{0}""] failed to retrieve imdb episode/seasons page", showid))
+        Else
+            'Get our React JSON next_data
+            json_IMBD_next_data = DeserializeJsonObject(Of IMDBJson)(htmldEpisodes.DocumentNode.SelectSingleNode("//script[@id='__NEXT_DATA__']").InnerHtml)
+
+            If json_IMBD_next_data IsNot Nothing Then
+                Dim EpisodeItems As List(Of EpisodeItem)
+
+                EpisodeItems = json_IMBD_next_data.props.PageProps.ContentData.Section.Episodes.items
+                For Each EpisodeItem In EpisodeItems
+                    If (Convert.ToInt32(EpisodeItem.episode) = episode) Then
+                        Dim nEpisode As MediaContainers.EpisodeDetails = GetTVEpisodeInfo(EpisodeItem.id, filteredoptions)
+
+                        If nEpisode IsNot Nothing Then
+                            Return nEpisode
+                        End If
+                    End If
+                Next
+            End If
+        End If
+
+        Return Nothing
+    End Function
+
+    Public Function GetMovieStudios(ByVal id As String) As List(Of String)
+        Dim webParsingSeasons As New HtmlWeb
+        Dim htmldReference As HtmlDocument = webParsingSeasons.Load(String.Concat("http://www.imdb.com/title/", id, "/reference"))
+
+        If webParsingSeasons.StatusCode <> 200 Then
+            logger.Trace(String.Format("[IMDB] [GetMovieStudios] [ID:""{0}""] failed to retrieve imdb reference page", id))
+        Else
+            'Get our React JSON next_data
+            json_IMBD_next_data = DeserializeJsonObject(Of IMDBJson)(htmldReference.DocumentNode.SelectSingleNode("//script[@id='__NEXT_DATA__']").InnerHtml)
+
+            If json_IMBD_next_data IsNot Nothing Then
+                Dim lstStudios = ParseStudios(json_IMBD_next_data)
+
+                If lstStudios IsNot Nothing Then
+                    Return lstStudios
+                End If
+            End If
+        End If
+
+        Return New List(Of String)
+    End Function
 
     Private Function ParseActors(ByRef json_data As IMDBJson) As List(Of MediaContainers.Person)
         Dim nActors As New List(Of MediaContainers.Person)
@@ -1297,230 +1552,6 @@ Public Class Scraper
 
         Return Nothing
     End Function
-
-    Private Function SearchMovie(ByVal title As String, ByVal year As String) As SearchResults_Movie
-        Dim R As New SearchResults_Movie
-
-        Dim strTitle As String = String.Concat(title, " ", If(Not String.IsNullOrEmpty(year), String.Concat("(", year, ")"), String.Empty)).Trim
-
-        Dim htmldResultsPartialTitles As HtmlDocument = Nothing
-        Dim htmldResultsPopularTitles As HtmlDocument = Nothing
-        Dim htmldResultsShortTitles As HtmlDocument = Nothing
-        Dim htmldResultsTvTitles As HtmlDocument = Nothing
-        Dim htmldResultsVideoTitles As HtmlDocument = Nothing
-
-        Dim webParsing As New HtmlWeb
-        Dim htmldResultsExact As HtmlDocument = webParsing.Load(String.Concat("https://www.imdb.com/find/?q=", HttpUtility.UrlEncode(strTitle), "&s=ttexact=true"))
-        Dim strResponseUri = webParsing.ResponseUri.ToString
-
-        If _SpecialSettings.SearchTvTitles Then
-            htmldResultsTvTitles = webParsing.Load(String.Concat("https://www.imdb.com/find/?q=", HttpUtility.UrlEncode(strTitle), "&title_type=tv_movie"))
-        End If
-        If _SpecialSettings.SearchVideoTitles Then
-            htmldResultsVideoTitles = webParsing.Load(String.Concat("https://www.imdb.com/find/?q=", HttpUtility.UrlEncode(strTitle), "&title_type=video"))
-        End If
-        If _SpecialSettings.SearchShortTitles Then
-            htmldResultsShortTitles = webParsing.Load(String.Concat("https://www.imdb.com/find/?q=", HttpUtility.UrlEncode(strTitle), "&title_type=short"))
-        End If
-        If _SpecialSettings.SearchPartialTitles Then
-            htmldResultsPartialTitles = webParsing.Load(String.Concat("https://www.imdb.com/find/?q=", HttpUtility.UrlEncode(strTitle), "&s=tt&ttype=ft&ref_=fn_ft"))
-        End If
-        If _SpecialSettings.SearchPopularTitles Then
-            htmldResultsPopularTitles = webParsing.Load(String.Concat("https://www.imdb.com/find/?q=", HttpUtility.UrlEncode(strTitle), "&s=tt"))
-        End If
-
-        If webParsing.StatusCode <> 200 Then
-            logger.Trace(String.Format("[IMDB] [SearchMovie] failed to retrieve imdb search pages"))
-        End If
-
-        'Check if we've been redirected straight to the movie page
-        If Regex.IsMatch(strResponseUri, REGEX_IMDBID) Then
-            Return R
-        End If
-
-        'Exact titles
-        If htmldResultsExact IsNot Nothing Then
-            json_IMDB_Search_Results_next_data = DeserializeJsonObject(Of IMDBSearchResultsJson)(htmldResultsExact.DocumentNode.SelectSingleNode("//script[@id='__NEXT_DATA__']").InnerHtml)
-
-            If json_IMDB_Search_Results_next_data.props.pageProps.titleResults IsNot Nothing AndAlso json_IMDB_Search_Results_next_data.props.pageProps.titleResults.results IsNot Nothing Then
-                Dim searchResults As List(Of Result)
-                searchResults = json_IMDB_Search_Results_next_data.props.pageProps.titleResults.results
-
-                For Each nResult In searchResults
-                    If nResult.listItem IsNot Nothing Then
-                        R.PopularTitles.Add(New MediaContainers.Movie With {
-                            .Lev = StringUtils.ComputeLevenshtein(StringUtils.FilterYear(strTitle).ToLower, nResult.listItem.originalTitleText),
-                            .Title = nResult.listItem.originalTitleText,
-                            .UniqueIDs = New MediaContainers.UniqueidContainer(Enums.ContentType.Movie) With {.IMDbId = nResult.listItem.titleId},
-                            .Year = nResult.listItem.releaseYear
-                            })
-                    End If
-                Next
-            End If
-        End If
-
-        'Popular titles
-        If htmldResultsPopularTitles IsNot Nothing Then
-            json_IMDB_Search_Results_next_data = DeserializeJsonObject(Of IMDBSearchResultsJson)(htmldResultsPopularTitles.DocumentNode.SelectSingleNode("//script[@id='__NEXT_DATA__']").InnerHtml)
-
-            If json_IMDB_Search_Results_next_data.props.pageProps.titleResults IsNot Nothing AndAlso json_IMDB_Search_Results_next_data.props.pageProps.titleResults.results IsNot Nothing Then
-                Dim searchResults As List(Of Result)
-                searchResults = json_IMDB_Search_Results_next_data.props.pageProps.titleResults.results
-
-                For Each nResult In searchResults
-                    If nResult.listItem IsNot Nothing Then
-                        R.PopularTitles.Add(New MediaContainers.Movie With {
-                            .Lev = StringUtils.ComputeLevenshtein(StringUtils.FilterYear(strTitle).ToLower, nResult.listItem.originalTitleText),
-                            .Title = nResult.listItem.originalTitleText,
-                            .UniqueIDs = New MediaContainers.UniqueidContainer(Enums.ContentType.Movie) With {.IMDbId = nResult.listItem.titleId},
-                            .Year = nResult.listItem.releaseYear
-                            })
-                    End If
-                Next
-            End If
-        End If
-
-        'Partial titles
-        If htmldResultsPartialTitles IsNot Nothing Then
-            json_IMDB_Search_Results_next_data = DeserializeJsonObject(Of IMDBSearchResultsJson)(htmldResultsPartialTitles.DocumentNode.SelectSingleNode("//script[@id='__NEXT_DATA__']").InnerHtml)
-
-            If json_IMDB_Search_Results_next_data.props.pageProps.titleResults.results IsNot Nothing AndAlso json_IMDB_Search_Results_next_data.props.pageProps.titleResults.results IsNot Nothing Then
-                Dim searchResults As List(Of Result)
-                searchResults = json_IMDB_Search_Results_next_data.props.pageProps.titleResults.results
-
-                For Each nResult In searchResults
-                    If nResult.listItem IsNot Nothing Then
-                        R.PartialMatches.Add(New MediaContainers.Movie With {
-                             .Lev = StringUtils.ComputeLevenshtein(StringUtils.FilterYear(strTitle).ToLower, nResult.listItem.originalTitleText),
-                             .Title = nResult.listItem.originalTitleText,
-                             .UniqueIDs = New MediaContainers.UniqueidContainer(Enums.ContentType.Movie) With {.IMDbId = nResult.listItem.titleId},
-                             .Year = nResult.listItem.releaseYear
-                             })
-                    End If
-                Next
-            End If
-
-        End If
-
-        'tv titles
-        If htmldResultsTvTitles IsNot Nothing Then
-            json_IMDB_Search_Results_next_data = DeserializeJsonObject(Of IMDBSearchResultsJson)(htmldResultsTvTitles.DocumentNode.SelectSingleNode("//script[@id='__NEXT_DATA__']").InnerHtml)
-
-            If json_IMDB_Search_Results_next_data.props.pageProps.titleResults IsNot Nothing AndAlso json_IMDB_Search_Results_next_data.props.pageProps.titleResults.results IsNot Nothing Then
-                Dim searchResults As List(Of Result)
-                searchResults = json_IMDB_Search_Results_next_data.props.pageProps.titleResults.results
-
-                For Each nResult In searchResults
-                    If nResult.listItem IsNot Nothing Then
-                        R.TvTitles.Add(New MediaContainers.Movie With {
-                             .Lev = StringUtils.ComputeLevenshtein(StringUtils.FilterYear(strTitle).ToLower, nResult.listItem.originalTitleText),
-                             .Title = nResult.listItem.originalTitleText,
-                             .UniqueIDs = New MediaContainers.UniqueidContainer(Enums.ContentType.Movie) With {.IMDbId = nResult.listItem.titleId},
-                             .Year = nResult.listItem.releaseYear
-                             })
-                    End If
-                Next
-            End If
-        End If
-
-        'video titles
-        If htmldResultsVideoTitles IsNot Nothing Then
-            json_IMDB_Search_Results_next_data = DeserializeJsonObject(Of IMDBSearchResultsJson)(htmldResultsVideoTitles.DocumentNode.SelectSingleNode("//script[@id='__NEXT_DATA__']").InnerHtml)
-
-            If json_IMDB_Search_Results_next_data.props.pageProps.titleResults IsNot Nothing AndAlso json_IMDB_Search_Results_next_data.props.pageProps.titleResults.results IsNot Nothing Then
-                Dim searchResults As List(Of Result)
-                searchResults = json_IMDB_Search_Results_next_data.props.pageProps.titleResults.results
-
-                For Each nResult In searchResults
-                    If nResult.listItem IsNot Nothing Then
-                        R.VideoTitles.Add(New MediaContainers.Movie With {
-                             .Lev = StringUtils.ComputeLevenshtein(StringUtils.FilterYear(strTitle).ToLower, nResult.listItem.originalTitleText),
-                             .Title = nResult.listItem.originalTitleText,
-                             .UniqueIDs = New MediaContainers.UniqueidContainer(Enums.ContentType.Movie) With {.IMDbId = nResult.listItem.titleId},
-                             .Year = nResult.listItem.releaseYear
-                             })
-                    End If
-                Next
-            End If
-        End If
-
-        'short titles
-        If htmldResultsShortTitles IsNot Nothing Then
-            json_IMDB_Search_Results_next_data = DeserializeJsonObject(Of IMDBSearchResultsJson)(htmldResultsShortTitles.DocumentNode.SelectSingleNode("//script[@id='__NEXT_DATA__']").InnerHtml)
-
-            If json_IMDB_Search_Results_next_data.props.pageProps.titleResults IsNot Nothing AndAlso json_IMDB_Search_Results_next_data.props.pageProps.titleResults.results IsNot Nothing Then
-                Dim searchResults As List(Of Result)
-                searchResults = json_IMDB_Search_Results_next_data.props.pageProps.titleResults.results
-
-                For Each nResult In searchResults
-                    If nResult.listItem IsNot Nothing Then
-                        R.ShortTitles.Add(New MediaContainers.Movie With {
-                                .Lev = StringUtils.ComputeLevenshtein(StringUtils.FilterYear(strTitle).ToLower, nResult.listItem.originalTitleText),
-                                .Title = nResult.listItem.originalTitleText,
-                                .UniqueIDs = New MediaContainers.UniqueidContainer(Enums.ContentType.Movie) With {.IMDbId = nResult.listItem.titleId},
-                                .Year = nResult.listItem.releaseYear
-                                })
-                    End If
-                Next
-            End If
-        End If
-
-        Return R
-    End Function
-
-    Public Sub SearchMovieAsync(ByVal title As String, ByVal year As String, ByVal filteredoptions As Structures.ScrapeOptions)
-        Try
-            If Not bwIMDB.IsBusy Then
-                bwIMDB.WorkerReportsProgress = False
-                bwIMDB.WorkerSupportsCancellation = True
-                bwIMDB.RunWorkerAsync(New Arguments With {.Search = SearchType.Movies, .Parameter = title, .Year = year, .Options_Movie = filteredoptions})
-            End If
-        Catch ex As Exception
-            logger.Error(ex, New StackFrame().GetMethod().Name)
-        End Try
-    End Sub
-
-    Private Function SearchTVShow(ByVal title As String) As SearchResults_TVShow
-        Dim R As New SearchResults_TVShow
-
-        Dim webParsing As New HtmlWeb
-        Dim htmldSearchResults As HtmlDocument = webParsing.Load(String.Concat("https://www.imdb.com/find/?q=", HttpUtility.UrlEncode(title), "&s=tt&ttype=tv"))
-
-        If webParsing.StatusCode <> 200 Then
-            logger.Trace(String.Format("[IMDB] [SearchTVShow] failed to retrieve imdb find page"))
-            'Do nothing
-        Else
-            If htmldSearchResults IsNot Nothing Then
-                json_IMDB_Search_Results_next_data = DeserializeJsonObject(Of IMDBSearchResultsJson)(htmldSearchResults.DocumentNode.SelectSingleNode("//script[@id='__NEXT_DATA__']").InnerHtml)
-            End If
-
-            If json_IMDB_Search_Results_next_data.props.pageProps.titleResults IsNot Nothing AndAlso json_IMDB_Search_Results_next_data.props.pageProps.titleResults.results IsNot Nothing Then
-                Dim searchResults As List(Of Result)
-                searchResults = json_IMDB_Search_Results_next_data.props.pageProps.titleResults.results
-
-                For Each nResult In searchResults
-                    If nResult.listItem IsNot Nothing Then
-                        R.Matches.Add(New MediaContainers.TVShow With {
-                          .Title = nResult.listItem.originalTitleText,
-                          .UniqueIDs = New MediaContainers.UniqueidContainer(Enums.ContentType.TVShow) With {.IMDbId = nResult.listItem.titleId}
-                          })
-                    End If
-                Next
-            End If
-        End If
-
-        Return R
-    End Function
-
-    Public Sub SearchTVShowAsync(ByVal title As String, ByVal scrapemodifiers As Structures.ScrapeModifiers, ByVal filteredoptions As Structures.ScrapeOptions)
-
-        If Not bwIMDB.IsBusy Then
-            bwIMDB.WorkerReportsProgress = False
-            bwIMDB.WorkerSupportsCancellation = True
-            bwIMDB.RunWorkerAsync(New Arguments With {.Search = SearchType.TVShows,
-                  .Parameter = title, .Options_TV = filteredoptions, .ScrapeModifiers = scrapemodifiers})
-        End If
-    End Sub
 
 #End Region 'Methods
 

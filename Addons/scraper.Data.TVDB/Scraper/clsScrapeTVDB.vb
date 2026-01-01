@@ -161,6 +161,7 @@ Namespace TVDBs
 
             Return R
         End Function
+
         ''' <summary>
         ''' Workaround to fix the theTVDB bug
         ''' </summary>
@@ -176,186 +177,197 @@ Namespace TVDBs
             End If
             Return Await _TVDBApi.GetFullSeriesById(tvdbID, strLanguage, _TVDBMirror)
         End Function
+
         ''' <summary>
-        ''' 
+        ''' Retrieves TV show information from TVDB.
         ''' </summary>
-        ''' <param name="imdbIdOrTvdbId">TVDB ID</param>
-        ''' <param name="GetPoster"></param>
-        ''' <param name="FilteredOptions"></param>
-        ''' <returns></returns>
-        ''' <remarks></remarks>
+        ''' <param name="imdbIdOrTvdbId">TVDB ID or IMDB ID</param>
+        ''' <param name="ScrapeModifiers">Scrape modifiers</param>
+        ''' <param name="FilteredOptions">Filtered scrape options</param>
+        ''' <param name="GetPoster">Whether to get poster</param>
+        ''' <returns>TVShow container with scraped data</returns>
         Public Function GetTVShowInfo(ByVal imdbIdOrTvdbId As String, ByVal ScrapeModifiers As Structures.ScrapeModifiers, ByVal FilteredOptions As Structures.ScrapeOptions, ByVal GetPoster As Boolean) As MediaContainers.TVShow
-            If String.IsNullOrEmpty(imdbIdOrTvdbId) OrElse imdbIdOrTvdbId.Length < 2 Then Return Nothing
+            Using scopeTotal = EmberAPI.PerformanceTracker.StartOperation("TVDB.GetTVShowInfo")
+                If String.IsNullOrEmpty(imdbIdOrTvdbId) OrElse imdbIdOrTvdbId.Length < 2 Then Return Nothing
 
-            Dim nTVShow As New MediaContainers.TVShow
-            Dim intTvdbId As Integer = -1
+                Dim nTVShow As New MediaContainers.TVShow
+                Dim intTvdbId As Integer = -1
 
-            If bwTVDB.CancellationPending Then Return Nothing
+                If bwTVDB.CancellationPending Then Return Nothing
 
-            If imdbIdOrTvdbId.StartsWith("tt") Then
-                intTvdbId = GetTVDBbyIMDB(imdbIdOrTvdbId)
-            ElseIf Integer.TryParse(imdbIdOrTvdbId, 0) Then
-                intTvdbId = CInt(imdbIdOrTvdbId)
-            End If
-
-            If intTvdbId = -1 Then Return Nothing
-
-            Dim APIResult As Task(Of TVDB.Model.SeriesDetails) = Task.Run(Function() GetFullSeriesById(intTvdbId))
-            If APIResult Is Nothing OrElse APIResult.Result Is Nothing Then
-                Return Nothing
-            End If
-            Dim TVShowInfo = APIResult.Result
-
-            nTVShow.Scrapersource = "TVDB"
-            nTVShow.UniqueIDs.TVDbId = TVShowInfo.Series.Id
-            nTVShow.UniqueIDs.IMDbId = TVShowInfo.Series.IMDBId
-
-            'Actors
-            If FilteredOptions.bMainActors Then
-                If TVShowInfo.Actors IsNot Nothing Then
-                    For Each aCast As TVDB.Model.Actor In TVShowInfo.Actors.Where(Function(f) f.Name IsNot Nothing AndAlso f.Role IsNot Nothing).OrderBy(Function(f) f.SortOrder)
-                        nTVShow.Actors.Add(New MediaContainers.Person With {
-                                           .Name = aCast.Name,
-                                           .Order = aCast.SortOrder,
-                                           .Role = aCast.Role,
-                                           .URLOriginal = If(Not String.IsNullOrEmpty(aCast.ImagePath), String.Format("{0}/banners/{1}", _TVDBMirror.Address, aCast.ImagePath), String.Empty),
-                                           .TVDB = CStr(aCast.Id)
-                                           })
-                    Next
-                End If
-            End If
-
-            If bwTVDB.CancellationPending Then Return Nothing
-
-            'EpisodeGuideURL
-            If FilteredOptions.bMainEpisodeGuide Then
-                nTVShow.EpisodeGuide.URL = String.Concat(_TVDBMirror.Address, "/api/", _SpecialSettings.APIKey, "/series/", TVShowInfo.Series.Id, "/all/", TVShowInfo.Language, ".zip")
-            End If
-
-            If bwTVDB.CancellationPending Then Return Nothing
-
-            'Genres
-            If FilteredOptions.bMainGenres Then
-                Dim aGenres As List(Of String) = Nothing
-                If TVShowInfo.Series.Genre IsNot Nothing Then
-                    aGenres = TVShowInfo.Series.Genre.Split(CChar(",")).ToList
+                If imdbIdOrTvdbId.StartsWith("tt") Then
+                    intTvdbId = GetTVDBbyIMDB(imdbIdOrTvdbId)
+                ElseIf Integer.TryParse(imdbIdOrTvdbId, 0) Then
+                    intTvdbId = CInt(imdbIdOrTvdbId)
                 End If
 
-                If aGenres IsNot Nothing Then
-                    For Each tGenre As String In aGenres
-                        nTVShow.Genres.Add(tGenre.Trim)
-                    Next
-                End If
-            End If
+                If intTvdbId = -1 Then Return Nothing
 
-            If bwTVDB.CancellationPending Then Return Nothing
+                Dim APIResult As Task(Of TVDB.Model.SeriesDetails)
 
-            'MPAA
-            If FilteredOptions.bMainMPAA Then
-                nTVShow.MPAA = TVShowInfo.Series.ContentRating
-            End If
-
-            If bwTVDB.CancellationPending Then Return Nothing
-
-            'Plot
-            If FilteredOptions.bMainPlot Then
-                If TVShowInfo.Series.Overview IsNot Nothing AndAlso Not String.IsNullOrEmpty(TVShowInfo.Series.Overview) Then
-                    nTVShow.Plot = TVShowInfo.Series.Overview
-                ElseIf _SpecialSettings.FallBackEng Then
-                    'looks like TVDb does an auto fallback to EN, so this is only used as backup
-                    Dim intTVShowId = TVShowInfo.Series.Id
-                    Dim APIResultEN As Task(Of TVDB.Model.SeriesDetails) = Task.Run(Function() GetFullSeriesById(intTVShowId, "en"))
-                    If APIResultEN IsNot Nothing AndAlso APIResultEN.Result IsNot Nothing AndAlso
-                        APIResultEN.Result.Series.Overview IsNot Nothing AndAlso Not String.IsNullOrEmpty(APIResultEN.Result.Series.Overview) Then
-                        nTVShow.Plot = APIResultEN.Result.Series.Overview
+                Using scopeApi = EmberAPI.PerformanceTracker.StartOperation("TVDB.GetTVShowInfo.APICall")
+                    APIResult = Task.Run(Function() GetFullSeriesById(intTvdbId))
+                    If APIResult IsNot Nothing Then
+                        APIResult.Wait()
                     End If
+                End Using
+
+                If APIResult Is Nothing OrElse APIResult.Result Is Nothing Then
+                    Return Nothing
                 End If
-            End If
+                Dim TVShowInfo = APIResult.Result
 
-            If bwTVDB.CancellationPending Then Return Nothing
+                nTVShow.Scrapersource = "TVDB"
+                nTVShow.UniqueIDs.TVDbId = TVShowInfo.Series.Id
+                nTVShow.UniqueIDs.IMDbId = TVShowInfo.Series.IMDBId
 
-            'Posters (only for SearchResult dialog, auto fallback to "en" by TVDB)
-            If GetPoster Then
-                If TVShowInfo.Series.Poster IsNot Nothing AndAlso Not String.IsNullOrEmpty(TVShowInfo.Series.Poster) Then
-                    _PosterUrl = String.Concat(_TVDBMirror.Address, "/banners/", TVShowInfo.Series.Poster)
-                Else
-                    _PosterUrl = String.Empty
-                End If
-            End If
-
-            If bwTVDB.CancellationPending Then Return Nothing
-
-            'Premiered
-            If FilteredOptions.bMainPremiered Then
-                If Not TVShowInfo.Series.FirstAired = Date.MinValue Then
-                    'always save date in same date format not depending on users language setting!
-                    nTVShow.Premiered = TVShowInfo.Series.FirstAired.ToString("yyyy-MM-dd")
-                End If
-            End If
-
-            If bwTVDB.CancellationPending Then Return Nothing
-
-            'Rating
-            If FilteredOptions.bMainRating Then
-                nTVShow.Ratings.Add(New MediaContainers.RatingDetails With {
-                                    .Max = 10,
-                                    .Type = "tvdb",
-                                    .Value = TVShowInfo.Series.Rating,
-                                    .Votes = TVShowInfo.Series.RatingCount
-                                    })
-            End If
-
-            If bwTVDB.CancellationPending Then Return Nothing
-
-            'Runtime
-            If FilteredOptions.bMainRuntime Then
-                nTVShow.Runtime = CStr(TVShowInfo.Series.Runtime)
-            End If
-
-            If bwTVDB.CancellationPending Then Return Nothing
-
-            'Status
-            If FilteredOptions.bMainStatus Then
-                nTVShow.Status = TVShowInfo.Series.Status
-            End If
-
-            If bwTVDB.CancellationPending Then Return Nothing
-
-            'Studios
-            If FilteredOptions.bMainStudios Then
-                nTVShow.Studios.Add(TVShowInfo.Series.Network)
-            End If
-
-            If bwTVDB.CancellationPending Then Return Nothing
-
-            'Title
-            If FilteredOptions.bMainTitle Then
-                nTVShow.Title = TVShowInfo.Series.Name
-            End If
-
-            If bwTVDB.CancellationPending Then Return Nothing
-
-            'Seasons and Episodes
-            For Each aEpisode As TVDB.Model.Episode In TVShowInfo.Series.Episodes
-                If ScrapeModifiers.withSeasons Then
-                    'check if we have already saved season information for this scraped season
-                    Dim lSeasonList = nTVShow.KnownSeasons.Where(Function(f) f.Season = aEpisode.SeasonNumber)
-
-                    If lSeasonList.Count = 0 Then
-                        nTVShow.KnownSeasons.Add(New MediaContainers.SeasonDetails With {
-                                                 .Season = aEpisode.SeasonNumber,
-                                                 .UniqueIDs = New MediaContainers.UniqueidContainer(Enums.ContentType.TVSeason) With {.TVDbId = aEpisode.SeasonId}
-                                                 })
+                'Actors
+                If FilteredOptions.bMainActors Then
+                    If TVShowInfo.Actors IsNot Nothing Then
+                        For Each aCast As TVDB.Model.Actor In TVShowInfo.Actors.Where(Function(f) f.Name IsNot Nothing AndAlso f.Role IsNot Nothing).OrderBy(Function(f) f.SortOrder)
+                            nTVShow.Actors.Add(New MediaContainers.Person With {
+                                               .Name = aCast.Name,
+                                               .Order = aCast.SortOrder,
+                                               .Role = aCast.Role,
+                                               .URLOriginal = If(Not String.IsNullOrEmpty(aCast.ImagePath), String.Format("{0}/banners/{1}", _TVDBMirror.Address, aCast.ImagePath), String.Empty),
+                                               .TVDB = CStr(aCast.Id)
+                                               })
+                        Next
                     End If
                 End If
 
-                If ScrapeModifiers.withEpisodes Then
-                    Dim nEpisode As MediaContainers.EpisodeDetails = GetTVEpisodeInfo(aEpisode, TVShowInfo, FilteredOptions)
-                    nTVShow.KnownEpisodes.Add(nEpisode)
-                End If
-            Next
+                If bwTVDB.CancellationPending Then Return Nothing
 
-            Return nTVShow
+                'EpisodeGuideURL
+                If FilteredOptions.bMainEpisodeGuide Then
+                    nTVShow.EpisodeGuide.URL = String.Concat(_TVDBMirror.Address, "/api/", _SpecialSettings.APIKey, "/series/", TVShowInfo.Series.Id, "/all/", TVShowInfo.Language, ".zip")
+                End If
+
+                If bwTVDB.CancellationPending Then Return Nothing
+
+                'Genres
+                If FilteredOptions.bMainGenres Then
+                    Dim aGenres As List(Of String) = Nothing
+                    If TVShowInfo.Series.Genre IsNot Nothing Then
+                        aGenres = TVShowInfo.Series.Genre.Split(CChar(",")).ToList
+                    End If
+
+                    If aGenres IsNot Nothing Then
+                        For Each tGenre As String In aGenres
+                            nTVShow.Genres.Add(tGenre.Trim)
+                        Next
+                    End If
+                End If
+
+                If bwTVDB.CancellationPending Then Return Nothing
+
+                'MPAA
+                If FilteredOptions.bMainMPAA Then
+                    nTVShow.MPAA = TVShowInfo.Series.ContentRating
+                End If
+
+                If bwTVDB.CancellationPending Then Return Nothing
+
+                'Plot
+                If FilteredOptions.bMainPlot Then
+                    If TVShowInfo.Series.Overview IsNot Nothing AndAlso Not String.IsNullOrEmpty(TVShowInfo.Series.Overview) Then
+                        nTVShow.Plot = TVShowInfo.Series.Overview
+                    ElseIf _SpecialSettings.FallBackEng Then
+                        'looks like TVDb does an auto fallback to EN, so this is only used as backup
+                        Dim intTVShowId = TVShowInfo.Series.Id
+                        Dim APIResultEN As Task(Of TVDB.Model.SeriesDetails) = Task.Run(Function() GetFullSeriesById(intTVShowId, "en"))
+                        If APIResultEN IsNot Nothing AndAlso APIResultEN.Result IsNot Nothing AndAlso
+                            APIResultEN.Result.Series.Overview IsNot Nothing AndAlso Not String.IsNullOrEmpty(APIResultEN.Result.Series.Overview) Then
+                            nTVShow.Plot = APIResultEN.Result.Series.Overview
+                        End If
+                    End If
+                End If
+
+                If bwTVDB.CancellationPending Then Return Nothing
+
+                'Posters (only for SearchResult dialog, auto fallback to "en" by TVDB)
+                If GetPoster Then
+                    If TVShowInfo.Series.Poster IsNot Nothing AndAlso Not String.IsNullOrEmpty(TVShowInfo.Series.Poster) Then
+                        _PosterUrl = String.Concat(_TVDBMirror.Address, "/banners/", TVShowInfo.Series.Poster)
+                    Else
+                        _PosterUrl = String.Empty
+                    End If
+                End If
+
+                If bwTVDB.CancellationPending Then Return Nothing
+
+                'Premiered
+                If FilteredOptions.bMainPremiered Then
+                    If Not TVShowInfo.Series.FirstAired = Date.MinValue Then
+                        'always save date in same date format not depending on users language setting!
+                        nTVShow.Premiered = TVShowInfo.Series.FirstAired.ToString("yyyy-MM-dd")
+                    End If
+                End If
+
+                If bwTVDB.CancellationPending Then Return Nothing
+
+                'Rating
+                If FilteredOptions.bMainRating Then
+                    nTVShow.Ratings.Add(New MediaContainers.RatingDetails With {
+                                        .Max = 10,
+                                        .Type = "tvdb",
+                                        .Value = TVShowInfo.Series.Rating,
+                                        .Votes = TVShowInfo.Series.RatingCount
+                                        })
+                End If
+
+                If bwTVDB.CancellationPending Then Return Nothing
+
+                'Runtime
+                If FilteredOptions.bMainRuntime Then
+                    nTVShow.Runtime = CStr(TVShowInfo.Series.Runtime)
+                End If
+
+                If bwTVDB.CancellationPending Then Return Nothing
+
+                'Status
+                If FilteredOptions.bMainStatus Then
+                    nTVShow.Status = TVShowInfo.Series.Status
+                End If
+
+                If bwTVDB.CancellationPending Then Return Nothing
+
+                'Studios
+                If FilteredOptions.bMainStudios Then
+                    nTVShow.Studios.Add(TVShowInfo.Series.Network)
+                End If
+
+                If bwTVDB.CancellationPending Then Return Nothing
+
+                'Title
+                If FilteredOptions.bMainTitle Then
+                    nTVShow.Title = TVShowInfo.Series.Name
+                End If
+
+                If bwTVDB.CancellationPending Then Return Nothing
+
+                'Seasons and Episodes
+                For Each aEpisode As TVDB.Model.Episode In TVShowInfo.Series.Episodes
+                    If ScrapeModifiers.withSeasons Then
+                        'check if we have already saved season information for this scraped season
+                        Dim lSeasonList = nTVShow.KnownSeasons.Where(Function(f) f.Season = aEpisode.SeasonNumber)
+
+                        If lSeasonList.Count = 0 Then
+                            nTVShow.KnownSeasons.Add(New MediaContainers.SeasonDetails With {
+                                                     .Season = aEpisode.SeasonNumber,
+                                                     .UniqueIDs = New MediaContainers.UniqueidContainer(Enums.ContentType.TVSeason) With {.TVDbId = aEpisode.SeasonId}
+                                                     })
+                        End If
+                    End If
+
+                    If ScrapeModifiers.withEpisodes Then
+                        Dim nEpisode As MediaContainers.EpisodeDetails = GetTVEpisodeInfo(aEpisode, TVShowInfo, FilteredOptions)
+                        nTVShow.KnownEpisodes.Add(nEpisode)
+                    End If
+                Next
+
+                Return nTVShow
+            End Using
         End Function
 
         Public Function GetTVEpisodeInfo(ByVal tvdbID As Integer, ByVal SeasonNumber As Integer, ByVal EpisodeNumber As Integer, ByVal tEpisodeOrdering As Enums.EpisodeOrdering, ByRef FilteredOptions As Structures.ScrapeOptions) As MediaContainers.EpisodeDetails

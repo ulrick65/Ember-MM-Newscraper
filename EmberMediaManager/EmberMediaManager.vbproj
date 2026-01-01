@@ -535,6 +535,8 @@
     <None Include="docs\improvements-docs\PerformanceImprovements-Phase2-2.md" />
     <None Include="docs\improvements-docs\PerformanceImprovements-Phase2.md" />
     <None Include="docs\improvements-docs\PerformanceImprovements-Phase3.md" />
+    <None Include="docs\performance-data\PerformanceData-Movies.md" />
+    <None Include="docs\performance-data\PerformanceData-Tv.md" />
     <None Include="docs\performance-data\IMDB-Baseline-2025-12-31.md" />
     <None Include="docs\process-docs\BuildProcess.md" />
     <None Include="docs\process-docs\CertificationMappingProcess.md" />
