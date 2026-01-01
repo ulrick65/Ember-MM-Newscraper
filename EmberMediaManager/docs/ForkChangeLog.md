@@ -1,28 +1,53 @@
 ﻿# Ember Media Manager - Fork Changelog
 
-## Document Purpose
-
-This document tracks all changes made to this fork of Ember Media Manager, starting from the upstream source (nagten/Ember-MM-Newscraper). It serves as:
-
-- A historical record of changes since forking
-- A version tracking system for all projects in the solution
-- A reference for future development decisions
-- A guide for understanding divergence from upstream
-
----
-
-## Document Information
-
-| Property | Value |
-|----------|-------|
-| **Document Version** | 1.0.9 |
+| |Document Info |
+|---------------|---|
+| **Version** | 1.0.9 |
 | **Created** | December 25, 2025 |
-| **Last Updated** | December 31, 2025 |
+| **Updated** | December 31, 2025 |
 | **Author** | Eric H. Anderson |
+| **Purpose** | Tracks changes made to this fork of Ember Media Manager
+
+##### [← Return to Document Index](DocumentIndex.md)
 
 ---
 
-## Fork Information
+## Overview
+
+Looking for what's changed in this fork? You've found the right place!
+
+This document is your complete history of everything that's happened since forking from the upstream [nagten/Ember-MM-Newscraper](https://github.com/nagten/Ember-MM-Newscraper) repository. It tracks:
+
+- **Version history** — Every release and what changed
+- **Project versions** — Current version of all 24 projects in the solution
+- **Deprecated features** — What's broken or slated for removal
+- **Detailed changes** — The nitty-gritty of every code change, bug fix, and enhancement
+
+**Quick links:**
+- See [Version History Summary](#version-history-summary) for a timeline of releases
+- Check [Project Version Registry](#project-version-registry) to find any project's current version
+- Review [Deprecated Features](#deprecated-features) before using legacy scrapers
+
+---
+
+## Table of Contents
+
+- [Fork Information](#fork-information)
+- [Version History Summary](#version-history-summary)
+- [Project Version Registry](#project-version-registry)
+- [Deprecated Features](#deprecated-features)
+- [Detailed Change History](#detailed-change-history)
+- [Git Diff Summary](#git-diff-summary-vs-upstream)
+- [Related Documentation](#related-documentation)
+- [Scripts](#scripts)
+- [Change Entry Template](#change-entry-template)
+- [Version Numbering Convention](#version-numbering-convention)
+- [Updating This Document](#updating-this-document)
+- [Notes](#notes)
+
+---
+
+## [↑](#table-of-contents) Fork Information
 
 | Property | Value |
 |----------|-------|
@@ -35,7 +60,7 @@ This document tracks all changes made to this fork of Ember Media Manager, start
 
 ---
 
-## Version History Summary
+## [↑](#table-of-contents) Version History Summary
 
 | Version | Date | Description |
 |---------|------|-------------|
@@ -48,10 +73,9 @@ This document tracks all changes made to this fork of Ember Media Manager, start
 | 1.12.1.0 | Dec 31, 2025 | **Phase 3: TV Show parallel scraping (50-60% improvement)**, TVDB file contention fix, cancellation bug fixes |
 | 1.12.1.0 | Dec 31, 2025 | **Phase 4: Comprehensive performance tracking** for all scrapers (Movies + TV), performance data documentation |
 
-
 ---
 
-## Project Version Registry
+## [↑](#table-of-contents) Project Version Registry
 
 This section tracks the current version of every project in the solution. Versions should be incremented when changes are made to that project.
 
@@ -135,7 +159,7 @@ This section tracks the current version of every project in the solution. Versio
 
 ---
 
-## Deprecated Features
+## [↑](#table-of-contents) Deprecated Features
 
 The following features are deprecated and slated for removal in a future version. They are non-functional, broken, or not needed:
 
@@ -169,7 +193,7 @@ The following features are deprecated and slated for removal in a future version
 
 ---
 
-## Detailed Change History
+## [↑](#table-of-contents) Detailed Change History
 
 ### Version 1.12.1.0 (December 23-28, 2025)
 
@@ -310,7 +334,6 @@ The following features are deprecated and slated for removal in a future version
 | Documentation | Created ScrapingProcessMovies.md | `EmberMediaManager\docs\process-docs\ScrapingProcessMovies.md` |
 | Documentation | Created ScrapingProcessTvShows.md | `EmberMediaManager\docs\process-docs\ScrapingProcessTvShows.md` |
 
-
 **Build and Scripts:**
 
 | Category | Change | Files Affected |
@@ -404,7 +427,7 @@ The following features are deprecated and slated for removal in a future version
 
 ---
 
-## Git Diff Summary (vs Upstream)
+## [↑](#table-of-contents) Git Diff Summary (vs Upstream)
 
 Based on `git diff --stat upstream/master..HEAD`:
 
@@ -420,7 +443,7 @@ Based on `git diff --stat upstream/master..HEAD`:
 
 ---
 
-## Related Documentation
+## [↑](#table-of-contents) Related Documentation
 
 The following documents provide detailed information about specific initiatives:
 
@@ -446,7 +469,7 @@ The following documents provide detailed information about specific initiatives:
 
 ---
 
-## Scripts
+## [↑](#table-of-contents) Scripts
 
 | Script | Location | Purpose |
 |--------|----------|---------|
@@ -456,7 +479,7 @@ The following documents provide detailed information about specific initiatives:
 
 ---
 
-## Change Entry Template
+## [↑](#table-of-contents) Change Entry Template
 
 When making changes, add entries using this format:
 
@@ -474,7 +497,7 @@ When making changes, add entries using this format:
 
 ---
 
-## Version Numbering Convention
+## [↑](#table-of-contents) Version Numbering Convention
 
 The project uses a four-part version number: `Major.Minor.Build.Revision`
 
@@ -495,7 +518,7 @@ The project uses a four-part version number: `Major.Minor.Build.Revision`
 
 ---
 
-## Updating This Document
+## [↑](#table-of-contents) Updating This Document
 
 When making changes to the codebase:
 
@@ -508,8 +531,12 @@ When making changes to the codebase:
 
 ---
 
-## Notes
+## [↑](#table-of-contents) Notes
 
 - All dates are in YYYY-MM-DD or Month DD, YYYY format
 - File paths are relative to the solution root
 - Change Type values: Code Modified, Framework Updated, Deprecated, Removed, New
+
+---
+
+*End of file*

@@ -1,9 +1,12 @@
+﻿<!--This document is best viewed in Preview mode for readability and document linking-->
+
 # Ember Media Manager - Documentation Index
 
-| Document Info | |
+| | Document Info |
 |---------------|---|
 | **Version** | 1.0 |
 | **Created** | December 31, 2025 |
+| **Updated** | January 1, 2026 |
 | **Author** | Eric H. Anderson |
 | **Purpose** | Master index for all project documentation |
 
@@ -11,11 +14,27 @@
 
 ## Overview
 
-This document serves as the central navigation point for all Ember Media Manager fork documentation.
+Welcome! This is your one-stop navigation hub for all Ember Media Manager documentation.
+
+Whether you're looking for performance analysis, scraping process details, or release notes — you'll find it here. Documents are organized by purpose to help you quickly find what you need.
+
+**New here?** Start with the [Project Index](ProjectIndex.md) for a tour of all 24 projects in the solution.
 
 ---
 
-## Analysis Documents
+## Table of Contents
+
+- [Analysis Documents](#analysis-documents)
+- [Improvements Documents](#improvements-documents)
+- [Process Documents](#process-documents)
+- [Performance Data](#performance-data)
+- [Archived Documents](#archived-documents)
+- [Release Notes](#release-notes)
+- [Project Documents](#project-documents)
+
+---
+
+## [↑](#table-of-contents) Analysis Documents
 
 | Document | Description |
 |----------|-------------|
@@ -25,7 +44,9 @@ This document serves as the central navigation point for all Ember Media Manager
 | [ImageThumbnailAnalysis.md](analysis-docs/ImageThumbnailAnalysis.md) | Thumbnail download efficiency analysis (resolved) |
 | [AsyncImageDownloadAnalysis.md](analysis-docs/AsyncImageDownloadAnalysis.md) | Async image download regression analysis |
 
-## Improvements Documents
+---
+
+## [↑](#table-of-contents) Improvements Documents
 
 | Document | Description |
 |----------|-------------|
@@ -40,7 +61,9 @@ This document serves as the central navigation point for all Ember Media Manager
 | [AddonRemovalPlan.md](improvements-docs/AddonRemovalPlan.md) | Legacy scraper addon removal (complete) |
 | [IntegratedAddonRemoval.md](improvements-docs/IntegratedAddonRemoval.md) | NMT/Boxee/Kodi Addons removal plan |
 
-## Process Documents
+---
+
+## [↑](#table-of-contents) Process Documents
 
 | Document | Description |
 |----------|-------------|
@@ -57,7 +80,9 @@ This document serves as the central navigation point for all Ember Media Manager
 | [MediaInfoMappingProcess.md](process-docs/MediaInfoMappingProcess.md) | MediaInfo.dll integration and update guide |
 | [FFmpegProcess.md](process-docs/FFmpegProcess.md) | FFmpeg integration and update guide |
 
-## Performance Data
+---
+
+## [↑](#table-of-contents) Performance Data
 
 | Document | Description |
 |----------|-------------|
@@ -65,7 +90,9 @@ This document serves as the central navigation point for all Ember Media Manager
 | [PerformanceData-Movies.md](performance-data/PerformanceData-Movies.md) | Movie scraping baseline metrics |
 | [IMDB-Baseline-2025-12-31.md](performance-data/IMDB-Baseline-2025-12-31.md) | IMDB scraper baseline measurements |
 
-## Archived Documents
+---
+
+## [↑](#table-of-contents) Archived Documents
 
 | Document | Description |
 |----------|-------------|
@@ -74,7 +101,9 @@ This document serves as the central navigation point for all Ember Media Manager
 | [FileCleanUpPlan.md](archived-docs/FileCleanUpPlan.md) | Solution cleanup tracking |
 | [BulkScrapingDocumentation.md](archived-docs/BulkScrapingDocumentation.md) | Bulk scraping (archived - see ScrapingProcessMovies) |
 
-## Release Notes
+---
+
+## [↑](#table-of-contents) Release Notes
 
 | Document | Description |
 |----------|-------------|
@@ -83,12 +112,13 @@ This document serves as the central navigation point for all Ember Media Manager
 
 ---
 
-## Project Documents
+## [↑](#table-of-contents) Project Documents
 
 | Document | Description |
 |----------|-------------|
+| [ProjectIndex.md](ProjectIndex.md) | Complete index of all 24 projects in the solution |
 | [ForkChangeLog.md](ForkChangeLog.md) | Complete change history since forking from upstream |
 
 ---
 
-*Last Updated: December 31, 2025*
+*End of file*

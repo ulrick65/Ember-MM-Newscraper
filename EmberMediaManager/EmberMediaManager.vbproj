@@ -550,6 +550,7 @@
     <None Include="docs\process-docs\NfoFileProcess .md" />
     <None Include="docs\process-docs\ScrapingProcessMovies.md" />
     <None Include="docs\process-docs\ScrapingProcessTvShows.md" />
+    <None Include="docs\ProjectIndex.md" />
     <None Include="docs\release-notes\ReleaseNotes-v1.12.0.0.md" />
     <None Include="docs\process-docs\FFmpegProcess.md" />
     <None Include="docs\archived-docs\FileCleanUpPlan.md" />
