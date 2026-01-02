@@ -4,7 +4,7 @@
 |---------------|---|
 | **Version** | 1.1.1 |
 | **Created** | December 25, 2025 |
-| **Updated** | December 31, 2025 |
+| **Updated** | January 1, 2026 |
 | **Author** | Eric H. Anderson |
 | **Purpose** | Tracks changes made to this fork of Ember Media Manager
 
@@ -52,7 +52,7 @@ This document is your complete history of everything that's happened since forki
 | Property | Value |
 |----------|-------|
 | **Upstream Repository** | [nagten/Ember-MM-Newscraper](https://github.com/nagten/Ember-MM-Newscraper) |
-| **Fork Repository** | [ulrick65/Ember-MM-Newscraper](https://github.com/ulrick65/Ember-MM-Newsscraper) |
+| **Fork Repository** | [ulrick65/Ember-MM-Newscraper](https://github.com/ulrick65/Ember-MM-Newscraper) |
 | **Fork Date** | December 21, 2025 |
 | **Upstream Version at Fork** | 1.11.1.0 |
 | **Current Fork Version** | 1.12.1.0 |
@@ -66,14 +66,8 @@ This document is your complete history of everything that's happened since forki
 |---------|------|-------------|
 | 1.11.1.0 | Pre-fork | Upstream nagten version at time of fork |
 | 1.11.1.7 | Dec 21, 2025 | Upstream patch pulled (IMDB writer comparison fix) |
-| 1.12.0.0 | Dec 22, 2025 | Framework upgrade to .NET 4.8, package updates, all addons versioned |
-| 1.12.1.0 | Dec 23-28, 2025 | Bug fixes, cleanup, genre mapping fix, documentation, code organization, performance improvements, additional package updates |
-| 1.12.1.0 | Dec 29-30, 2025 | Bug fixes, cleanup, documentation, code organization, **Phase 1 performance complete (61% improvement)**, Phase 2 planning |
-| 1.12.1.0 | Dec 29-30, 2025 | Bug fixes, cleanup, documentation, **Phase 2-2 parallel scraping complete (60% improvement)** |
-| 1.12.1.0 | Dec 31, 2025 | **Phase 3: TV Show parallel scraping (50-60% improvement)**, TVDB file contention fix, cancellation bug fixes |
-| 1.12.1.0 | Dec 31, 2025 | **Phase 4: Comprehensive performance tracking** for all scrapers (Movies + TV), performance data documentation |
-| 1.12.1.0 | Jan 1, 2026 | Bug fix, documentation linking and cleanup |
-| 1.12.1.0 | Jan 1, 2026 | Renamed folders to standard naming conventions for several of the projects, build, run and test OK |
+| 1.12.0.0 | Dec 22, 2025 | Framework upgrade to .NET 4.8, package updates, all addons versioned, removed 3 legacy projects |
+| 1.12.1.0 | Dec 23, 2025 – Jan 1, 2026 | Bug fixes, genre mapping fix, code cleanup/reorganization, removed 9 deprecated scrapers and EmberAPI_test, **Phase 1-4 performance improvements (50-60% faster scraping)**, parallel movie/TV scraping, TVDB file contention fix, cancellation fixes, comprehensive performance tracking, documentation overhaul, project folder standardization |
 
 ---
 
@@ -83,12 +77,10 @@ This section tracks the current version of every project in the solution. Versio
 
 ### Version Status Legend
 
-| Status | Description |
+| Change Type | Description |
 |--------|-------------|
 | Code Modified | Actual code logic changes made |
 | Framework Updated | .NET 4.8 upgrade and package updates only |
-| Deprecated | Slated for removal, non-functional or not needed |
-| Removed | Deleted from solution |
 
 ### Core Projects
 
@@ -98,19 +90,29 @@ This section tracks the current version of every project in the solution. Versio
 | EmberAPI | EmberAPI.dll | 1.12.1.1 | 1.11.1.0 | Code Modified |
 | KodiAPI | KodiAPI.dll | 1.10.1.0 | 1.10.0 | Framework Updated |
 
-### Generic Addons
+### Generic Addons - Tools
 
 | Project | Assembly Name | Current Version | Upstream Version | Change Type |
 |---------|---------------|-----------------|------------------|-------------|
 | generic.EmberCore.BulkRename | generic.EmberCore.BulkRename.dll | 1.12.0.0 | 1.11.1.0 | Framework Updated |
-| generic.EmberCore.ContextMenu | generic.EmberCore.ContextMenu.dll | 1.12.0.0 | 1.10.1.0 | Framework Updated |
-| generic.EmberCore.FilterEditor | generic.EmberCore.FilterEditor.dll | 1.12.0.0 | 1.10.1.0 | Framework Updated |
-| generic.EmberCore.Mapping | generic.EmberCore.Mapping.dll | 1.12.0.0 | 1.11.1.0 | Framework Updated |
 | generic.EmberCore.MediaFileManager | generic.EmberCore.MediaFileManager.dll | 1.12.0.0 | 1.10.1.0 | Framework Updated |
-| generic.EmberCore.MetadataEditor | generic.EmberCore.MetadataEditor.dll | 1.12.0.0 | 1.10.1.0 | Framework Updated |
-| generic.EmberCore.MovieExport | generic.EmberCore.MovieExporter.dll | 1.12.0.0 | 1.11.1.0 | Framework Updated |
+| generic.EmberCore.MovieExporter | generic.EmberCore.MovieExporter.dll | 1.12.0.0 | 1.11.1.0 | Framework Updated |
 | generic.EmberCore.TagManager | generic.EmberCore.TagManager.dll | 1.12.0.0 | 1.11.1.0 | Framework Updated |
+
+### Generic Addons - Mapping & Settings
+
+| Project | Assembly Name | Current Version | Upstream Version | Change Type |
+|---------|---------------|-----------------|------------------|-------------|
+| generic.EmberCore.Mapping | generic.EmberCore.Mapping.dll | 1.12.0.0 | 1.11.1.0 | Framework Updated |
+| generic.EmberCore.MetadataEditor | generic.EmberCore.MetadataEditor.dll | 1.12.0.0 | 1.10.1.0 | Framework Updated |
 | generic.EmberCore.VideoSourceMapping | generic.EmberCore.MediaSources.dll | 1.12.0.0 | 1.10.1.0 | Framework Updated |
+| generic.EmberCore.MediaListEditor | generic.EmberCore.MediaListEditor.dll | 1.12.0.0 | 1.10.1.0 | Framework Updated |
+| generic.EmberCore.ContextMenu | generic.EmberCore.ContextMenu.dll | 1.12.0.0 | 1.10.1.0 | Framework Updated |
+
+### Generic Addons - External Integrations
+
+| Project | Assembly Name | Current Version | Upstream Version | Change Type |
+|---------|---------------|-----------------|------------------|-------------|
 | generic.Interface.Kodi | generic.Interface.Kodi.dll | 1.11.1.0 | 1.11.0.0 | Code Modified |
 | generic.Interface.Trakttv | generic.EmberCore.Trakt.dll | 1.12.0.0 | 1.11.1.0 | Framework Updated |
 
@@ -118,38 +120,26 @@ This section tracks the current version of every project in the solution. Versio
 
 | Project | Assembly Name | Current Version | Upstream Version | Change Type |
 |---------|---------------|-----------------|------------------|-------------|
-| scraper.IMDB.Data | scraper.Data.IMDB.dll | 1.11.2.7 | 1.11.2.0 | Code Modified |
-| scraper.TMDB.Data | scraper.Data.TMDB.dll | 1.12.0.0 | 1.11.2.0 | Framework Updated |
+| scraper.Data.IMDB | scraper.Data.IMDB.dll | 1.11.2.7 | 1.11.2.0 | Code Modified |
+| scraper.Data.TMDB | scraper.Data.TMDB.dll | 1.12.0.0 | 1.11.2.0 | Framework Updated |
 | scraper.Data.TVDB | scraper.Data.TVDB.dll | 1.12.0.0 | 1.10.2.0 | Framework Updated |
 | scraper.Data.OMDb | scraper.Data.OMDb.dll | 1.12.0.0 | 1.10.2.0 | Framework Updated |
-| scraper.Trakttv.Data | scraper.Data.Trakttv.dll | 1.12.0.0 | 1.10.2.0 | Framework Updated |
-| scraper.OFDB.Data | scraper.Data.OFDB.dll | 1.12.0.0 | 1.10.1.0 | Deprecated |
-| scraper.MoviepilotDE.Data | scraper.Data.MoviepilotDE.dll | 1.12.0.0 | 1.10.1.0 | Deprecated |
+| scraper.Data.Trakttv | scraper.Data.Trakttv.dll | 1.12.0.0 | 1.10.2.0 | Framework Updated |
 
 ### Image Scrapers
 
 | Project | Assembly Name | Current Version | Upstream Version | Change Type |
 |---------|---------------|-----------------|------------------|-------------|
-| scraper.FanartTV.Poster | scraper.Image.FanartTV.dll | 1.12.0.0 | 1.11.1.0 | Framework Updated |
-| scraper.TMDB.Poster | scraper.Image.TMDB.dll | 1.12.0.0 | 1.11.1.0 | Framework Updated |
+| scraper.Image.FanartTV | scraper.Image.FanartTV.dll | 1.12.0.0 | 1.11.1.0 | Framework Updated |
+| scraper.Image.TMDB | scraper.Image.TMDB.dll | 1.12.0.0 | 1.11.1.0 | Framework Updated |
 | scraper.Image.TVDB | scraper.Image.TVDB.dll | 1.12.0.0 | 1.11.1.0 | Framework Updated |
 
 ### Trailer Scrapers
 
 | Project | Assembly Name | Current Version | Upstream Version | Change Type |
 |---------|---------------|-----------------|------------------|-------------|
-| scraper.TMDB.Trailer | scraper.Trailer.TMDB.dll | 1.12.0.0 | 1.10.1.0 | Framework Updated |
+| scraper.Trailer.TMDB | scraper.Trailer.TMDB.dll | 1.12.0.0 | 1.10.1.0 | Framework Updated |
 | scraper.Trailer.YouTube | scraper.Trailer.YouTube.dll | 1.12.0.0 | 1.10.1.0 | Framework Updated |
-| scraper.Apple.Trailer | scraper.Trailer.Apple.dll | 1.12.0.0 | 1.10.1.0 | Deprecated |
-| scraper.Davestrailerpage.Trailer | scraper.Trailer.Davestrailerpage.dll | 1.12.0.0 | 1.10.1.0 | Deprecated |
-| scraper.Trailer.VideobusterDE | scraper.Trailer.VideobusterDE.dll | 1.12.0.0 | 1.10.1.0 | Deprecated |
-
-### Theme Scrapers
-
-| Project | Assembly Name | Current Version | Upstream Version | Change Type |
-|---------|---------------|-----------------|------------------|-------------|
-| scraper.TelevisionTunes.Theme | scraper.Theme.TelevisionTunes.dll | 1.12.0.0 | 1.10.1.0 | Deprecated |
-| scraper.Theme.YouTube | scraper.Theme.YouTube.dll | 1.12.0.0 | 1.10.1.0 | Deprecated |
 
 ### Removed Projects
 
@@ -158,12 +148,19 @@ This section tracks the current version of every project in the solution. Versio
 | scraper.EmberCore.XML | 1.10.1.0 | Dec 22, 2025 | Legacy XML scraper, unused |
 | scraper.TVDB.Poster | 1.10.1.0 | Dec 22, 2025 | Duplicate functionality |
 | EmberAPI_Test | 1.10.1.0 | Dec 22, 2025 | Outdated test project |
+| scraper.Data.OFDB | 1.10.1.0 | Dec 23, 2025 | Website no longer available |
+| scraper.Data.MoviepilotDE | 1.10.1.0 | Dec 23, 2025 | API discontinued |
+| scraper.Trailer.Apple | 1.10.1.0 | Dec 23, 2025 | Scraper broken |
+| scraper.Trailer.Davestrailerpage | 1.10.1.0 | Dec 23, 2025 | Website structure changed |
+| scraper.Trailer.VideobusterDE | 1.10.1.0 | Dec 23, 2025 | Regional, not maintained |
+| scraper.Theme.TelevisionTunes | 1.10.1.0 | Dec 23, 2025 | Service discontinued |
+| scraper.Theme.YouTube | 1.10.1.0 | Dec 23, 2025 | Broken / Not needed |
 
 ---
 
 ## [↑](#table-of-contents) Deprecated Features
 
-The following features are deprecated and slated for removal in a future version. They are non-functional, broken, or not needed:
+The following features are deprecated and slated for removal in a future version. They are still present in the codebase but non-functional or not needed:
 
 ### NFO Format Support (Deprecated)
 
@@ -173,31 +170,18 @@ The following features are deprecated and slated for removal in a future version
 | NMT Support | Legacy format, not used | Future |
 | Boxee Support | Service discontinued | Future |
 
-### Scrapers (Deprecated/Broken)
-
-| Scraper | Type | Reason |
-|---------|------|--------|
-| scraper.OFDB.Data | Data | Website no longer available |
-| scraper.MoviepilotDE.Data | Data | API discontinued |
-| scraper.Apple.Trailer | Trailer | Scraper broken |
-| scraper.Davestrailerpage.Trailer | Trailer | Website structure changed |
-| scraper.Trailer.VideobusterDE | Trailer | Regional, not maintained |
-| scraper.TelevisionTunes.Theme | Theme | Service discontinued |
-| scraper.Theme.YouTube | Theme | Broken / Not needed |
-
 ### Other Deprecated Features
 
 | Feature | Reason |
 |---------|--------|
 | Kodi Addons | Not used in newer Kodi |
-| TV Tunes / Themes | Broken / Not needed |
-| External Subtitle Download | Broken / Not Needed |
+| External Subtitle Download | Broken / Not needed |
 
 ---
 
 ## [↑](#table-of-contents) Detailed Change History
 
-### Version 1.12.1.0 (December 23-28, 2025)
+### Version 1.12.1.0 (December 23, 2025 - January 1, 2026)
 
 **Summary:** Bug fixes, code cleanup, version standardization, documentation improvements, and additional package updates.
 
@@ -271,7 +255,7 @@ The following features are deprecated and slated for removal in a future version
 | Documentation | Created PerformanceData-Tv.md for TV scraping baseline metrics | `EmberMediaManager\docs\performance-data\PerformanceData-Tv.md` |
 | Documentation | Created PerformanceData-Movies.md for Movie scraping baseline metrics | `EmberMediaManager\docs\performance-data\PerformanceData-Movies.md` |
 | Bug Fix | Fixed Genre Tooltips failing to display due to improper cleaning, not using .Dispose() | `EmberMediaManager\frmMain.vb` |
-| File Consistency | Renamed misnamed folders for several projects to align with solution naming conventions (data, images, etc.) | `Multipe Projects` |
+| File Consistency | Renamed misnamed folders for several projects to align with solution naming conventions (data, images, etc.) | `Multiple Projects` |
 
 
 **Version Updates:**
