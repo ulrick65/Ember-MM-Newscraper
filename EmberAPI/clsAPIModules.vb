@@ -84,8 +84,8 @@ Public Class ModulesManager
 
     Private Sub BuildVersionList()
         VersionList.Clear()
-        VersionList.Add(New VersionItem With {.AssemblyFileName = "*EmberAPP", .Name = "Ember Application", .Version = My.Application.Info.Version.ToString()})
-        VersionList.Add(New VersionItem With {.AssemblyFileName = "*EmberAPI", .Name = "Ember API", .Version = Functions.EmberAPIVersion()})
+        VersionList.Add(New VersionItem With {.AssemblyFileName = "*EmberAPP", .Name = "Ember Media Manager", .Version = My.Application.Info.Version.ToString()})
+        VersionList.Add(New VersionItem With {.AssemblyFileName = "*EmberAPI", .Name = "EmberAPI", .Version = Functions.EmberAPIVersion()})
 
         ' Use a HashSet to track which assemblies we've already added
         Dim addedAssemblies As New HashSet(Of String)(StringComparer.OrdinalIgnoreCase)
@@ -192,7 +192,7 @@ Public Class ModulesManager
 
         If Not String.IsNullOrEmpty(imdbIdOrTmdbId) Then
             Dim ret As Interfaces.ModuleResult
-            For Each _externalScraperModuleClass_Data As _externalScraperModuleClass_Data_MovieSet In externalScrapersModules_Data_MovieSet.Where(Function(e) e.ProcessorModule.ModuleName = "TMDB_Data")
+            For Each _externalScraperModuleClass_Data As _externalScraperModuleClass_Data_MovieSet In externalScrapersModules_Data_MovieSet.Where(Function(e) e.ProcessorModule.ModuleName = "scraper.Data.TMDB")
                 ret = _externalScraperModuleClass_Data.ProcessorModule.GetTMDbCollectionId(imdbIdOrTmdbId, TMDbCollectionId)
                 If ret.breakChain Then Exit For
             Next
@@ -226,7 +226,7 @@ Public Class ModulesManager
 
         If Not String.IsNullOrEmpty(imdbId) Then
             Dim ret As Interfaces.ModuleResult
-            For Each _externalScraperModuleClass_Data As _externalScraperModuleClass_Data_Movie In externalScrapersModules_Data_Movie.Where(Function(e) e.ProcessorModule.ModuleName = "TMDB_Data")
+            For Each _externalScraperModuleClass_Data As _externalScraperModuleClass_Data_Movie In externalScrapersModules_Data_Movie.Where(Function(e) e.ProcessorModule.ModuleName = "scraper.Data.TMDB")
                 ret = _externalScraperModuleClass_Data.ProcessorModule.GetTMDbIdByIMDbId(imdbId, iTMDbId)
                 If ret.breakChain Then Exit For
             Next

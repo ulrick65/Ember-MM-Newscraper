@@ -11321,18 +11321,30 @@ Public Class frmMain
             lblOriginalTitle.Text = String.Empty
         End If
 
-        lblCertifications.Text = String.Join(" / ", currMovie.Movie.Certifications.ToArray)
-        lblCollections.Text = String.Join(" / ", From sets In currMovie.Movie.Sets Select sets.Title)
-        lblCountries.Text = String.Join(" / ", currMovie.Movie.Countries.ToArray)
-        lblCredits.Text = String.Join(" / ", currMovie.Movie.Credits.ToArray)
-        lblDirectors.Text = String.Join(" / ", currMovie.Movie.Directors.ToArray)
+        lblCertifications.Text = If(currMovie.Movie.Certifications IsNot Nothing,
+                                    String.Join(" / ", currMovie.Movie.Certifications.ToArray),
+                                    String.Empty)
+        lblCollections.Text = If(currMovie.Movie.Sets IsNot Nothing,
+                                 String.Join(" / ", From sets In currMovie.Movie.Sets Select sets.Title),
+                                 String.Empty)
+        lblCountries.Text = If(currMovie.Movie.Countries IsNot Nothing,
+                               String.Join(" / ", currMovie.Movie.Countries.ToArray),
+                               String.Empty)
+        lblCredits.Text = If(currMovie.Movie.Credits IsNot Nothing,
+                             String.Join(" / ", currMovie.Movie.Credits.ToArray),
+                             String.Empty)
+        lblDirectors.Text = If(currMovie.Movie.Directors IsNot Nothing,
+                               String.Join(" / ", currMovie.Movie.Directors.ToArray),
+                               String.Empty)
         lblDirectorsHeader.Text = Master.eLang.GetString(940, "Directors")
         lblIMDBHeader.Tag = StringUtils.GetURL_IMDb(currMovie)
         lblPremiered.Text = currMovie.Movie.Premiered
         lblPremieredHeader.Text = Master.eLang.GetString(724, "Premiered")
         lblTMDBHeader.Tag = StringUtils.GetURL_TMDb(currMovie)
         lblTagline.Text = currMovie.Movie.Tagline
-        lblTags.Text = String.Join(" / ", currMovie.Movie.Tags.ToArray)
+        lblTags.Text = If(currMovie.Movie.Tags IsNot Nothing,
+                          String.Join(" / ", currMovie.Movie.Tags.ToArray),
+                          String.Empty)
         txtFilePath.Text = currMovie.Filename
         txtIMDBID.Text = currMovie.Movie.UniqueIDs.IMDbId
         txtMetaData.Text = NFO.FIToString(currMovie.Movie.FileInfo, False)
@@ -11443,9 +11455,11 @@ Public Class frmMain
         End If
 
         If pbMPAA.Image IsNot Nothing Then pnlMPAA.Visible = True
-        For i As Integer = 0 To pnlGenre.Count - 1
-            pnlGenre(i).Visible = True
-        Next
+        If pnlGenre IsNot Nothing Then
+            For i As Integer = 0 To pnlGenre.Count - 1
+                pnlGenre(i).Visible = True
+            Next
+        End If
 
         ResumeLayout()
     End Sub

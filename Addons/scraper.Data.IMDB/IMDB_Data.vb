@@ -39,7 +39,7 @@ Public Class IMDB_Data
 
     Private _SpecialSettings_Movie As New SpecialSettings
     Private _SpecialSettings_TV As New SpecialSettings
-    Private _Name As String = "IMDB_Data"
+    Private _Name As String = "scraper.Data.IMDB"
     Private _ScraperEnabled_Movie As Boolean = False
     Private _ScraperEnabled_TV As Boolean = False
     Private _setup_Movie As frmSettingsHolder_Movie

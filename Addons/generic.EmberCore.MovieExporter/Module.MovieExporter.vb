@@ -36,7 +36,7 @@ Public Class MovieExporterModule
     Private WithEvents cmnuTrayToolsExporter As New ToolStripMenuItem
     Private _AssemblyName As String = String.Empty
     Private _enabled As Boolean = False
-    Private _Name As String = "MovieListExporter"
+    Private _Name As String = "generic.EmberCore.MovieExporter"
     Private _setup As frmSettingsHolder
     Private MySettings As New _MySettings
 

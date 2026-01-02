@@ -2,9 +2,9 @@
 
 | |Document Info |
 |---------------|---|
-| **Version** | 1.1.1 |
+| **Version** | 1.2.0 |
 | **Created** | December 25, 2025 |
-| **Updated** | January 1, 2026 |
+| **Updated** | January 2, 2026 |
 | **Author** | Eric H. Anderson |
 | **Purpose** | Tracks changes made to this fork of Ember Media Manager
 
@@ -55,7 +55,7 @@ This document is your complete history of everything that's happened since forki
 | **Fork Repository** | [ulrick65/Ember-MM-Newscraper](https://github.com/ulrick65/Ember-MM-Newscraper) |
 | **Fork Date** | December 21, 2025 |
 | **Upstream Version at Fork** | 1.11.1.0 |
-| **Current Fork Version** | 1.12.1.0 |
+| **Current Fork Version** | 1.12.2.0 |
 | **Target Framework** | .NET Framework 4.8 (upgraded from 4.5) |
 
 ---
@@ -68,6 +68,7 @@ This document is your complete history of everything that's happened since forki
 | 1.11.1.7 | Dec 21, 2025 | Upstream patch pulled (IMDB writer comparison fix) |
 | 1.12.0.0 | Dec 22, 2025 | Framework upgrade to .NET 4.8, package updates, all addons versioned, removed 3 legacy projects |
 | 1.12.1.0 | Dec 23, 2025 – Jan 1, 2026 | Bug fixes, genre mapping fix, code cleanup/reorganization, removed 9 deprecated scrapers and EmberAPI_test, **Phase 1-4 performance improvements (50-60% faster scraping)**, parallel movie/TV scraping, TVDB file contention fix, cancellation fixes, comprehensive performance tracking, documentation overhaul, project folder standardization |
+| 1.12.2.0 | Jan 2, 2026 | Version standardization release - all 24 projects aligned to 1.12.2.0, VersionConfig.json cleanup, BuildCleanup.ps1 rebuild feature, image save fix |
 
 ---
 
@@ -86,60 +87,60 @@ This section tracks the current version of every project in the solution. Versio
 
 | Project | Assembly Name | Current Version | Upstream Version | Change Type |
 |---------|---------------|-----------------|------------------|-------------|
-| EmberMediaManager | Ember Media Manager.exe | 1.12.1.0 | 1.11.1.0 | Code Modified |
-| EmberAPI | EmberAPI.dll | 1.12.1.1 | 1.11.1.0 | Code Modified |
-| KodiAPI | KodiAPI.dll | 1.10.1.0 | 1.10.0 | Framework Updated |
+| EmberMediaManager | Ember Media Manager.exe | 1.12.2.0 | 1.11.1.0 | Code Modified |
+| EmberAPI | EmberAPI.dll | 1.12.2.0 | 1.11.1.0 | Code Modified |
+| KodiAPI | KodiAPI.dll | 1.12.2.0 | 1.10.0 | Framework Updated |
 
 ### Generic Addons - Tools
 
 | Project | Assembly Name | Current Version | Upstream Version | Change Type |
 |---------|---------------|-----------------|------------------|-------------|
-| generic.EmberCore.BulkRename | generic.EmberCore.BulkRename.dll | 1.12.0.0 | 1.11.1.0 | Framework Updated |
-| generic.EmberCore.MediaFileManager | generic.EmberCore.MediaFileManager.dll | 1.12.0.0 | 1.10.1.0 | Framework Updated |
-| generic.EmberCore.MovieExporter | generic.EmberCore.MovieExporter.dll | 1.12.0.0 | 1.11.1.0 | Framework Updated |
-| generic.EmberCore.TagManager | generic.EmberCore.TagManager.dll | 1.12.0.0 | 1.11.1.0 | Framework Updated |
+| generic.EmberCore.BulkRename | generic.EmberCore.BulkRename.dll | 1.12.2.0 | 1.11.1.0 | Framework Updated |
+| generic.EmberCore.MediaFileManager | generic.EmberCore.MediaFileManager.dll | 1.12.2.0 | 1.10.1.0 | Framework Updated |
+| generic.EmberCore.MovieExporter | generic.EmberCore.MovieExporter.dll | 1.12.2.0 | 1.11.1.0 | Framework Updated |
+| generic.EmberCore.TagManager | generic.EmberCore.TagManager.dll | 1.12.2.0 | 1.11.1.0 | Framework Updated |
 
 ### Generic Addons - Mapping & Settings
 
 | Project | Assembly Name | Current Version | Upstream Version | Change Type |
 |---------|---------------|-----------------|------------------|-------------|
-| generic.EmberCore.Mapping | generic.EmberCore.Mapping.dll | 1.12.0.0 | 1.11.1.0 | Framework Updated |
-| generic.EmberCore.MetadataEditor | generic.EmberCore.MetadataEditor.dll | 1.12.0.0 | 1.10.1.0 | Framework Updated |
-| generic.EmberCore.VideoSourceMapping | generic.EmberCore.MediaSources.dll | 1.12.0.0 | 1.10.1.0 | Framework Updated |
-| generic.EmberCore.MediaListEditor | generic.EmberCore.MediaListEditor.dll | 1.12.0.0 | 1.10.1.0 | Framework Updated |
-| generic.EmberCore.ContextMenu | generic.EmberCore.ContextMenu.dll | 1.12.0.0 | 1.10.1.0 | Framework Updated |
+| generic.EmberCore.Mapping | generic.EmberCore.Mapping.dll | 1.12.2.0 | 1.11.1.0 | Framework Updated |
+| generic.EmberCore.MetadataEditor | generic.EmberCore.MetadataEditor.dll | 1.12.2.0 | 1.10.1.0 | Framework Updated |
+| generic.EmberCore.VideoSourceMapping | generic.EmberCore.MediaSources.dll | 1.12.2.0 | 1.10.1.0 | Framework Updated |
+| generic.EmberCore.MediaListEditor | generic.EmberCore.MediaListEditor.dll | 1.12.2.0 | 1.10.1.0 | Framework Updated |
+| generic.EmberCore.ContextMenu | generic.EmberCore.ContextMenu.dll | 1.12.2.0 | 1.10.1.0 | Framework Updated |
 
 ### Generic Addons - External Integrations
 
 | Project | Assembly Name | Current Version | Upstream Version | Change Type |
 |---------|---------------|-----------------|------------------|-------------|
-| generic.Interface.Kodi | generic.Interface.Kodi.dll | 1.11.1.0 | 1.11.0.0 | Code Modified |
-| generic.Interface.Trakttv | generic.EmberCore.Trakt.dll | 1.12.0.0 | 1.11.1.0 | Framework Updated |
+| generic.Interface.Kodi | generic.Interface.Kodi.dll | 1.12.2.0 | 1.11.0.0 | Code Modified |
+| generic.Interface.Trakttv | generic.EmberCore.Trakt.dll | 1.12.2.0 | 1.11.1.0 | Framework Updated |
 
 ### Data Scrapers
 
 | Project | Assembly Name | Current Version | Upstream Version | Change Type |
 |---------|---------------|-----------------|------------------|-------------|
-| scraper.Data.IMDB | scraper.Data.IMDB.dll | 1.11.2.7 | 1.11.2.0 | Code Modified |
-| scraper.Data.TMDB | scraper.Data.TMDB.dll | 1.12.0.0 | 1.11.2.0 | Framework Updated |
-| scraper.Data.TVDB | scraper.Data.TVDB.dll | 1.12.0.0 | 1.10.2.0 | Framework Updated |
-| scraper.Data.OMDb | scraper.Data.OMDb.dll | 1.12.0.0 | 1.10.2.0 | Framework Updated |
-| scraper.Data.Trakttv | scraper.Data.Trakttv.dll | 1.12.0.0 | 1.10.2.0 | Framework Updated |
+| scraper.Data.IMDB | scraper.Data.IMDB.dll | 1.12.2.0 | 1.11.2.0 | Code Modified |
+| scraper.Data.TMDB | scraper.Data.TMDB.dll | 1.12.2.0 | 1.11.2.0 | Code Modified |
+| scraper.Data.TVDB | scraper.Data.TVDB.dll | 1.12.2.0 | 1.10.2.0 | Code Modified |
+| scraper.Data.OMDb | scraper.Data.OMDb.dll | 1.12.2.0 | 1.10.2.0 | Code Modified |
+| scraper.Data.Trakttv | scraper.Data.Trakttv.dll | 1.12.2.0 | 1.10.2.0 | Framework Updated |
 
 ### Image Scrapers
 
 | Project | Assembly Name | Current Version | Upstream Version | Change Type |
 |---------|---------------|-----------------|------------------|-------------|
-| scraper.Image.FanartTV | scraper.Image.FanartTV.dll | 1.12.0.0 | 1.11.1.0 | Framework Updated |
-| scraper.Image.TMDB | scraper.Image.TMDB.dll | 1.12.0.0 | 1.11.1.0 | Framework Updated |
-| scraper.Image.TVDB | scraper.Image.TVDB.dll | 1.12.0.0 | 1.11.1.0 | Framework Updated |
+| scraper.Image.FanartTV | scraper.Image.FanartTV.dll | 1.12.2.0 | 1.11.1.0 | Framework Updated |
+| scraper.Image.TMDB | scraper.Image.TMDB.dll | 1.12.2.0 | 1.11.1.0 | Framework Updated |
+| scraper.Image.TVDB | scraper.Image.TVDB.dll | 1.12.2.0 | 1.11.1.0 | Code Modified |
 
 ### Trailer Scrapers
 
 | Project | Assembly Name | Current Version | Upstream Version | Change Type |
 |---------|---------------|-----------------|------------------|-------------|
-| scraper.Trailer.TMDB | scraper.Trailer.TMDB.dll | 1.12.0.0 | 1.10.1.0 | Framework Updated |
-| scraper.Trailer.YouTube | scraper.Trailer.YouTube.dll | 1.12.0.0 | 1.10.1.0 | Framework Updated |
+| scraper.Trailer.TMDB | scraper.Trailer.TMDB.dll | 1.12.2.0 | 1.10.1.0 | Framework Updated |
+| scraper.Trailer.YouTube | scraper.Trailer.YouTube.dll | 1.12.2.0 | 1.10.1.0 | Framework Updated |
 
 ### Removed Projects
 
@@ -180,6 +181,51 @@ The following features are deprecated and slated for removal in a future version
 ---
 
 ## [↑](#table-of-contents) Detailed Change History
+
+### Version 1.12.2.0 (January 2, 2026)
+
+**Summary:** Version standardization release. All 24 projects aligned to version 1.12.2.0, configuration cleanup, build script enhancements, and image save fix.
+
+**Code Changes:**
+
+| Category | Change | Files Affected |
+|----------|--------|----------------|
+| Bug Fix | Reverted `SaveToFile` race condition fix that prevented image overwrites during editing | `EmberAPI\clsAPIImages.vb` |
+
+**Script Updates:**
+
+| Category | Change | Files Affected |
+|----------|--------|----------------|
+| Enhancement | Added `-Rebuild` parameter to BuildCleanup.ps1 for automatic solution rebuild after cleanup | `EmberMediaManager\scripts\BuildCleanup.ps1` |
+| Enhancement | Added `-Configuration` and `-Platform` parameters for build customization | `EmberMediaManager\scripts\BuildCleanup.ps1` |
+| Enhancement | Added VS-style build summary with project counts and timing | `EmberMediaManager\scripts\BuildCleanup.ps1` |
+| Enhancement | Added `vswhere.exe` support for VS Preview/Insiders MSBuild discovery | `EmberMediaManager\scripts\BuildCleanup.ps1` |
+| Enhancement | Updated verbosity to show build progress | `EmberMediaManager\scripts\BuildCleanup.ps1` |
+| Cleanup | Removed 8 deprecated/removed projects from VersionConfig.json | `EmberMediaManager\scripts\VersionConfig.json` |
+| Cleanup | Removed `themeScrapers` category (all projects removed) | `EmberMediaManager\scripts\VersionConfig.json` |
+| Cleanup | Fixed project paths to match standardized folder names | `EmberMediaManager\scripts\VersionConfig.json` |
+| Cleanup | Removed `ThemeScrapers` category from UpdateAssemblyVersions.ps1 | `EmberMediaManager\scripts\UpdateAssemblyVersions.ps1` |
+
+**Version Updates:**
+
+| Category | Change | Files Affected |
+|----------|--------|----------------|
+| Version | Updated all 24 projects to 1.12.2.0 | All AssemblyInfo files |
+| Version | BuildCleanup.ps1 updated to v1.2.1 | `EmberMediaManager\scripts\BuildCleanup.ps1` |
+| Version | UpdateAssemblyVersions.ps1 updated to v2.2.0 | `EmberMediaManager\scripts\UpdateAssemblyVersions.ps1` |
+
+**Projects Updated to 1.12.2.0:**
+
+| From Version | Count | Projects |
+|--------------|:-----:|----------|
+| 1.12.1.0 | 1 | EmberMediaManager |
+| 1.12.1.1 | 1 | EmberAPI |
+| 1.12.0.0 | 18 | All addons and scrapers at baseline |
+| 1.11.2.7 | 1 | scraper.Data.IMDB |
+| 1.11.1.0 | 2 | generic.Interface.Kodi, KodiAPI |
+| 1.10.1.0 | 1 | KodiAPI |
+
+---
 
 ### Version 1.12.1.0 (December 23, 2025 - January 1, 2026)
 
@@ -418,17 +464,44 @@ The following features are deprecated and slated for removal in a future version
 
 ## [↑](#table-of-contents) Git Diff Summary (vs Upstream)
 
-Based on `git diff --stat upstream/master..HEAD`:
+Based on `git diff --stat upstream/master` (as of January 2, 2026):
 
-| Category | Files Changed | Lines Added | Lines Removed |
-|----------|---------------|-------------|---------------|
-| Total | 377 files | ~10,631 | ~39,500 |
-| Documentation | 14 files | ~7,000 | 0 |
-| Project Removals | ~60 files | 0 | ~25,000 |
-| Framework/Package | ~200 files | ~2,000 | ~2,000 |
-| Code Changes | ~10 files | ~500 | ~300 |
-| Build Scripts | 3 files | ~230 | 0 |
-| Binary Updates | 4 files | N/A | N/A |
+### Overall Summary
+
+| Metric | Value |
+|--------|-------|
+| **Files Changed** | 408 |
+| **Lines Added** | +17,256 |
+| **Lines Removed** | -39,617 |
+| **Net Change** | -22,361 (leaner codebase) |
+
+### By Top-Level Folder
+
+| Count | Folder |
+|------:|--------|
+| 214 | Addons |
+| 93 | EmberMediaManager |
+| 74 | EmberAPI |
+| 13 | KodiAPI |
+| 6 | .github |
+| 5 | TempBackups |
+| 2 | (root) |
+| 1 | .vs |
+
+### By File Type
+
+| Category | Files | Insertions | Deletions | Net |
+|----------|------:|----------:|----------:|----:|
+| Code (.vb/.cs) | 227 | +5,820 | -34,918 | -29,098 |
+| Documentation (.md) | 57 | +9,906 | 0 | +9,906 |
+
+### What This Means
+
+- **~29,000 lines of legacy code removed** — 10 deprecated/broken projects deleted
+- **~10,000 lines of documentation added** — Comprehensive process docs, performance analysis, changelogs
+- **Net reduction of ~22,000 lines** — Cleaner, more maintainable codebase
+- **50-60% faster scraping** — Parallel processing for movies and TV shows
+- **Framework modernized** — .NET 4.5 → 4.8 with updated packages
 
 ---
 
@@ -455,6 +528,7 @@ The following documents provide detailed information about specific initiatives:
 | [PerformanceImprovements-Phase3.md](improvements-docs/PerformanceImprovements-Phase3.md) | Phase 3: TV Show Parallel Scraping, TVDB fixes, cancellation fixes (v2.2 - Complete) |
 | [PerformanceData-Tv.md](performance-data/PerformanceData-Tv.md) | TV scraping performance baseline metrics and analysis |
 | [PerformanceData-Movies.md](performance-data/PerformanceData-Movies.md) | Movie scraping performance baseline metrics and analysis |
+| [FutureEnhancements.md](improvements-docs/FutureEnhancements.md) | Living backlog of planned and potential improvements |
 
 ---
 
@@ -464,7 +538,7 @@ The following documents provide detailed information about specific initiatives:
 |--------|----------|---------|
 | UpdateAssemblyVersions.ps1 | `EmberMediaManager\scripts\` | Update assembly versions across all projects (run with -Help for usage) |
 | VersionConfig.json | `EmberMediaManager\scripts\` | Configuration file for version targets |
-| BuildCleanup.ps1 | `EmberMediaManager\scripts\` | Clean build artifacts |
+| BuildCleanup.ps1 | `EmberMediaManager\scripts\` | Clean build artifacts and optionally rebuild solution |
 
 ---
 
@@ -497,12 +571,12 @@ The project uses a four-part version number: `Major.Minor.Build.Revision`
 | **Build** | Bug fixes, minor improvements, package updates |
 | **Revision** | Patches, hotfixes, documentation-only changes |
 
-**Current Application Version:** 1.12.1.0
-**Current Addon Baseline Version:** 1.12.0.0
+**Current Application Version:** 1.12.2.0
+**Current Addon Baseline Version:** 1.12.2.0
 
 - **1** - Major version (inherited from upstream)
 - **12** - Minor version (incremented for .NET 4.8 upgrade)
-- **1** - Build (core app: incremented for post-upgrade fixes)
+- **2** - Build (version standardization release)
 - **0** - Revision
 
 ---

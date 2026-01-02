@@ -31,7 +31,7 @@ Public Class YouTube_Trailer
     Public Shared ConfigScrapeModifiers As New Structures.ScrapeModifiers
     Public Shared _AssemblyName As String
 
-    Private _Name As String = "YouTube_Trailer"
+    Private _Name As String = "scraper.Trailer.YouTube"
     Private _ScraperEnabled As Boolean = False
     Private _setup As frmSettingsHolder
 

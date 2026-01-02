@@ -57,7 +57,7 @@ Public Class genericMetadataEditor
 
     Public ReadOnly Property ModuleName() As String Implements Interfaces.GenericModule.ModuleName
         Get
-            Return "Audio & Video Codec Mapping"
+            Return "generic.EmberCore.MetadataEditor"
         End Get
     End Property
 

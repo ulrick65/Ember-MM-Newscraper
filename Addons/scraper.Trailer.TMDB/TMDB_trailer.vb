@@ -33,7 +33,7 @@ Public Class TMDB_Trailer
 
     Private strPrivateAPIKey As String = String.Empty
     Private _SpecialSettings As New AddonSettings
-    Private _Name As String = "TMDB_Trailer"
+    Private _Name As String = "scraper.Trailer.TMDB"
     Private _ScraperEnabled As Boolean = False
     Private _setup As frmSettingsHolder
     Private _TMDBAPI As New clsAPITMDB

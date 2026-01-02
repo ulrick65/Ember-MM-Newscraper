@@ -1,13 +1,13 @@
 {
     "description": "Assembly version configuration for Ember Media Manager",
-    "lastUpdated": "2025-12-26",
-    "defaultVersion": "1.12.0.0",
+    "lastUpdated": "2026-01-02",
+    "defaultVersion": "1.12.2.0",
     "projects": {
         "core": [
             {
                 "name": "EmberMediaManager",
                 "path": "EmberMediaManager\\My Project\\AssemblyInfo.vb",
-                "version": "1.12.1.0",
+                "version": "1.12.2.0",
                 "type": "vb",
                 "status": "active",
                 "notes": "Main application"
@@ -15,7 +15,7 @@
             {
                 "name": "EmberAPI",
                 "path": "EmberAPI\\My Project\\AssemblyInfo.vb",
-                "version": "1.12.1.1",
+                "version": "1.12.2.0",
                 "type": "vb",
                 "status": "active",
                 "notes": "Core API library"
@@ -23,7 +23,7 @@
             {
                 "name": "KodiAPI",
                 "path": "KodiAPI\\Properties\\AssemblyInfo.cs",
-                "version": "1.10.1.0",
+                "version": "1.12.2.0",
                 "type": "cs",
                 "status": "active",
                 "notes": "Kodi integration library"
@@ -33,70 +33,70 @@
             {
                 "name": "generic.EmberCore.BulkRename",
                 "path": "Addons\\generic.EmberCore.BulkRename\\My Project\\AssemblyInfo.vb",
-                "version": "1.12.0.0",
+                "version": "1.12.2.0",
                 "type": "vb",
                 "status": "active"
             },
             {
                 "name": "generic.EmberCore.ContextMenu",
                 "path": "Addons\\generic.EmberCore.ContextMenu\\My Project\\AssemblyInfo.vb",
-                "version": "1.12.0.0",
-                "type": "vb",
-                "status": "active"
-            },
-            {
-                "name": "generic.EmberCore.FilterEditor",
-                "path": "Addons\\generic.EmberCore.FilterEditor\\My Project\\AssemblyInfo.vb",
-                "version": "1.12.0.0",
+                "version": "1.12.2.0",
                 "type": "vb",
                 "status": "active"
             },
             {
                 "name": "generic.EmberCore.Mapping",
                 "path": "Addons\\generic.EmberCore.Mapping\\My Project\\AssemblyInfo.vb",
-                "version": "1.12.0.0",
+                "version": "1.12.2.0",
                 "type": "vb",
                 "status": "active"
             },
             {
                 "name": "generic.EmberCore.MediaFileManager",
                 "path": "Addons\\generic.EmberCore.MediaFileManager\\My Project\\AssemblyInfo.vb",
-                "version": "1.12.0.0",
+                "version": "1.12.2.0",
+                "type": "vb",
+                "status": "active"
+            },
+            {
+                "name": "generic.EmberCore.MediaListEditor",
+                "path": "Addons\\generic.EmberCore.MediaListEditor\\My Project\\AssemblyInfo.vb",
+                "version": "1.12.2.0",
                 "type": "vb",
                 "status": "active"
             },
             {
                 "name": "generic.EmberCore.MetadataEditor",
-                "path": "Addons\\generic.Embercore.MetadataEditor\\My Project\\AssemblyInfo.vb",
-                "version": "1.12.0.0",
+                "path": "Addons\\generic.EmberCore.MetadataEditor\\My Project\\AssemblyInfo.vb",
+                "version": "1.12.2.0",
                 "type": "vb",
                 "status": "active"
             },
             {
-                "name": "generic.EmberCore.MovieExport",
-                "path": "Addons\\generic.EmberCore.MovieExport\\My Project\\AssemblyInfo.vb",
-                "version": "1.12.0.0",
+                "name": "generic.EmberCore.MovieExporter",
+                "path": "Addons\\generic.EmberCore.MovieExporter\\My Project\\AssemblyInfo.vb",
+                "version": "1.12.2.0",
                 "type": "vb",
                 "status": "active"
             },
             {
                 "name": "generic.EmberCore.TagManager",
                 "path": "Addons\\generic.EmberCore.TagManager\\My Project\\AssemblyInfo.vb",
-                "version": "1.12.0.0",
+                "version": "1.12.2.0",
                 "type": "vb",
                 "status": "active"
             },
             {
                 "name": "generic.EmberCore.VideoSourceMapping",
                 "path": "Addons\\generic.EmberCore.VideoSourceMapping\\My Project\\AssemblyInfo.vb",
-                "version": "1.12.0.0",
+                "version": "1.12.2.0",
                 "type": "vb",
                 "status": "active"
             },
             {
                 "name": "generic.Interface.Kodi",
                 "path": "Addons\\generic.Interface.Kodi\\My Project\\AssemblyInfo.vb",
-                "version": "1.11.1.0",
+                "version": "1.12.2.0",
                 "type": "vb",
                 "status": "active",
                 "notes": "Code modified - async fix"
@@ -104,144 +104,86 @@
             {
                 "name": "generic.Interface.Trakttv",
                 "path": "Addons\\generic.Interface.Trakttv\\My Project\\AssemblyInfo.vb",
-                "version": "1.12.0.0",
+                "version": "1.12.2.0",
                 "type": "vb",
                 "status": "active"
             }
         ],
         "dataScrapers": [
             {
-                "name": "scraper.IMDB.Data",
-                "path": "Addons\\scraper.IMDB.Data\\My Project\\AssemblyInfo.vb",
-                "version": "1.11.2.7",
+                "name": "scraper.Data.IMDB",
+                "path": "Addons\\scraper.Data.IMDB\\My Project\\AssemblyInfo.vb",
+                "version": "1.12.2.0",
                 "type": "vb",
                 "status": "active",
                 "notes": "Code modified - upstream merge"
             },
             {
-                "name": "scraper.TMDB.Data",
-                "path": "Addons\\scraper.TMDB.Data\\My Project\\AssemblyInfo.vb",
-                "version": "1.12.0.0",
+                "name": "scraper.Data.TMDB",
+                "path": "Addons\\scraper.Data.TMDB\\My Project\\AssemblyInfo.vb",
+                "version": "1.12.2.0",
                 "type": "vb",
                 "status": "active"
             },
             {
                 "name": "scraper.Data.TVDB",
                 "path": "Addons\\scraper.Data.TVDB\\My Project\\AssemblyInfo.vb",
-                "version": "1.12.0.0",
+                "version": "1.12.2.0",
                 "type": "vb",
                 "status": "active"
             },
             {
                 "name": "scraper.Data.OMDb",
                 "path": "Addons\\scraper.Data.OMDb\\My Project\\AssemblyInfo.vb",
-                "version": "1.12.0.0",
+                "version": "1.12.2.0",
                 "type": "vb",
                 "status": "active"
             },
             {
-                "name": "scraper.Trakttv.Data",
-                "path": "Addons\\scraper.Trakttv.Data\\My Project\\AssemblyInfo.vb",
-                "version": "1.12.0.0",
+                "name": "scraper.Data.Trakttv",
+                "path": "Addons\\scraper.Data.Trakttv\\My Project\\AssemblyInfo.vb",
+                "version": "1.12.2.0",
                 "type": "vb",
                 "status": "active"
-            },
-            {
-                "name": "scraper.OFDB.Data",
-                "path": "Addons\\scraper.OFDB.Data\\My Project\\AssemblyInfo.vb",
-                "version": "1.12.0.0",
-                "type": "vb",
-                "status": "deprecated",
-                "notes": "Website no longer available"
-            },
-            {
-                "name": "scraper.MoviepilotDE.Data",
-                "path": "Addons\\scraper.MoviepilotDE.Data\\My Project\\AssemblyInfo.vb",
-                "version": "1.12.0.0",
-                "type": "vb",
-                "status": "deprecated",
-                "notes": "API discontinued"
             }
         ],
         "imageScrapers": [
             {
-                "name": "scraper.FanartTV.Poster",
-                "path": "Addons\\scraper.FanartTV.Poster\\My Project\\AssemblyInfo.vb",
-                "version": "1.12.0.0",
+                "name": "scraper.Image.FanartTV",
+                "path": "Addons\\scraper.Image.FanartTV\\My Project\\AssemblyInfo.vb",
+                "version": "1.12.2.0",
                 "type": "vb",
                 "status": "active"
             },
             {
-                "name": "scraper.TMDB.Poster",
-                "path": "Addons\\scraper.TMDB.Poster\\My Project\\AssemblyInfo.vb",
-                "version": "1.12.0.0",
+                "name": "scraper.Image.TMDB",
+                "path": "Addons\\scraper.Image.TMDB\\My Project\\AssemblyInfo.vb",
+                "version": "1.12.2.0",
                 "type": "vb",
                 "status": "active"
             },
             {
                 "name": "scraper.Image.TVDB",
                 "path": "Addons\\scraper.Image.TVDB\\My Project\\AssemblyInfo.vb",
-                "version": "1.12.0.0",
+                "version": "1.12.2.0",
                 "type": "vb",
                 "status": "active"
             }
         ],
         "trailerScrapers": [
             {
-                "name": "scraper.TMDB.Trailer",
-                "path": "Addons\\scraper.TMDB.Trailer\\My Project\\AssemblyInfo.vb",
-                "version": "1.12.0.0",
+                "name": "scraper.Trailer.TMDB",
+                "path": "Addons\\scraper.Trailer.TMDB\\My Project\\AssemblyInfo.vb",
+                "version": "1.12.2.0",
                 "type": "vb",
                 "status": "active"
             },
             {
                 "name": "scraper.Trailer.YouTube",
                 "path": "Addons\\scraper.Trailer.YouTube\\My Project\\AssemblyInfo.vb",
-                "version": "1.12.0.0",
+                "version": "1.12.2.0",
                 "type": "vb",
                 "status": "active"
-            },
-            {
-                "name": "scraper.Apple.Trailer",
-                "path": "Addons\\scraper.Apple.Trailer\\My Project\\AssemblyInfo.vb",
-                "version": "1.12.0.0",
-                "type": "vb",
-                "status": "deprecated",
-                "notes": "Scraper broken"
-            },
-            {
-                "name": "scraper.Davestrailerpage.Trailer",
-                "path": "Addons\\scraper.Davestrailerpage.Trailer\\My Project\\AssemblyInfo.vb",
-                "version": "1.12.0.0",
-                "type": "vb",
-                "status": "deprecated",
-                "notes": "Website structure changed"
-            },
-            {
-                "name": "scraper.Trailer.VideobusterDE",
-                "path": "Addons\\scraper.Trailer.VideobusterDE\\My Project\\AssemblyInfo.vb",
-                "version": "1.12.0.0",
-                "type": "vb",
-                "status": "deprecated",
-                "notes": "Regional, not maintained"
-            }
-        ],
-        "themeScrapers": [
-            {
-                "name": "scraper.TelevisionTunes.Theme",
-                "path": "Addons\\scraper.TelevisionTunes.Theme\\My Project\\AssemblyInfo.vb",
-                "version": "1.12.0.0",
-                "type": "vb",
-                "status": "deprecated",
-                "notes": "Service discontinued"
-            },
-            {
-                "name": "scraper.Theme.YouTube",
-                "path": "Addons\\scraper.Theme.YouTube\\My Project\\AssemblyInfo.vb",
-                "version": "1.12.0.0",
-                "type": "vb",
-                "status": "deprecated",
-                "notes": "Not needed"
             }
         ]
     }

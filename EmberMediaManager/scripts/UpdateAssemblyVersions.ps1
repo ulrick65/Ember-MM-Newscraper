@@ -17,7 +17,7 @@
     Example: 1.12.0.0 -> 1.12.1.0
 
 .PARAMETER Category
-    Update only specific category: Core, GenericAddons, DataScrapers, ImageScrapers, TrailerScrapers, ThemeScrapers, All
+    Update only specific category: Core, GenericAddons, DataScrapers, ImageScrapers, TrailerScrapers, All
 
 .PARAMETER IncludeDeprecated
     Include deprecated projects in the update. By default, deprecated projects are skipped.
@@ -49,9 +49,15 @@
     Updates all projects including deprecated ones.
 
 .NOTES
-    Author: Eric H. Anderson
-    Version: 2.1.1
-    Last Updated: 2025-12-25
+    ============================================================
+    Document Info
+    ============================================================
+    Version:      2.2.0
+    Created:      December 25, 2025
+    Updated:      January 2, 2026
+    Author:       Eric H. Anderson
+    Purpose:      Update assembly versions across Ember Media Manager projects
+    ============================================================
     
     Configuration: EmberMediaManager\scripts\VersionConfig.json
     Results: Saved to EmberMediaManager\docs\version-updates\VersionUpdates_*.csv
@@ -64,7 +70,7 @@ param(
     
     [switch]$IncrementBuild,
     
-    [ValidateSet("Core", "GenericAddons", "DataScrapers", "ImageScrapers", "TrailerScrapers", "ThemeScrapers", "All")]
+    [ValidateSet("Core", "GenericAddons", "DataScrapers", "ImageScrapers", "TrailerScrapers", "All")]
     [string]$Category = "All",
     
     [switch]$IncludeDeprecated,
@@ -81,7 +87,7 @@ if ($Help) {
     Write-Host ""
     Write-Host "============================================================" -ForegroundColor Cyan
     Write-Host " Ember Media Manager - Assembly Version Updater" -ForegroundColor Cyan
-    Write-Host " Version 2.1.1" -ForegroundColor Cyan
+    Write-Host " Version 2.2.0" -ForegroundColor Cyan
     Write-Host "============================================================" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "DESCRIPTION:" -ForegroundColor Yellow
@@ -94,7 +100,7 @@ if ($Help) {
     Write-Host "  -IncrementBuild    Auto-increment build number (ignores config versions)"
     Write-Host "  -Category          Filter by category:"
     Write-Host "                       Core, GenericAddons, DataScrapers,"
-    Write-Host "                       ImageScrapers, TrailerScrapers, ThemeScrapers, All"
+    Write-Host "                       ImageScrapers, TrailerScrapers, All"
     Write-Host "  -IncludeDeprecated Include deprecated projects (skipped by default)"
     Write-Host "  -NoBackup          Skip backup creation"
     Write-Host "  -ConfigPath        Custom path to VersionConfig.json"
@@ -338,7 +344,7 @@ function Backup-AssemblyInfo {
 
 #region Main Script
 
-Write-Banner "Ember Media Manager - Assembly Version Updater v2.1.1"
+Write-Banner "Ember Media Manager - Assembly Version Updater v2.2.0"
 
 # Load and validate configuration file
 if (-not (Test-Path $ConfigPath)) {
@@ -367,7 +373,6 @@ $categoryMap = @{
     "DataScrapers"    = "dataScrapers"
     "ImageScrapers"   = "imageScrapers"
     "TrailerScrapers" = "trailerScrapers"
-    "ThemeScrapers"   = "themeScrapers"
 }
 
 # Collect projects based on selected category

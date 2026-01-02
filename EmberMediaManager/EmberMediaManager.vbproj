@@ -561,6 +561,8 @@
     <None Include="docs\analysis-docs\SolutionCleanupAnalysis.md" />
     <None Include="docs\process-docs\StatusMappingProcess.md" />
     <None Include="docs\process-docs\StudioMappingProcess.md" />
+    <None Include="docs\release-notes\ReleaseNotes-v1.12.2.0.md" />
+    <None Include="docs\version-updates\VersionUpdates_20260102_163739.csv" />
     <None Include="scripts\BuildCleanup.ps1" />
     <None Include="scripts\UpdateAssemblyVersions.ps1" />
     <None Include="My Project\app.manifest" />
@@ -5374,7 +5376,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Bin\" />
-    <Folder Include="docs\version-updates\" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">

@@ -42,7 +42,7 @@ Public Class TMDB_Image
     Private _SpecialSettings_Movie As New AddonSettings
     Private _SpecialSettings_MovieSet As New AddonSettings
     Private _SpecialSettings_TV As New AddonSettings
-    Private _Name As String = "TMDB_Image"
+    Private _Name As String = "scraper.Image.TMDB"
     Private _ScraperEnabled_Movie As Boolean = False
     Private _ScraperEnabled_MovieSet As Boolean = False
     Private _ScraperEnabled_TV As Boolean = False

@@ -36,7 +36,7 @@ Public Class BulkRenamerModule
     Private MySettings As New _MySettings
     Private _AssemblyName As String = String.Empty
     Private _enabled As Boolean = False
-    Private _Name As String = "Renamer"
+    Private _Name As String = "generic.EmberCore.BulkRename"
     Private _setup As frmSettingsHolder
     Private cmnuRenamer_Movies As New ToolStripMenuItem
     Private cmnuRenamer_Episodes As New ToolStripMenuItem

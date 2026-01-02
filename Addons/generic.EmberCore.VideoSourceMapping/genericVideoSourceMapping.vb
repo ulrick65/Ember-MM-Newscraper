@@ -60,7 +60,7 @@ Public Class genericVideoSourceMapping
 
     Public ReadOnly Property ModuleName() As String Implements Interfaces.GenericModule.ModuleName
         Get
-            Return "Media Sources Editor"
+            Return "generic.EmberCore.VideoSourceMapping"
         End Get
     End Property
 

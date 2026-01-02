@@ -1934,6 +1934,7 @@ Namespace MediaContainers
         <XmlIgnore()>
         Public Property Sets() As List(Of SetDetails)
             Get
+                If _sets Is Nothing Then _sets = New List(Of SetDetails)
                 Return _sets
             End Get
             Set(value As List(Of SetDetails))
@@ -1944,7 +1945,7 @@ Namespace MediaContainers
         <XmlIgnore()>
         Public ReadOnly Property SetsSpecified() As Boolean
             Get
-                Return Sets.Count > 0
+                Return _sets IsNot Nothing AndAlso _sets.Count > 0
             End Get
         End Property
 

@@ -1,4 +1,4 @@
-Imports System
+﻿Imports System
 Imports System.Reflection
 Imports System.Runtime.InteropServices
 
@@ -12,7 +12,7 @@ Imports System.Runtime.InteropServices
 <Assembly: AssemblyDescription("https://github.com/nagten/Ember-MM-Newscraper")>
 <Assembly: AssemblyCompany("Ember Media Manager")>
 <Assembly: AssemblyProduct("scraper.Data.IMDB")>
-<Assembly: AssemblyCopyright("Copyright © 2025")>
+<Assembly: AssemblyCopyright("Copyright Â© 2025")>
 <Assembly: AssemblyTrademark("")>
 
 <Assembly: ComVisible(False)>
@@ -32,5 +32,5 @@ Imports System.Runtime.InteropServices
 ' <Assembly: AssemblyVersion("1.0.*")> 
 
 ' Updated version after adding writers to the comparison from nagten in the upstream repository 
-<Assembly: AssemblyVersion("1.11.2.7")>
-<Assembly: AssemblyFileVersion("1.11.2.7")>
+<Assembly: AssemblyVersion("1.12.2.0")>
+<Assembly: AssemblyFileVersion("1.12.2.0")>

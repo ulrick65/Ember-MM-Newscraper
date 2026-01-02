@@ -38,7 +38,7 @@ Public Class genericMapping
 
     Shared _Logger As Logger = LogManager.GetCurrentClassLogger()
 
-    Private _Name As String = "MappingManager"
+    Private _Name As String = "generic.EmberCore.Mapping"
     Private _setup As frmSettingsHolder
     Private _AssemblyName As String = String.Empty
     Private _enabled As Boolean = False

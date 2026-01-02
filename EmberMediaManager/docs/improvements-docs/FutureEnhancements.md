@@ -2,10 +2,13 @@
 
 | Document Info | |
 |---------------|---|
-| **Version** | 1.0 |
+| **Version** | 1.1 |
 | **Created** | December 31, 2025 |
+| **Updated** | January 2, 2026 |
 | **Author** | Eric H. Anderson |
 | **Purpose** | Living backlog of deferred, planned, and potential improvements |
+
+##### [← Return to Document Index](../DocumentIndex.md)
 
 ---
 
@@ -15,18 +18,20 @@ This document tracks all future enhancement opportunities for Ember Media Manage
 
 ---
 
-## Categories
+## Table of Contents
 
 - [Performance Enhancements](#performance-enhancements)
 - [Code Cleanup](#code-cleanup)
 - [UI/UX Improvements](#uiux-improvements)
 - [Feature Requests](#feature-requests)
-- [Technical Debt](#technical-debt)
+- [Code Quality](#code-quality)
+- [Known Issues](#known-issues)
+- [Cancelled Items](#cancelled-items)
 - [Completed Items](#completed-items)
 
 ---
 
-## Performance Enhancements
+## [↑](#table-of-contents) Performance Enhancements
 
 | Item | Priority | Effort | Source | Notes |
 |------|----------|--------|--------|-------|
@@ -43,7 +48,7 @@ This document tracks all future enhancement opportunities for Ember Media Manage
 
 ---
 
-## Code Cleanup
+## [↑](#table-of-contents) Code Cleanup
 
 | Item | Priority | Effort | Source | Notes |
 |------|----------|--------|--------|-------|
@@ -60,7 +65,7 @@ This document tracks all future enhancement opportunities for Ember Media Manage
 
 ---
 
-## UI/UX Improvements
+## [↑](#table-of-contents) UI/UX Improvements
 
 | Item | Priority | Effort | Source | Notes |
 |------|----------|--------|--------|-------|
@@ -70,7 +75,7 @@ This document tracks all future enhancement opportunities for Ember Media Manage
 
 ---
 
-## Feature Requests
+## [↑](#table-of-contents) Feature Requests
 
 | Item | Priority | Effort | Source | Notes |
 |------|----------|--------|--------|-------|
@@ -79,7 +84,7 @@ This document tracks all future enhancement opportunities for Ember Media Manage
 
 ---
 
-## Technical Debt
+## [↑](#table-of-contents) Code Quality
 
 | Item | Priority | Effort | Source | Notes |
 |------|----------|--------|--------|-------|
@@ -92,7 +97,17 @@ This document tracks all future enhancement opportunities for Ember Media Manage
 
 ---
 
-## Cancelled Items
+## [↑](#table-of-contents) Known Issues
+
+*Items that may need attention if problems are reported. Monitor during testing.*
+
+| Item | Priority | Source | Notes |
+|------|----------|--------|-------|
+| Parallel download race conditions in `SaveToFile` | Monitor | Phase 1 | Reverted `File.Exists` check that broke image editing; if race conditions occur during parallel scraping, implement fix at cache layer instead of in `SaveToFile` |
+
+---
+
+## [↑](#table-of-contents) Cancelled Items
 
 | Item | Source | Reason |
 |------|--------|--------|
@@ -101,7 +116,7 @@ This document tracks all future enhancement opportunities for Ember Media Manage
 
 ---
 
-## Completed Items
+## [↑](#table-of-contents) Completed Items
 
 *Items moved here when completed, with completion date and link to implementation.*
 
@@ -120,4 +135,4 @@ This document tracks all future enhancement opportunities for Ember Media Manage
 
 ---
 
-*Last Updated: December 31, 2025*
+*Last Updated: January 2, 2026*

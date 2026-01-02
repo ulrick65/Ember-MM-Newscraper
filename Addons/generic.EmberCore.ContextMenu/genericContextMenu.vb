@@ -27,7 +27,7 @@ Public Class genericContexMenu
 
     Private _setup As frmSettingsHolder
     Private _AssemblyName As String = String.Empty
-    Private _Name As String = "Context Menu"
+    Private _Name As String = "generic.EmberCore.ContextMenu"
 
 #End Region 'Fields
 

@@ -47,7 +47,7 @@ Public Class KodiInterface
     Private _SpecialSettings As New SpecialSettings
     Private _AssemblyName As String = String.Empty
     Private _Enabled As Boolean = False
-    Private _Name As String = "Kodi"
+    Private _Name As String = "generic.Interface.Kodi"
     Private _setup As frmSettingsHolder
     Private _xmlSettingsPath As String = Path.Combine(Master.SettingsPath, "Interface.Kodi.xml")
     Private cmnuKodi_MovieSets As New ToolStripMenuItem

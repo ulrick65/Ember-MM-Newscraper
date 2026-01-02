@@ -43,7 +43,7 @@ Public Class FileManagerExternalModule
     Private _MySettings As New MySettings
     Private eSettings As New Settings
     Private _enabled As Boolean = False
-    Private _Name As String = Master.eLang.GetString(311, "Media File Manager")
+    Private _Name As String = "generic.EmberCore.MediaFileManager"
     Private _setup As frmSettingsHolder
     Private cmnuMediaCustomList As New List(Of ToolStripMenuItem)
     Private cmnuMedia_Movies As New ToolStripMenuItem

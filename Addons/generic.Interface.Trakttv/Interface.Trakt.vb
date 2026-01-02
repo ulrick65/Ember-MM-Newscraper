@@ -57,7 +57,7 @@ Public Class Addon
     Private cmnuTrayToolsTrakt As New ToolStripMenuItem
     Private mnuMainToolsTrakt As New ToolStripMenuItem
     Private _Enabled As Boolean = False
-    Private _Name As String = "Trakt.tv Manager"
+    Private _Name As String = "generic.Interface.Trakttv"
     Private _AddonSettings As New AddonSettings
     Private _TraktAPI As clsAPITrakt
 

@@ -37,7 +37,7 @@ Public Class Addon
     Public Shared ConfigScrapeModifier_Movie As New Structures.ScrapeModifiers
     Public Shared ConfigScrapeModifier_TV As New Structures.ScrapeModifiers
 
-    Private _Name As String = "Trakttv_Data"
+    Private _Name As String = "scraper.Data.Trakttv"
     Private _ScraperEnabled_Movie As Boolean = False
     Private _ScraperEnabled_TV As Boolean = False
     Private _setup_Movie As frmSettingsHolder_Movie

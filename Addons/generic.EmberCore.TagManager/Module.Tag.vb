@@ -41,7 +41,7 @@ Public Class Tag_Generic
     Private WithEvents mnuMainToolsTag As New ToolStripMenuItem
     Private WithEvents cmnuTrayToolsTag As New ToolStripMenuItem
     Private _enabled As Boolean = False
-    Private _Name As String = "Tag Manager"
+    Private _Name As String = "generic.EmberCore.TagManager"
 
 #End Region 'Fields
 

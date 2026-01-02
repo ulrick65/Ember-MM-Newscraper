@@ -27,7 +27,7 @@ Public Class genericMediaListEditor
 #Region "Fields"
 
     Private _AssemblyName As String = String.Empty
-    Private _name As String = "Media List Editor"
+    Private _name As String = "generic.EmberCore.MediaListEditor"
     Private _setup As frmSettingsHolder
 
 #End Region 'Fields

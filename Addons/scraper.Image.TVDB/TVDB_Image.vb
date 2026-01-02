@@ -34,7 +34,7 @@ Public Class TVDB_Image
     Public Shared _AssemblyName As String
 
     Private _SpecialSettings As New SpecialSettings
-    Private _Name As String = "TVDB_Image"
+    Private _Name As String = "scraper.Image.TVDB"
     Private _ScraperEnabled As Boolean = False
     Private _setup As frmSettingsHolder
     Private strPrivateAPIKey As String = String.Empty

@@ -43,7 +43,7 @@ Public Class TMDB_Data
     Private _SpecialSettings_Movie As New SpecialSettings
     Private _SpecialSettings_MovieSet As New SpecialSettings
     Private _SpecialSettings_TV As New SpecialSettings
-    Private _Name As String = "TMDB_Data"
+    Private _Name As String = "scraper.Data.TMDB"
     Private _ScraperEnabled_Movie As Boolean = False
     Private _ScraperEnabled_MovieSet As Boolean = False
     Private _ScraperEnabled_TV As Boolean = False
