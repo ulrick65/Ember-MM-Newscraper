@@ -67,7 +67,7 @@ Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "scraper.Data.TVDB", "Addons
 EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "scraper.Trailer.YouTube", "Addons\scraper.Trailer.YouTube\scraper.Trailer.YouTube.vbproj", "{C2B5C245-6D01-47D0-812F-895C6C3C3393}"
 EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "scraper.Data.Trakttv", "Addons\scraper.Trakttv.Data\scraper.Data.Trakttv.vbproj", "{953436C0-3624-4594-8E00-D3487EB197A7}"
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "scraper.Data.Trakttv", "Addons\scraper.Data.Trakttv\scraper.Data.Trakttv.vbproj", "{953436C0-3624-4594-8E00-D3487EB197A7}"
 EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "generic.EmberCore.VideoSourceMapping", "Addons\generic.EmberCore.VideoSourceMapping\generic.EmberCore.VideoSourceMapping.vbproj", "{386116B7-7870-4F91-9DEC-C79062882E3E}"
 EndProject
