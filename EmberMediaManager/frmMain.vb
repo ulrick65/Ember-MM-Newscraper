@@ -334,13 +334,30 @@ Public Class frmMain
         pnlDiscArt.Visible = False
         MainDiscArt.Clear()
 
-        'remove all current genres
+        'remove all current genres (updated to properly .Dispose)
         Try
-            For iDel As Integer = 0 To pnlGenre.Count - 1
-                scMain.Panel2.Controls.Remove(pbGenre(iDel))
-                scMain.Panel2.Controls.Remove(pnlGenre(iDel))
-            Next
-        Catch
+            If pnlGenre IsNot Nothing Then
+                For iDel As Integer = 0 To pnlGenre.Length - 1
+                    If pbGenre(iDel) IsNot Nothing Then
+                        ToolTips.SetToolTip(pbGenre(iDel), Nothing)  ' Clear tooltip association
+                        If pbGenre(iDel).Image IsNot Nothing Then
+                            pbGenre(iDel).Image.Dispose()
+                            pbGenre(iDel).Image = Nothing
+                        End If
+                        scMain.Panel2.Controls.Remove(pbGenre(iDel))
+                        pbGenre(iDel).Dispose()
+                    End If
+                    If pnlGenre(iDel) IsNot Nothing Then
+                        ToolTips.SetToolTip(pnlGenre(iDel), Nothing)  ' Clear tooltip association
+                        scMain.Panel2.Controls.Remove(pnlGenre(iDel))
+                        pnlGenre(iDel).Dispose()
+                    End If
+                Next
+            End If
+            pnlGenre = Nothing
+            pbGenre = Nothing
+        Catch ex As Exception
+            logger.Error(ex, New StackFrame().GetMethod().Name)
         End Try
 
         'remove all current ratings
@@ -6396,8 +6413,44 @@ Public Class frmMain
     ''' <param name="genres"><c>List (Of String)</c> holding genre names</param>
     ''' <remarks>If any individual genre is invalid or generates an error, 
     ''' the remaining genres are still processed, however the placement/spacing
-    ''' of the remaining genres may show gaps where the erronious genres should have been</remarks>
+    ''' of the remaining genres may show gaps where the erroneous genres should have been</remarks>
+    ''' <summary>
+    ''' Creates genre thumbnail panels with images for display in the info panel.
+    ''' </summary>
+    ''' <param name="genres">List of genre names to display as thumbnails.</param>
+    ''' <remarks>
+    ''' This method first cleans up any existing genre controls and their tooltip associations
+    ''' to prevent memory leaks and tooltip corruption, then creates new panels with genre images.
+    ''' Each genre panel includes a PictureBox with the genre image and a tooltip showing the genre name.
+    ''' </remarks>
     Private Sub createGenreThumbs(ByVal genres As List(Of String))
+        ' Clean up existing genre controls (belt and suspenders - ClearInfo also does this)
+        Try
+            If pnlGenre IsNot Nothing Then
+                For i As Integer = 0 To pnlGenre.Length - 1
+                    If pbGenre(i) IsNot Nothing Then
+                        ToolTips.SetToolTip(pbGenre(i), Nothing)
+                        If pbGenre(i).Image IsNot Nothing Then
+                            pbGenre(i).Image.Dispose()
+                            pbGenre(i).Image = Nothing
+                        End If
+                        scMain.Panel2.Controls.Remove(pbGenre(i))
+                        pbGenre(i).Dispose()
+                    End If
+                    If pnlGenre(i) IsNot Nothing Then
+                        ToolTips.SetToolTip(pnlGenre(i), Nothing)
+                        scMain.Panel2.Controls.Remove(pnlGenre(i))
+                        pnlGenre(i).Dispose()
+                    End If
+                Next
+            End If
+        Catch ex As Exception
+            logger.Error(ex, New StackFrame().GetMethod().Name)
+        End Try
+
+        pnlGenre = Nothing
+        pbGenre = Nothing
+
         If genres Is Nothing OrElse genres.Count = 0 Then Return
 
         genres.Sort()
@@ -6420,18 +6473,13 @@ Public Class frmMain
                 pbGenre(i).Image = APIXML.GetGenreImage(genres(i).Trim)
                 ToolTips.SetToolTip(pbGenre(i), genres(i))
                 ToolTips.SetToolTip(pnlGenre(i), genres(i))
-                pnlGenre(i).Left = ((pnlInfoPanel.Right) - (i*73)) - 73
+                pnlGenre(i).Left = ((pnlInfoPanel.Right) - (i * 73)) - 73
                 pbGenre(i).Left = 2
                 pnlGenre(i).Top = pnlInfoPanel.Top - 105
                 pbGenre(i).Top = 2
                 scMain.Panel2.Controls.Add(pnlGenre(i))
                 pnlGenre(i).Controls.Add(pbGenre(i))
                 pnlGenre(i).BringToFront()
-                'AddHandler pbGenre(i).MouseEnter, AddressOf pbGenre_MouseEnter
-                'AddHandler pbGenre(i).MouseLeave, AddressOf pbGenre_MouseLeave
-                'If Master.eSettings.GeneralShowGenresText Then
-                '    pbGenre(i).Image = ImageUtils.AddGenreString(pbGenre(i).Image, pbGenre(i).Name)
-                'End If
             Catch ex As Exception
                 logger.Error(ex, New StackFrame().GetMethod().Name)
             End Try

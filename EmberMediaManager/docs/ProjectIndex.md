@@ -5,7 +5,7 @@
 
 | |Document Info |
 |---------------|---|
-| **Version** | 1.0 |
+| **Version** | 1.1 |
 | **Created** | January 1, 2026 |
 | **Updated** | January 1, 2026 |
 | **Author** | Eric H. Anderson |
@@ -570,10 +570,15 @@ Some folders don't match their project names:
 | Folder Name | Project Name | Reason |
 |-------------|--------------|--------|
 | `generic.EmberCore.FilterEditor` | `generic.EmberCore.MediaListEditor` | Renamed project |
+| `generic.EmberCore.MovieExport` | `generic.EmberCore.MovieExporter` | Missing 'er' suffix |
+| `generic.Embercore.MetadataEditor` | `generic.EmberCore.MetadataEditor` | Case difference (Embercore vs EmberCore) |
 | `scraper.FanartTV.Poster` | `scraper.Image.FanartTV` | Standardized naming |
-| `scraper.TMDB.Poster` | `scraper.Image.TMDB` | Standardized naming |
+| `scraper.IMDB.Data` | `scraper.Data.IMDB` | Standardized naming |
 | `scraper.TMDB.Data` | `scraper.Data.TMDB` | Standardized naming |
-| `generic.Embercore.MetadataEditor` | `generic.EmberCore.MetadataEditor` | Case difference |
+| `scraper.TMDB.Poster` | `scraper.Image.TMDB` | Standardized naming |
+| `scraper.TMDB.Trailer` | `scraper.Trailer.TMDB` | Standardized naming |
+| `scraper.Trailer.YouTube` | `scraper.Trailer.YouTube` | Folder matches, but file is `clsScrapeYouTube.vb` (missing 'r') |
+| `scraper.Trakttv.Data` | `scraper.Data.Trakttv` | Standardized naming |
 
 ---
 

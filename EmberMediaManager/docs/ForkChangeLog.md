@@ -2,7 +2,7 @@
 
 | |Document Info |
 |---------------|---|
-| **Version** | 1.0.9 |
+| **Version** | 1.1.0 |
 | **Created** | December 25, 2025 |
 | **Updated** | December 31, 2025 |
 | **Author** | Eric H. Anderson |
@@ -72,6 +72,7 @@ This document is your complete history of everything that's happened since forki
 | 1.12.1.0 | Dec 29-30, 2025 | Bug fixes, cleanup, documentation, **Phase 2-2 parallel scraping complete (60% improvement)** |
 | 1.12.1.0 | Dec 31, 2025 | **Phase 3: TV Show parallel scraping (50-60% improvement)**, TVDB file contention fix, cancellation bug fixes |
 | 1.12.1.0 | Dec 31, 2025 | **Phase 4: Comprehensive performance tracking** for all scrapers (Movies + TV), performance data documentation |
+| 1.12.1.0 | Jan 1, 2026 | Bug fix, documentation linking and cleanup |
 
 ---
 
@@ -268,6 +269,7 @@ The following features are deprecated and slated for removal in a future version
 | Enhancement | Added `TVDB.GetTVShowInfo` + `TVDB.GetTVShowInfo.APICall` tracking | `Addons\scraper.Data.TVDB\Scraper\clsScrapeTVDB.vb` |
 | Documentation | Created PerformanceData-Tv.md for TV scraping baseline metrics | `EmberMediaManager\docs\performance-data\PerformanceData-Tv.md` |
 | Documentation | Created PerformanceData-Movies.md for Movie scraping baseline metrics | `EmberMediaManager\docs\performance-data\PerformanceData-Movies.md` |
+| Bug Fix | Fixed Genre Tooltips failing to display due to improper cleaning, not using .Dispose() | `EmberMediaManager\frmMain.vb` |
 
 **Version Updates:**
 
