@@ -5,7 +5,7 @@
 
 | |Document Info |
 |---------------|---|
-| **Version** | 1.1 |
+| **Version** | 1.2 |
 | **Created** | January 1, 2026 |
 | **Updated** | January 1, 2026 |
 | **Author** | Eric H. Anderson |
@@ -24,7 +24,6 @@ This guide covers all 24 projects in the solution — from the core application 
 **Quick links:**
 - Jump to the [Quick Reference Table](#quick-reference-table) for a birds-eye view
 - Check [Naming Conventions](#naming-conventions) to understand the project prefixes
-- See [Folder vs Project Name Mismatches](#folder-vs-project-name-mismatches) if a folder name doesn't match what you expected
 
 ---
 
@@ -54,7 +53,7 @@ This guide covers all 24 projects in the solution — from the core application 
   - [generic.EmberCore.MovieExporter](#generic.embercore.movieexporter)
   - [generic.EmberCore.TagManager](#generic.embercore.tagmanager)
 - [Generic Addons - Mapping & Settings](#generic-addons---mapping--settings)
-  - [generic.EmberCore.Mapping](#generic.embercore.mapping)
+  - [generic.EmberCore.Mapping](#genericember.core.mapping)
   - [generic.EmberCore.MetadataEditor](#generic.embercore.metadataeditor)
   - [generic.EmberCore.VideoSourceMapping](#generic.embercore.videosourcemapping)
   - [generic.EmberCore.MediaListEditor](#generic.embercore.medialisteditor)
@@ -65,7 +64,6 @@ This guide covers all 24 projects in the solution — from the core application 
 - [Project Dependencies](#project-dependencies)
 - [Naming Conventions](#naming-conventions)
 - [Quick Reference Table](#quick-reference-table)
-- [Folder vs Project Name Mismatches](#folder-vs-project-name-mismatches)
 - [See Also](#see-also)
 
 **Related Documentation:** [Document Index](DocumentIndex.md) - Master index for all project documentation
@@ -147,10 +145,10 @@ These addons retrieve **metadata** (title, plot, cast, ratings, etc.) from onlin
 
 | Property | Value |
 |----------|-------|
-| **Project File** | `Addons\scraper.TMDB.Data\scraper.Data.TMDB.vbproj` |
-| **Folder** | `Addons\scraper.TMDB.Data\` |
+| **Project File** | `Addons\scraper.Data.TMDB\scraper.Data.TMDB.vbproj` |
+| **Folder** | `Addons\scraper.Data.TMDB\` |
 | **Module Name** | "TMDB" |
-| **Key File** | [`Scraper\clsScrapeTMDB.vb`](../../Addons/scraper.TMDB.Data/Scraper/clsScrapeTMDB.vb) |
+| **Key File** | [`Scraper\clsScrapeTMDB.vb`](../../Addons/scraper.Data.TMDB/Scraper/clsScrapeTMDB.vb) |
 | **API** | TheMovieDB.org |
 
 Primary metadata scraper for movies and TV shows. Retrieves:
@@ -166,10 +164,10 @@ Primary metadata scraper for movies and TV shows. Retrieves:
 
 | Property | Value |
 |----------|-------|
-| **Project File** | `Addons\scraper.IMDB.Data\scraper.Data.IMDB.vbproj` |
-| **Folder** | `Addons\scraper.IMDB.Data\` |
+| **Project File** | `Addons\scraper.Data.IMDB\scraper.Data.IMDB.vbproj` |
+| **Folder** | `Addons\scraper.Data.IMDB\` |
 | **Module Name** | "IMDB" |
-| **Key File** | [`Scraper\clsScrapeIMDB.vb`](../../Addons/scraper.IMDB.Data/Scraper/clsScrapeIMDB.vb) |
+| **Key File** | [`Scraper\clsScrapeIMDB.vb`](../../Addons/scraper.Data.IMDB/Scraper/clsScrapeIMDB.vb) |
 | **API** | IMDb (web scraping) |
 
 Supplementary metadata scraper. Particularly useful for:
@@ -218,10 +216,10 @@ Lightweight metadata scraper. Good for:
 
 | Property | Value |
 |----------|-------|
-| **Project File** | `Addons\scraper.Trakttv.Data\scraper.Data.Trakttv.vbproj` |
-| **Folder** | `Addons\scraper.Trakttv.Data\` |
+| **Project File** | `Addons\scraper.Data.Trakttv\scraper.Data.Trakttv.vbproj` |
+| **Folder** | `Addons\scraper.Data.Trakttv\` |
 | **Module Name** | "Trakt.tv" |
-| **Key File** | [`clsAPITrakt.vb`](../../Addons/scraper.Trakttv.Data/clsAPITrakt.vb) |
+| **Key File** | [`clsAPITrakt.vb`](../../Addons/scraper.Data.Trakttv/clsAPITrakt.vb) |
 | **API** | Trakt.tv |
 
 Social metadata scraper. Provides:
@@ -239,10 +237,10 @@ These addons retrieve **artwork** (posters, fanart, banners, etc.) from online s
 
 | Property | Value |
 |----------|-------|
-| **Project File** | `Addons\scraper.TMDB.Poster\scraper.Image.TMDB.vbproj` |
-| **Folder** | `Addons\scraper.TMDB.Poster\` |
+| **Project File** | `Addons\scraper.Image.TMDB\scraper.Image.TMDB.vbproj` |
+| **Folder** | `Addons\scraper.Image.TMDB\` |
 | **Module Name** | "TMDB Images" |
-| **Key File** | [`Scraper\clsScrapeTMDB.vb`](../../Addons/scraper.TMDB.Poster/Scraper/clsScrapeTMDB.vb) |
+| **Key File** | [`Scraper\clsScrapeTMDB.vb`](../../Addons/scraper.Image.TMDB/Scraper/clsScrapeTMDB.vb) |
 | **API** | TheMovieDB.org |
 
 Primary image source for movies and TV shows:
@@ -256,10 +254,10 @@ Primary image source for movies and TV shows:
 
 | Property | Value |
 |----------|-------|
-| **Project File** | `Addons\scraper.FanartTV.Poster\scraper.Image.FanartTV.vbproj` |
-| **Folder** | `Addons\scraper.FanartTV.Poster\` |
+| **Project File** | `Addons\scraper.Image.FanartTV\scraper.Image.FanartTV.vbproj` |
+| **Folder** | `Addons\scraper.Image.FanartTV\` |
 | **Module Name** | "Fanart.tv" |
-| **Key File** | [`Scraper\clsScrapeFANARTTV.vb`](../../Addons/scraper.FanartTV.Poster/Scraper/clsScrapeFANARTTV.vb) |
+| **Key File** | [`Scraper\clsScrapeFANARTTV.vb`](../../Addons/scraper.Image.FanartTV/Scraper/clsScrapeFANARTTV.vb) |
 | **API** | Fanart.tv |
 
 High-quality artwork source:
@@ -293,10 +291,10 @@ TV-specific artwork:
 
 | Property | Value |
 |----------|-------|
-| **Project File** | `Addons\scraper.TMDB.Trailer\scraper.Trailer.TMDB.vbproj` |
-| **Folder** | `Addons\scraper.TMDB.Trailer\` |
+| **Project File** | `Addons\scraper.Trailer.TMDB\scraper.Trailer.TMDB.vbproj` |
+| **Folder** | `Addons\scraper.Trailer.TMDB\` |
 | **Module Name** | "TMDB Trailers" |
-| **Key File** | [`Scraper\clsScrapeTMDB.vb`](../../Addons/scraper.TMDB.Trailer/Scraper/clsScrapeTMDB.vb) |
+| **Key File** | [`Scraper\clsScrapeTMDB.vb`](../../Addons/scraper.Trailer.TMDB/Scraper/clsScrapeTMDB.vb) |
 
 Retrieves trailer links from TMDB's video database.
 
@@ -360,10 +358,10 @@ Copy or move media files to different locations:
 
 | Property | Value |
 |----------|-------|
-| **Project File** | `Addons\generic.EmberCore.MovieExport\generic.EmberCore.MovieExporter.vbproj` |
-| **Folder** | `Addons\generic.EmberCore.MovieExport\` |
+| **Project File** | `Addons\generic.EmberCore.MovieExporter\generic.EmberCore.MovieExporter.vbproj` |
+| **Folder** | `Addons\generic.EmberCore.MovieExporter\` |
 | **Module Name** | "MovieListExporter" |
-| **Key Files** | [`Module.MovieExporter.vb`](../../Addons/generic.EmberCore.MovieExport/Module.MovieExporter.vb), [`clsAPIMediaExporter.vb`](../../Addons/generic.EmberCore.MovieExport/clsAPIMediaExporter.vb) |
+| **Key Files** | [`Module.MovieExporter.vb`](../../Addons/generic.EmberCore.MovieExporter/Module.MovieExporter.vb), [`clsAPIMediaExporter.vb`](../../Addons/generic.EmberCore.MovieExporter/clsAPIMediaExporter.vb) |
 
 Export your movie library to HTML or other formats:
 - Customizable HTML templates
@@ -413,10 +411,10 @@ Standardize and translate metadata values:
 
 | Property | Value |
 |----------|-------|
-| **Project File** | `Addons\generic.Embercore.MetadataEditor\generic.EmberCore.MetadataEditor.vbproj` |
-| **Folder** | `Addons\generic.Embercore.MetadataEditor\` |
+| **Project File** | `Addons\generic.EmberCore.MetadataEditor\generic.EmberCore.MetadataEditor.vbproj` |
+| **Folder** | `Addons\generic.EmberCore.MetadataEditor\` |
 | **Module Name** | "Audio & Video Codec Mapping" |
-| **Key File** | [`genericVCodecEditor.vb`](../../Addons/generic.Embercore.MetadataEditor/genericVCodecEditor.vb) |
+| **Key File** | [`genericVCodecEditor.vb`](../../Addons/generic.EmberCore.MetadataEditor/genericVCodecEditor.vb) |
 
 Configure how audio/video codec information is displayed:
 - Map codec identifiers to friendly names
@@ -443,12 +441,10 @@ Map video source paths and configure media sources:
 
 | Property | Value |
 |----------|-------|
-| **Project File** | `Addons\generic.EmberCore.FilterEditor\generic.EmberCore.MediaListEditor.vbproj` |
-| **Folder** | `Addons\generic.EmberCore.FilterEditor\` |
+| **Project File** | `Addons\generic.EmberCore.MediaListEditor\generic.EmberCore.MediaListEditor.vbproj` |
+| **Folder** | `Addons\generic.EmberCore.MediaListEditor\` |
 | **Module Name** | "Media List Editor" |
-| **Key File** | [`genericMediaListEditor.vb`](../../Addons/generic.EmberCore.FilterEditor/genericMediaListEditor.vb) |
-
-**Note:** Folder name says "FilterEditor" but it's the Media List Editor.
+| **Key File** | [`genericMediaListEditor.vb`](../../Addons/generic.EmberCore.MediaListEditor/genericMediaListEditor.vb) |
 
 Edit and manage custom lists for filtering the library view.
 
@@ -560,25 +556,6 @@ Synchronize with Trakt.tv:
 | generic.EmberCore.ContextMenu | Addon | Explorer integration |
 | generic.Interface.Kodi | Addon | Kodi sync |
 | generic.Interface.Trakttv | Addon | Trakt.tv sync |
-
----
-
-## [↑](#table-of-contents) Folder vs Project Name Mismatches
-
-Some folders don't match their project names:
-
-| Folder Name | Project Name | Reason |
-|-------------|--------------|--------|
-| `generic.EmberCore.FilterEditor` | `generic.EmberCore.MediaListEditor` | Renamed project |
-| `generic.EmberCore.MovieExport` | `generic.EmberCore.MovieExporter` | Missing 'er' suffix |
-| `generic.Embercore.MetadataEditor` | `generic.EmberCore.MetadataEditor` | Case difference (Embercore vs EmberCore) |
-| `scraper.FanartTV.Poster` | `scraper.Image.FanartTV` | Standardized naming |
-| `scraper.IMDB.Data` | `scraper.Data.IMDB` | Standardized naming |
-| `scraper.TMDB.Data` | `scraper.Data.TMDB` | Standardized naming |
-| `scraper.TMDB.Poster` | `scraper.Image.TMDB` | Standardized naming |
-| `scraper.TMDB.Trailer` | `scraper.Trailer.TMDB` | Standardized naming |
-| `scraper.Trailer.YouTube` | `scraper.Trailer.YouTube` | Folder matches, but file is `clsScrapeYouTube.vb` (missing 'r') |
-| `scraper.Trakttv.Data` | `scraper.Data.Trakttv` | Standardized naming |
 
 ---
 
