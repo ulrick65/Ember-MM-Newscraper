@@ -1,4 +1,4 @@
-<a href="http://flattr.com/thing/1321788/" target="_blank"><img src="http://api.flattr.com/button/flattr-badge-large.png" alt="Flattr this" title="Flattr this" border="0" /></a>
+﻿<a href="http://flattr.com/thing/1321788/" target="_blank"><img src="http://api.flattr.com/button/flattr-badge-large.png" alt="Flattr this" title="Flattr this" border="0" /></a>
 
 # Ember Media Manager
 
@@ -39,3 +39,94 @@ We made a major effort in reviewing the core of Ember Media Manager, the scrapin
 
 ## Contact
 Please use the forum as main contact point.
+
+# Ember Media Manager (Fork)
+
+[![.NET Framework](https://img.shields.io/badge/.NET%20Framework-4.8-blue.svg)](https://dotnet.microsoft.com/download/dotnet-framework/net48)
+[![Version](https://img.shields.io/badge/version-1.12.2.0-green.svg)](EmberMediaManager/docs/release-notes/ReleaseNotes-v1.12.2.0.md)
+[![License](https://img.shields.io/badge/license-GPL--3.0-orange.svg)](LICENSE)
+
+A powerful media manager for organizing movies and TV shows with Kodi-compatible NFO files.
+
+---
+
+## 🚀 What's Changed in This Fork
+
+This fork includes significant improvements over the [upstream project](https://github.com/nagten/Ember-MM-Newscraper):
+
+| Improvement | Details |
+|-------------|---------|
+| ⚡ **50-60% Faster Scraping** | Parallel processing for movies and TV shows |
+| 🔧 **.NET Framework 4.8** | Upgraded from 4.5 with modern packages |
+| 🧹 **Cleaner Codebase** | ~29,000 lines of legacy code removed (10 deprecated projects) |
+| 📚 **Comprehensive Docs** | ~10,000 lines of documentation added |
+| 🐛 **Bug Fixes** | Genre mapping, image filtering, TVDB file contention, and more |
+
+### Fork Statistics (vs Upstream)
+
+| Metric | Value |
+|--------|-------|
+| Files Changed | 408 |
+| Lines Added | +17,256 |
+| Lines Removed | -39,617 |
+| Net Change | -22,361 (leaner!) |
+
+👉 **[View Full Changelog](EmberMediaManager/docs/ForkChangeLog.md)** | **[Latest Release Notes](EmberMediaManager/docs/release-notes/ReleaseNotes-v1.12.2.0.md)**
+
+---
+
+## 📦 Requirements
+
+- **Windows** 7 SP1, 8.1, 10, or 11
+- **[.NET Framework 4.8](https://dotnet.microsoft.com/download/dotnet-framework/net48)**
+
+---
+
+## 💾 Installation
+
+1. Download the latest release from [Releases](https://github.com/ulrick65/Ember-MM-Newscraper/releases)
+2. Extract to your desired location
+3. Run `Ember Media Manager.exe`
+
+---
+
+## 📖 Documentation
+
+| Document | Description |
+|----------|-------------|
+| [ForkChangeLog.md](EmberMediaManager/docs/ForkChangeLog.md) | Complete history of all changes |
+| [Document Index](EmberMediaManager/docs/DocumentIndex.md) | Index of all documentation |
+| [Build Process](EmberMediaManager/docs/process-docs/BuildProcess.md) | How to build the solution |
+| [Future Enhancements](EmberMediaManager/docs/improvements-docs/FutureEnhancements.md) | Planned improvements |
+
+---
+
+## 🔗 Links
+
+| Link | Description |
+|------|-------------|
+| [This Fork](https://github.com/ulrick65/Ember-MM-Newscraper) | ulrick65/Ember-MM-Newscraper |
+| [Upstream](https://github.com/nagten/Ember-MM-Newscraper) | Original nagten project |
+| [Issues](https://github.com/ulrick65/Ember-MM-Newscraper/issues) | Report bugs or request features |
+| [Releases](https://github.com/ulrick65/Ember-MM-Newscraper/releases) | Download releases |
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please:
+1. Fork this repository
+2. Create a feature branch
+3. Submit a Pull Request
+
+See [CONTRIBUTING.md](.github/CONTRIBUTING.md) for guidelines (if available).
+
+---
+
+## 📜 License
+
+This project is licensed under the GPL-3.0 License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+*This is a fork of [nagten/Ember-MM-Newscraper](https://github.com/nagten/Ember-MM-Newscraper). All credit to the original authors.*
