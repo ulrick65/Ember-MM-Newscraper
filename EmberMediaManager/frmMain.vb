@@ -14515,8 +14515,10 @@ Public Class frmMain
     ''' <remarks></remarks>
     Private Sub MoveGenres()
         Try
+            If pnlGenre Is Nothing OrElse pnlGenre.Count = 0 Then Exit Sub
+
             For i As Integer = 0 To pnlGenre.Count - 1
-                pnlGenre(i).Left = ((pnlInfoPanel.Right) - (i*73)) - 73
+                pnlGenre(i).Left = ((pnlInfoPanel.Right) - (i * 73)) - 73
                 pnlGenre(i).Top = pnlInfoPanel.Top - 105
             Next
         Catch ex As Exception
