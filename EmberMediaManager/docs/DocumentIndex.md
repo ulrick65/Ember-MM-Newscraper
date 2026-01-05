@@ -122,6 +122,7 @@ Whether you're looking for performance analysis, scraping process details, or re
 |----------|-------------|
 | [ProjectIndex.md](ProjectIndex.md) | Complete index of all 24 projects in the solution |
 | [ForkChangeLog.md](ForkChangeLog.md) | Complete change history since forking from upstream |
+| [CONTRIBUTING.md](../../.github/CONTRIBUTING.md) | Development guide and workflow |
 
 ---
 
