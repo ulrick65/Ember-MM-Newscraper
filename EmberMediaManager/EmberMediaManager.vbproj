@@ -528,6 +528,13 @@
     <None Include="docs\analysis-docs\PerformanceAnalysis.md" />
     <None Include="docs\analysis-docs\AsyncImageDownloadAnalysis.md" />
     <None Include="docs\DocumentIndex.md" />
+    <None Include="docs\improvements-docs\backlog\BL-CQ-001-IMDB-ThreadSafety.md" />
+    <None Include="docs\improvements-docs\backlog\BL-CQ-002-NullCheckAudit.md" />
+    <None Include="docs\improvements-docs\backlog\BL-KI-001-TVSeasonImagesSaveIssue.md" />
+    <None Include="docs\improvements-docs\backlog\BL-KI-002-EditSeasonImageSelectionBug.md" />
+    <None Include="docs\improvements-docs\backlog\BL-UX-001-EditImagesQuickAccess.md" />
+    <None Include="docs\improvements-docs\backlog\BL-UX-002-EditImagesQuickAccess-TVShow.md" />
+    <None Include="docs\improvements-docs\backlog\BL-UX-003-EditImagesQuickAccess-TVSeason.md" />
     <None Include="docs\improvements-docs\FutureEnhancements.md" />
     <None Include="docs\improvements-docs\AddonRemovalPlan.md" />
     <None Include="docs\analysis-docs\IMDBScraperAnalysis.md" />
@@ -546,6 +553,7 @@
     <None Include="docs\process-docs\CountryMappingProcess.md" />
     <None Include="docs\ForkChangeLog.md" />
     <None Include="docs\improvements-docs\NfoFileImprovements.md" />
+    <None Include="docs\process-docs\ImageSelectionProcess.md" />
     <None Include="docs\process-docs\LanguageProcess.md" />
     <None Include="docs\process-docs\NfoFileProcess .md" />
     <None Include="docs\process-docs\ScrapingProcessMovies.md" />
@@ -562,6 +570,7 @@
     <None Include="docs\process-docs\StatusMappingProcess.md" />
     <None Include="docs\process-docs\StudioMappingProcess.md" />
     <None Include="docs\release-notes\ReleaseNotes-v1.12.2.0.md" />
+    <None Include="docs\process-docs\DocumentationStandardsProcess.md" />
     <None Include="docs\version-updates\VersionUpdates_20260102_163739.csv" />
     <None Include="scripts\BuildCleanup.ps1" />
     <None Include="scripts\UpdateAssemblyVersions.ps1" />

@@ -6272,7 +6272,6 @@ Public Class Database
     ''' </remarks>
     Public Async Function Save_TVShowAsync(ByVal dbElement As DBElement, ByVal batchMode As Boolean, ByVal toNFO As Boolean, ByVal toDisk As Boolean, ByVal withEpisodes As Boolean) As Task(Of DBElement)
         If dbElement.TVShow Is Nothing Then Return dbElement
-        ' TODO: Debug Log Entry [ulrick65, 12/29/2025]
         logger.Trace($"[DEBUG TV] Save_TVShowAsync ENTERED for: {dbElement.TVShow.Title}, toDisk={toDisk}, withEpisodes={withEpisodes}")
 
         Dim sqlTransaction As SQLiteTransaction = Nothing
@@ -6384,7 +6383,6 @@ Public Class Database
             'art Table be be linked later
             If toNFO Then NFO.SaveToNFO_TVShow(dbElement)
             If toDisk Then
-                ' TODO: Debug Log Event [ulrick65, 12/29/2025]
                 logger.Trace($"[DEBUG TV] Save_TVShowAsync calling SaveAllImagesAsync for: {dbElement.TVShow.Title}")
                 dbElement = Await dbElement.ImagesContainer.SaveAllImagesAsync(dbElement, False).ConfigureAwait(False)
                 dbElement.Theme.Save(dbElement, Enums.ModifierType.MainTheme, False)

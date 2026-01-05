@@ -1737,7 +1737,6 @@ Public Class frmMain
             ' SEQUENTIAL MODE (Original logic for single items)
             ' ============================================================
             Dim Cancelled As Boolean = False
-            ' TODO: Commenting out these unused variables [ulrick65, 12/30/2025]
             For Each tScrapeItem As ScrapeItem In Args.ScrapeList
                 'Dim Theme As New MediaContainers.MediaFile
                 Dim tURL As String = String.Empty
@@ -1808,7 +1807,7 @@ Public Class frmMain
 
                 If Not Cancelled Then
                     If Master.eSettings.MovieScraperMetaDataScan AndAlso tScrapeItem.ScrapeModifiers.MainMeta Then
-                        bwMovieScraper.ReportProgress(- 3,
+                        bwMovieScraper.ReportProgress(-3,
                                                       String.Concat(Master.eLang.GetString(140, "Scanning Meta Data"),
                                                                     ":"))
                         MediaInfo.UpdateMediaInfo(DBScrapeMovie)
@@ -1837,7 +1836,7 @@ Public Class frmMain
                        tScrapeItem.ScrapeModifiers.MainPoster Then
 
                         Dim SearchResultsContainer As New MediaContainers.SearchResultsContainer
-                        bwMovieScraper.ReportProgress(- 3,
+                        bwMovieScraper.ReportProgress(-3,
                                                       String.Concat(Master.eLang.GetString(254, "Scraping Images"), ":"))
                         If _
                             Not _
@@ -1857,7 +1856,7 @@ Public Class frmMain
                             Else
                                 'autoscraping
                                 Images.SetPreferredImages(DBScrapeMovie, SearchResultsContainer,
-                                                          tScrapeItem.ScrapeModifiers, IsAutoScraper := True)
+                                                          tScrapeItem.ScrapeModifiers, IsAutoScraper:=True)
                             End If
                         End If
                     End If
@@ -1866,7 +1865,7 @@ Public Class frmMain
 
                     'Theme
                     If tScrapeItem.ScrapeModifiers.MainTheme Then
-                        bwMovieScraper.ReportProgress(- 3,
+                        bwMovieScraper.ReportProgress(-3,
                                                       String.Concat(Master.eLang.GetString(266, "Scraping Themes"), ":"))
                         Dim SearchResults As New List(Of MediaContainers.MediaFile)
                         If _
@@ -1894,7 +1893,7 @@ Public Class frmMain
 
                     'Trailer
                     If tScrapeItem.ScrapeModifiers.MainTrailer Then
-                        bwMovieScraper.ReportProgress(- 3,
+                        bwMovieScraper.ReportProgress(-3,
                                                       String.Concat(Master.eLang.GetString(574, "Scraping Trailers"),
                                                                     ":"))
                         Dim SearchResults As New List(Of MediaContainers.MediaFile)
@@ -1924,7 +1923,7 @@ Public Class frmMain
                     If Not (Args.ScrapeType = Enums.ScrapeType.SingleScrape) Then
                         ModulesManager.Instance.RunGeneric(Enums.ModuleEventType.ScraperMulti_Movie, Nothing, Nothing,
                                                            False, DBScrapeMovie)
-                        bwMovieScraper.ReportProgress(- 3,
+                        bwMovieScraper.ReportProgress(-3,
                                                       String.Concat(
                                                           Master.eLang.GetString(399,
                                                                                  "Downloading and Saving Contents into Database"),
@@ -1935,8 +1934,8 @@ Public Class frmMain
                                                       tScrapeItem.ScrapeModifiers.MainNFO OrElse
                                                       tScrapeItem.ScrapeModifiers.MainMeta, True, True, False).
                                 GetAwaiter().GetResult()
-                        bwMovieScraper.ReportProgress(- 2, DBScrapeMovie.ID)
-                        bwMovieScraper.ReportProgress(- 1,
+                        bwMovieScraper.ReportProgress(-2, DBScrapeMovie.ID)
+                        bwMovieScraper.ReportProgress(-1,
                                                       If _
                                                          (Not OldTitle = NewTitle,
                                                           String.Format(
@@ -2205,14 +2204,10 @@ Public Class frmMain
 
         logger.Trace(String.Format("[MovieSet Scraper] [Start] MovieSets Count [{0}]", Args.ScrapeList.Count.ToString))
 
-        ' TODO: Commenting out these unused variables [ulrick65, 12/30/2025]
         For Each tScrapeItem As ScrapeItem In Args.ScrapeList
-            'Dim aContainer As New MediaContainers.SearchResultsContainer
             Dim NewTitle As String = String.Empty
             Dim OldTMDBColID As String = String.Empty
             Dim OldTitle As String = String.Empty
-            'Dim efList As New List(Of String)
-            'Dim etList As New List(Of String)
             Dim tURL As String = String.Empty
 
             Cancelled = False
@@ -2231,7 +2226,7 @@ Public Class frmMain
             'ModulesManager.Instance.RunGeneric(Enums.ModuleEventType.BeforeEditMovieSet, Nothing, DBScrapeMovieSet)
 
             If tScrapeItem.ScrapeModifiers.MainNFO Then
-                bwMovieSetScraper.ReportProgress(- 3, String.Concat(Master.eLang.GetString(253, "Scraping Data"), ":"))
+                bwMovieSetScraper.ReportProgress(-3, String.Concat(Master.eLang.GetString(253, "Scraping Data"), ":"))
                 If _
                     ModulesManager.Instance.ScrapeData_MovieSet(DBScrapeMovieSet, tScrapeItem.ScrapeModifiers,
                                                                 Args.ScrapeType, Args.ScrapeOptions,
@@ -2292,7 +2287,7 @@ Public Class frmMain
                    tScrapeItem.ScrapeModifiers.MainPoster Then
 
                     Dim SearchResultsContainer As New MediaContainers.SearchResultsContainer
-                    bwMovieSetScraper.ReportProgress(- 3,
+                    bwMovieSetScraper.ReportProgress(-3,
                                                      String.Concat(Master.eLang.GetString(254, "Scraping Images"), ":"))
                     If _
                         Not _
@@ -2311,7 +2306,7 @@ Public Class frmMain
                         Else
                             'autoscraping
                             Images.SetPreferredImages(DBScrapeMovieSet, SearchResultsContainer,
-                                                      tScrapeItem.ScrapeModifiers, IsAutoScraper := True)
+                                                      tScrapeItem.ScrapeModifiers, IsAutoScraper:=True)
                         End If
                     End If
                 End If
@@ -2319,14 +2314,14 @@ Public Class frmMain
                 If bwMovieScraper.CancellationPending Then Exit For
 
                 If Not (Args.ScrapeType = Enums.ScrapeType.SingleScrape) Then
-                    bwMovieSetScraper.ReportProgress(- 3,
+                    bwMovieSetScraper.ReportProgress(-3,
                                                      String.Concat(
                                                          Master.eLang.GetString(399,
                                                                                 "Downloading and Saving Contents into Database"),
                                                          ":"))
                     Master.DB.Save_MovieSet(DBScrapeMovieSet, True, True, True, True)
-                    bwMovieSetScraper.ReportProgress(- 2, DBScrapeMovieSet.ID)
-                    bwMovieSetScraper.ReportProgress(- 1,
+                    bwMovieSetScraper.ReportProgress(-2, DBScrapeMovieSet.ID)
+                    bwMovieSetScraper.ReportProgress(-1,
                                                      If _
                                                         (Not OldTitle = NewTitle,
                                                          String.Format(
@@ -3170,17 +3165,40 @@ Public Class frmMain
     End Sub
 
     ''' <summary>
-    ''' Main bulk TV season scraping loop - processes each season in the scrape list sequentially.
+    ''' Background worker handler for TV season scraping operations.
+    ''' Processes each season in the scrape list, handling both metadata and image scraping.
     ''' </summary>
     ''' <param name="sender">The BackgroundWorker that raised the event.</param>
     ''' <param name="e">Contains the Arguments structure with ScrapeList, ScrapeOptions, and ScrapeType.</param>
     ''' <remarks>
-    ''' PERFORMANCE CRITICAL METHOD - This is the main scraping loop for bulk TV season operations.
-    ''' Processing Flow Per Season:
-    ''' 1. Load season from database via Master.DB.Load_TVSeason
-    ''' 2. ScrapeImage_TVSeason - Collect image URLs (poster, banner, fanart, landscape)
-    ''' 3. Save_TVSeason - Downloads images and saves to DB
-    ''' Entry Points: Context menu on seasons
+    ''' <para><b>Processing Flow Per Season:</b></para>
+    ''' <list type="number">
+    '''   <item>Load season from database via <c>Master.DB.Load_TVSeason</c></item>
+    '''   <item>Scrape NFO/metadata if <c>ScrapeModifiers.SeasonNFO</c> is set</item>
+    '''   <item>Scrape images (poster, banner, fanart, landscape) based on <c>ScrapeModifiers</c></item>
+    '''   <item>For <c>SingleScrape</c> with <c>TVImagesDisplayImageSelect</c> enabled, show <c>dlgImgSelect</c> dialog</item>
+    '''   <item>Run post-scrape module processing via <c>ScraperMulti_TVSeason</c> event</item>
+    '''   <item>Save season to database with <c>Save_TVSeasonAsync</c> (downloads and persists images)</item>
+    ''' </list>
+    ''' 
+    ''' <para><b>Entry Points:</b></para>
+    ''' <list type="bullet">
+    '''   <item>Context menu "Scrape" on TV Season</item>
+    '''   <item>Context menu "Edit Images..." on TV Season (via <c>cmnuSeasonEditImages_Click</c>)</item>
+    '''   <item>Bulk scrape operations from main toolbar</item>
+    ''' </list>
+    ''' 
+    ''' <para><b>Progress Reporting:</b></para>
+    ''' <list type="bullet">
+    '''   <item><c>-1</c>: Notification of completed season scrape (with season title)</item>
+    '''   <item><c>-2</c>: Request UI refresh for season ID (passed as UserState)</item>
+    '''   <item><c>-3</c>: Status text update (passed as UserState string)</item>
+    ''' </list>
+    ''' 
+    ''' <para><b>BL-KI-001 Fix (January 5, 2026):</b> Removed the <c>If Not SingleScrape</c> condition 
+    ''' that was preventing saves. The save now executes for all scrape types, fixing the issue where 
+    ''' images selected in <c>dlgImgSelect</c> were not persisted for single season scrapes and the 
+    ''' "Edit Images..." context menu feature.</para>
     ''' </remarks>
     Private Sub bwTVSeasonScraper_DoWork(ByVal sender As Object, ByVal e As System.ComponentModel.DoWorkEventArgs) _
         Handles bwTVSeasonScraper.DoWork
@@ -3206,7 +3224,7 @@ Public Class frmMain
                                        DBScrapeSeason.TVSeason.Season))
 
             If tScrapeItem.ScrapeModifiers.SeasonNFO Then
-                bwTVSeasonScraper.ReportProgress(- 3, String.Concat(Master.eLang.GetString(253, "Scraping Data"), ":"))
+                bwTVSeasonScraper.ReportProgress(-3, String.Concat(Master.eLang.GetString(253, "Scraping Data"), ":"))
                 If _
                     ModulesManager.Instance.ScrapeData_TVSeason(DBScrapeSeason, Args.ScrapeOptions,
                                                                 Args.ScrapeList.Count = 1) Then
@@ -3248,7 +3266,7 @@ Public Class frmMain
                    tScrapeItem.ScrapeModifiers.SeasonPoster Then
 
                     Dim SearchResultsContainer As New MediaContainers.SearchResultsContainer
-                    bwTVSeasonScraper.ReportProgress(- 3, "Scraping Season Images:")
+                    bwTVSeasonScraper.ReportProgress(-3, "Scraping Season Images:")
                     If _
                         Not _
                         ModulesManager.Instance.ScrapeImage_TV(DBScrapeSeason, SearchResultsContainer,
@@ -3267,26 +3285,23 @@ Public Class frmMain
                         Else
                             'autoscraping
                             Images.SetPreferredImages(DBScrapeSeason, SearchResultsContainer,
-                                                      tScrapeItem.ScrapeModifiers, IsAutoScraper := True)
+                                                      tScrapeItem.ScrapeModifiers, IsAutoScraper:=True)
                         End If
                     End If
                 End If
 
                 If bwTVSeasonScraper.CancellationPending Then Exit For
 
-                If Not (Args.ScrapeType = Enums.ScrapeType.SingleScrape) Then
-                    ModulesManager.Instance.RunGeneric(Enums.ModuleEventType.ScraperMulti_TVSeason, Nothing, Nothing,
-                                                       False, DBScrapeSeason)
-                    bwTVSeasonScraper.ReportProgress(- 3,
-                                                     String.Concat(
-                                                         Master.eLang.GetString(399,
-                                                                                "Downloading and Saving Contents into Database"),
-                                                         ":"))
-                    'Use Save_TVSeasonAsync for parallel image downloads (sync-over-async in BackgroundWorker context)
-                    DBScrapeSeason =
-                        Master.DB.Save_TVSeasonAsync(DBScrapeSeason, False, True, True).GetAwaiter().GetResult()
-                    bwTVSeasonScraper.ReportProgress(- 2, DBScrapeSeason.ID)
-                End If
+                ' Post-scrape processing and save
+                ' BL-KI-001 Fix: This block now executes for ALL scrape types (previously skipped for SingleScrape).
+                ' This ensures images selected via dlgImgSelect are persisted for:
+                '   - Single season scrape (context menu)
+                '   - "Edit Images..." context menu feature
+                '   - Bulk/batch season scrapes
+                ModulesManager.Instance.RunGeneric(Enums.ModuleEventType.ScraperMulti_TVSeason, Nothing, Nothing, False, DBScrapeSeason)
+                bwTVSeasonScraper.ReportProgress(-3, String.Concat(Master.eLang.GetString(399, "Downloading and Saving Contents into Database"), ":"))
+                DBScrapeSeason = Master.DB.Save_TVSeasonAsync(DBScrapeSeason, False, True, True).GetAwaiter().GetResult()
+                bwTVSeasonScraper.ReportProgress(-2, DBScrapeSeason.ID)
             End If
 
             logger.Trace(String.Format("Ended scraping: {0}: Season {1}", DBScrapeSeason.TVShow.Title,
@@ -5155,6 +5170,102 @@ Public Class frmMain
         Edit_Movie(tmpDBMovie)
     End Sub
 
+    ''' <summary>
+    ''' Opens the image selection dialog for the selected movie without full edit dialog.
+    ''' Scrapes fresh images from configured sources and allows direct image selection.
+    ''' </summary>
+    Private Sub cmnuMovieEditImages_Click(ByVal sender As Object, ByVal e As EventArgs) _
+            Handles cmnuMovieEditImages.Click
+        Try
+            Cursor = Cursors.WaitCursor
+
+            ' Validate selection
+            If currMovie Is Nothing OrElse currMovie.ID = -1 Then
+                Cursor = Cursors.Default
+                Exit Sub
+            End If
+
+            ' Load full movie data from database
+            Dim tmpDBElement As Database.DBElement = Master.DB.Load_Movie(currMovie.ID)
+            If tmpDBElement Is Nothing Then
+                Cursor = Cursors.Default
+                Exit Sub
+            End If
+
+            ' Check if movie is online
+            If Not tmpDBElement.IsOnline AndAlso Not FileUtils.Common.CheckOnlineStatus_Movie(tmpDBElement, True) Then
+                Cursor = Cursors.Default
+                Exit Sub
+            End If
+
+            ' Check if movie has required IDs for scraping
+            If Not tmpDBElement.Movie.UniqueIDs.IMDbIdSpecified AndAlso
+               Not tmpDBElement.Movie.UniqueIDs.TMDbIdSpecified Then
+                Cursor = Cursors.Default
+                MessageBox.Show("This movie has no IMDB or TMDB ID. Please scrape the movie first to retrieve metadata before editing images.",
+                                "Unable to Search for Images", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                Exit Sub
+            End If
+
+            ' Set up scrape modifiers for ALL image types
+            Dim nScrapeModifiers As New Structures.ScrapeModifiers With {
+                .MainBanner = Master.eSettings.MovieBannerAnyEnabled,
+                .MainClearArt = Master.eSettings.MovieClearArtAnyEnabled,
+                .MainClearLogo = Master.eSettings.MovieClearLogoAnyEnabled,
+                .MainDiscArt = Master.eSettings.MovieDiscArtAnyEnabled,
+                .MainExtrafanarts = Master.eSettings.MovieExtrafanartsAnyEnabled,
+                .MainExtrathumbs = Master.eSettings.MovieExtrathumbsAnyEnabled,
+                .MainFanart = Master.eSettings.MovieFanartAnyEnabled,
+                .MainKeyart = Master.eSettings.MovieKeyartAnyEnabled,
+                .MainLandscape = Master.eSettings.MovieLandscapeAnyEnabled,
+                .MainPoster = Master.eSettings.MoviePosterAnyEnabled
+            }
+
+            ' Scrape images from configured sources
+            Dim nSearchResultsContainer As New MediaContainers.SearchResultsContainer
+            If Not ModulesManager.Instance.ScrapeImage_Movie(tmpDBElement, nSearchResultsContainer, nScrapeModifiers, True) Then
+
+                ' Check if any images were found
+                Dim bImagesFound As Boolean = nSearchResultsContainer.MainBanners.Count > 0 OrElse
+                                              nSearchResultsContainer.MainClearArts.Count > 0 OrElse
+                                              nSearchResultsContainer.MainClearLogos.Count > 0 OrElse
+                                              nSearchResultsContainer.MainDiscArts.Count > 0 OrElse
+                                              nSearchResultsContainer.MainFanarts.Count > 0 OrElse
+                                              nSearchResultsContainer.MainKeyarts.Count > 0 OrElse
+                                              nSearchResultsContainer.MainLandscapes.Count > 0 OrElse
+                                              nSearchResultsContainer.MainPosters.Count > 0
+
+                If bImagesFound Then
+                    ' Open the image selection dialog
+                    Using dlgImgS As New dlgImgSelect
+                        If dlgImgS.ShowDialog(tmpDBElement, nSearchResultsContainer, nScrapeModifiers) = DialogResult.OK Then
+                            ' Apply selected images back to the movie
+                            tmpDBElement.ImagesContainer = dlgImgS.Result.ImagesContainer
+
+                            ' Save to database
+                            Master.DB.Save_Movie(tmpDBElement, False, False, True, False, False)
+
+                            ' Save images to disk (images only, no NFO)
+                            tmpDBElement.ImagesContainer.SaveAllImages(tmpDBElement, False)
+
+                            ' Refresh the display
+                            RefreshRow_Movie(tmpDBElement.ID)
+                            LoadInfo_Movie(tmpDBElement.ID)
+                        End If
+                    End Using
+                Else
+                    MessageBox.Show(Master.eLang.GetString(970, "No Fanarts found"),
+                                    String.Empty, MessageBoxButtons.OK, MessageBoxIcon.Information)
+                End If
+            End If
+
+        Catch ex As Exception
+            logger.Error(ex, New StackFrame().GetMethod().Name)
+        Finally
+            Cursor = Cursors.Default
+        End Try
+    End Sub
+
     Private Sub cmnuShowEdit_Click(ByVal sender As Object, ByVal e As EventArgs) Handles cmnuShowEdit.Click
         If dgvTVShows.SelectedRows.Count > 1 Then Return
 
@@ -5162,6 +5273,105 @@ Public Class frmMain
         Dim ID As Long = Convert.ToInt64(dgvTVShows.Item("idShow", indX).Value)
         Dim tmpDBTVShow As Database.DBElement = Master.DB.Load_TVShow(ID, True, False)
         Edit_TVShow(tmpDBTVShow)
+    End Sub
+
+    ''' <summary>
+    ''' Opens the image selection dialog for the selected TV show without full edit dialog.
+    ''' Scrapes fresh images from configured sources and allows direct image selection.
+    ''' </summary>
+    Private Sub cmnuShowEditImages_Click(ByVal sender As Object, ByVal e As EventArgs) _
+        Handles cmnuShowEditImages.Click
+        Try
+            Cursor = Cursors.WaitCursor
+
+            ' Validate selection
+            If dgvTVShows.SelectedRows.Count <> 1 Then
+                Cursor = Cursors.Default
+                Exit Sub
+            End If
+
+            Dim indX As Integer = dgvTVShows.SelectedRows(0).Index
+            Dim ID As Long = Convert.ToInt64(dgvTVShows.Item("idShow", indX).Value)
+
+            ' Load full TV show data from database
+            Dim tmpDBElement As Database.DBElement = Master.DB.Load_TVShow(ID, True, False)
+            If tmpDBElement Is Nothing Then
+                Cursor = Cursors.Default
+                Exit Sub
+            End If
+
+            ' Check if show is online
+            If Not tmpDBElement.IsOnline AndAlso Not FileUtils.Common.CheckOnlineStatus_TVShow(tmpDBElement, True) Then
+                Cursor = Cursors.Default
+                Exit Sub
+            End If
+
+            ' Check if show has required IDs for scraping
+            If Not tmpDBElement.TVShow.UniqueIDs.IMDbIdSpecified AndAlso
+           Not tmpDBElement.TVShow.UniqueIDs.TMDbIdSpecified AndAlso
+           Not tmpDBElement.TVShow.UniqueIDs.TVDbIdSpecified Then
+                Cursor = Cursors.Default
+                MessageBox.Show("This TV show has no IMDB, TMDB, or TVDB ID. Please scrape the show first to retrieve metadata before editing images.",
+                            "Unable to Search for Images", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                Exit Sub
+            End If
+
+            ' Set up scrape modifiers for ALL image types
+            Dim nScrapeModifiers As New Structures.ScrapeModifiers With {
+            .MainBanner = Master.eSettings.TVShowBannerAnyEnabled,
+            .MainCharacterArt = Master.eSettings.TVShowCharacterArtAnyEnabled,
+            .MainClearArt = Master.eSettings.TVShowClearArtAnyEnabled,
+            .MainClearLogo = Master.eSettings.TVShowClearLogoAnyEnabled,
+            .MainExtrafanarts = Master.eSettings.TVShowExtrafanartsAnyEnabled,
+            .MainFanart = Master.eSettings.TVShowFanartAnyEnabled,
+            .MainKeyart = Master.eSettings.TVShowKeyartAnyEnabled,
+            .MainLandscape = Master.eSettings.TVShowLandscapeAnyEnabled,
+            .MainPoster = Master.eSettings.TVShowPosterAnyEnabled
+        }
+
+            ' Scrape images from configured sources
+            Dim nSearchResultsContainer As New MediaContainers.SearchResultsContainer
+            If Not ModulesManager.Instance.ScrapeImage_TV(tmpDBElement, nSearchResultsContainer, nScrapeModifiers, True) Then
+
+                ' Check if any images were found
+                Dim bImagesFound As Boolean = nSearchResultsContainer.MainBanners.Count > 0 OrElse
+                                          nSearchResultsContainer.MainCharacterArts.Count > 0 OrElse
+                                          nSearchResultsContainer.MainClearArts.Count > 0 OrElse
+                                          nSearchResultsContainer.MainClearLogos.Count > 0 OrElse
+                                          nSearchResultsContainer.MainFanarts.Count > 0 OrElse
+                                          nSearchResultsContainer.MainKeyarts.Count > 0 OrElse
+                                          nSearchResultsContainer.MainLandscapes.Count > 0 OrElse
+                                          nSearchResultsContainer.MainPosters.Count > 0
+
+                If bImagesFound Then
+                    ' Open the image selection dialog
+                    Using dlgImgS As New dlgImgSelect
+                        If dlgImgS.ShowDialog(tmpDBElement, nSearchResultsContainer, nScrapeModifiers) = DialogResult.OK Then
+                            ' Apply selected images back to the TV show
+                            tmpDBElement.ImagesContainer = dlgImgS.Result.ImagesContainer
+
+                            ' Save to database (batchMode:=False, toNFO:=False, toDisk:=True, doSync:=False, forceFileCleanup:=False)
+                            Master.DB.Save_TVShow(tmpDBElement, False, False, True, False)
+
+                            ' Save images to disk (images only, no NFO)
+                            tmpDBElement.ImagesContainer.SaveAllImages(tmpDBElement, False)
+
+                            ' Refresh the display
+                            RefreshRow_TVShow(tmpDBElement.ID)
+                            LoadInfo_TVShow(tmpDBElement.ID)
+                        End If
+                    End Using
+                Else
+                    MessageBox.Show(Master.eLang.GetString(970, "No Fanarts found"),
+                                String.Empty, MessageBoxButtons.OK, MessageBoxIcon.Information)
+                End If
+            End If
+
+        Catch ex As Exception
+            logger.Error(ex, New StackFrame().GetMethod().Name)
+        Finally
+            Cursor = Cursors.Default
+        End Try
     End Sub
 
     Private Sub cmnuEpisodeOpenFolder_Click(ByVal sender As Object, ByVal e As EventArgs) _
@@ -6335,6 +6545,84 @@ Public Class frmMain
         Dim tmpDBTVSeason As Database.DBElement = Master.DB.Load_TVSeason(ID, True, False)
         Edit_TVSeason(tmpDBTVSeason)
     End Sub
+
+    ''' <summary>
+    ''' Opens the image selection dialog for the selected TV season without full edit dialog.
+    ''' Scrapes fresh images from configured sources and allows direct image selection.
+    ''' </summary>
+    Private Sub cmnuSeasonEditImages_Click(ByVal sender As Object, ByVal e As EventArgs) _
+            Handles cmnuSeasonEditImages.Click
+        Try
+            Cursor = Cursors.WaitCursor
+
+            ' Validate selection
+            If dgvTVSeasons.SelectedRows.Count <> 1 Then
+                Cursor = Cursors.Default
+                Exit Sub
+            End If
+
+            Dim indX As Integer = dgvTVSeasons.SelectedRows(0).Index
+            Dim ID As Long = Convert.ToInt64(dgvTVSeasons.Item("idSeason", indX).Value)
+
+            ' Load full TV season data from database
+            Dim tmpDBElement As Database.DBElement = Master.DB.Load_TVSeason(ID, True, False)
+            If tmpDBElement Is Nothing Then
+                Cursor = Cursors.Default
+                Exit Sub
+            End If
+
+            ' Check if show is online
+            If Not tmpDBElement.IsOnline AndAlso Not FileUtils.Common.CheckOnlineStatus_TVShow(tmpDBElement, True) Then
+                Cursor = Cursors.Default
+                Exit Sub
+            End If
+
+            ' Set up scrape modifiers for ALL season image types
+            Dim nScrapeModifiers As New Structures.ScrapeModifiers With {
+                .SeasonBanner = Master.eSettings.TVSeasonBannerAnyEnabled,
+                .SeasonFanart = Master.eSettings.TVSeasonFanartAnyEnabled,
+                .SeasonLandscape = Master.eSettings.TVSeasonLandscapeAnyEnabled,
+                .SeasonPoster = Master.eSettings.TVSeasonPosterAnyEnabled
+            }
+
+            ' Scrape images from configured sources
+            Dim nSearchResultsContainer As New MediaContainers.SearchResultsContainer
+            If Not ModulesManager.Instance.ScrapeImage_TV(tmpDBElement, nSearchResultsContainer, nScrapeModifiers, True) Then
+
+                ' Check if any images were found
+                Dim bImagesFound As Boolean = nSearchResultsContainer.SeasonBanners.Count > 0 OrElse
+                                              nSearchResultsContainer.SeasonFanarts.Count > 0 OrElse
+                                              nSearchResultsContainer.SeasonLandscapes.Count > 0 OrElse
+                                              nSearchResultsContainer.SeasonPosters.Count > 0
+
+                If bImagesFound Then
+                    ' Open the image selection dialog
+                    Using dlgImgS As New dlgImgSelect
+                        If dlgImgS.ShowDialog(tmpDBElement, nSearchResultsContainer, nScrapeModifiers) = DialogResult.OK Then
+                            ' Apply selected images back to the TV season
+                            Images.SetPreferredImages(tmpDBElement, dlgImgS.Result)
+
+                            ' Save to database (downloads images and persists)
+                            Master.DB.Save_TVSeason(tmpDBElement, False, True, True)
+
+                            ' Refresh the display
+                            RefreshRow_TVSeason(tmpDBElement.ID)
+                            LoadInfo_TVSeason(tmpDBElement.ID)
+                        End If
+                    End Using
+                Else
+                    MessageBox.Show(Master.eLang.GetString(970, "No Fanarts found"),
+                                    String.Empty, MessageBoxButtons.OK, MessageBoxIcon.Information)
+                End If
+            End If
+
+        Catch ex As Exception
+            logger.Error(ex, New StackFrame().GetMethod().Name)
+        Finally
+            Cursor = Cursors.Default
+        End Try
+    End Sub
+
 
     Private Sub cmnuSeasonOpenFolder_Click(ByVal sender As Object, ByVal e As EventArgs) _
         Handles cmnuSeasonOpenFolder.Click
@@ -15725,6 +16013,7 @@ Public Class frmMain
             Next
             cmnuMovieBrowseIMDB.Enabled = enableIMDB
             cmnuMovieBrowseTMDB.Enabled = enableTMDB
+            cmnuMovieEditImages.Enabled = (dgvMovies.SelectedRows.Count = 1)
         End If
     End Sub
 
@@ -15771,6 +16060,7 @@ Public Class frmMain
             cmnuSeasonBrowseIMDB.Enabled = enableIMDB
             cmnuSeasonBrowseTMDB.Enabled = enableTMDB
             cmnuSeasonBrowseTVDB.Enabled = enableTVDB
+            cmnuSeasonEditImages.Enabled = (dgvTVSeasons.SelectedRows.Count = 1)
         End If
     End Sub
 
@@ -15798,6 +16088,7 @@ Public Class frmMain
             cmnuShowBrowseIMDB.Enabled = enableIMDB
             cmnuShowBrowseTMDB.Enabled = enableTMDB
             cmnuShowBrowseTVDB.Enabled = enableTVDB
+            cmnuShowEditImages.Enabled = (dgvTVShows.SelectedRows.Count = 1)
         End If
     End Sub
 
@@ -20043,7 +20334,6 @@ Public Class frmMain
     Private Sub Setup(ByVal doTheme As Boolean)
         MinimumSize = New Size(800, 600)
 
-        ' TODO: Set tooltip for genre display here [ulrick65, 12/30/2025]
         ' Enable custom tooltip drawing with balloon style
         With ToolTips
             .OwnerDraw = True
@@ -20835,7 +21125,6 @@ Public Class frmMain
     ''' Custom draw handler for ToolTips to provide a styled appearance
     ''' </summary>
     Private Sub ToolTips_Draw(sender As Object, e As DrawToolTipEventArgs) Handles ToolTips.Draw
-        ' TODO: Tooltip setup here as well [ulrick65, 12/30/2025]
         ' Draw gradient background
         Using gradientBrush As New Drawing2D.LinearGradientBrush(
             e.Bounds,

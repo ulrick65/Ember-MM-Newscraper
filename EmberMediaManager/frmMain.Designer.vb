@@ -222,6 +222,13 @@ Partial Class frmMain
         Me.cmnuMovieUnlock = New System.Windows.Forms.ToolStripMenuItem()
         Me.cmnuMovieEditSeparator = New System.Windows.Forms.ToolStripSeparator()
         Me.cmnuMovieEdit = New System.Windows.Forms.ToolStripMenuItem()
+        '
+        'cmnuMovieEditImages
+        '
+        Me.cmnuMovieEditImages = New System.Windows.Forms.ToolStripMenuItem()
+        Me.cmnuMovieEditImages.Name = "cmnuMovieEditImages"
+        Me.cmnuMovieEditImages.Size = New System.Drawing.Size(200, 22)
+        Me.cmnuMovieEditImages.Text = "Edit Images..."
         Me.cmnuMovieEditMetaData = New System.Windows.Forms.ToolStripMenuItem()
         Me.cmnuMovieEditGenres = New System.Windows.Forms.ToolStripMenuItem()
         Me.mnuGenres = New System.Windows.Forms.ContextMenuStrip(Me.components)
@@ -358,6 +365,12 @@ Partial Class frmMain
         Me.cmnuShowUnlock = New System.Windows.Forms.ToolStripMenuItem()
         Me.cmnuShowEditSeparator = New System.Windows.Forms.ToolStripSeparator()
         Me.cmnuShowEdit = New System.Windows.Forms.ToolStripMenuItem()
+        'cmnuShowEditImages
+        '
+        Me.cmnuShowEditImages = New System.Windows.Forms.ToolStripMenuItem()
+        Me.cmnuShowEditImages.Name = "cmnuShowEditImages"
+        Me.cmnuShowEditImages.Size = New System.Drawing.Size(200, 22)
+        Me.cmnuShowEditImages.Text = "Edit Images..."
         Me.cmnuShowEditGenres = New System.Windows.Forms.ToolStripMenuItem()
         Me.cmnuShowEditTags = New System.Windows.Forms.ToolStripMenuItem()
         Me.cmnuShowEditDataFields = New System.Windows.Forms.ToolStripMenuItem()
@@ -397,6 +410,12 @@ Partial Class frmMain
         Me.cmnuSeasonUnlock = New System.Windows.Forms.ToolStripMenuItem()
         Me.cmnuSeasonEditSeparator = New System.Windows.Forms.ToolStripSeparator()
         Me.cmnuSeasonEdit = New System.Windows.Forms.ToolStripMenuItem()
+        'cmnuSeasonEditImages
+        '
+        Me.cmnuSeasonEditImages = New System.Windows.Forms.ToolStripMenuItem()
+        Me.cmnuSeasonEditImages.Name = "cmnuSeasonEditImages"
+        Me.cmnuSeasonEditImages.Size = New System.Drawing.Size(200, 22)
+        Me.cmnuSeasonEditImages.Text = "Edit Images..."
         Me.cmnuSeasonEditDataFields = New System.Windows.Forms.ToolStripMenuItem()
         Me.cmnuSeasonScrapeSeparator = New System.Windows.Forms.ToolStripSeparator()
         Me.cmnuSeasonScrape = New System.Windows.Forms.ToolStripMenuItem()
@@ -3158,7 +3177,7 @@ Partial Class frmMain
         '
         'cmnuMovie
         '
-        Me.cmnuMovie.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.cmnuMovieTitle, Me.cmnuMovieDatabaseSeparator, Me.cmnuMovieReload, Me.cmnuMovieMark, Me.cmnuMovieUnmark, Me.cmnuMovieMarkAs, Me.cmnuMovieWatched, Me.cmnuMovieUnwatched, Me.cmnuMovieLock, Me.cmnuMovieUnlock, Me.cmnuMovieEditSeparator, Me.cmnuMovieEdit, Me.cmnuMovieEditMetaData, Me.cmnuMovieEditGenres, Me.cmnuMovieEditTags, Me.cmnuMovieEditDataFields, Me.cmnuMovieRescrapeSeparator, Me.cmnuMovieScrape, Me.cmnuMovieScrapeSelected, Me.cmnuMovieScrapeSingleDataField, Me.cmnuMovieChange, Me.cmnuMovieChangeAuto, Me.cmnuMovieLanguage, Me.cmnuMovieSep3, Me.cmnuMovieBrowseIMDB, Me.cmnuMovieBrowseTMDB, Me.cmnuMovieOpenFolder, Me.cmnuMovieRemoveSeparator, Me.cmnuMovieRemove})
+        Me.cmnuMovie.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.cmnuMovieTitle, Me.cmnuMovieDatabaseSeparator, Me.cmnuMovieReload, Me.cmnuMovieMark, Me.cmnuMovieUnmark, Me.cmnuMovieMarkAs, Me.cmnuMovieWatched, Me.cmnuMovieUnwatched, Me.cmnuMovieLock, Me.cmnuMovieUnlock, Me.cmnuMovieEditSeparator, Me.cmnuMovieEdit, Me.cmnuMovieEditImages, Me.cmnuMovieEditMetaData, Me.cmnuMovieEditGenres, Me.cmnuMovieEditTags, Me.cmnuMovieEditDataFields, Me.cmnuMovieRescrapeSeparator, Me.cmnuMovieScrape, Me.cmnuMovieScrapeSelected, Me.cmnuMovieScrapeSingleDataField, Me.cmnuMovieChange, Me.cmnuMovieChangeAuto, Me.cmnuMovieLanguage, Me.cmnuMovieSep3, Me.cmnuMovieBrowseIMDB, Me.cmnuMovieBrowseTMDB, Me.cmnuMovieOpenFolder, Me.cmnuMovieRemoveSeparator, Me.cmnuMovieRemove})
         Me.cmnuMovie.Name = "mnuMediaList"
         Me.cmnuMovie.Size = New System.Drawing.Size(249, 562)
         '
@@ -4213,7 +4232,7 @@ Partial Class frmMain
         '
         'cmnuShow
         '
-        Me.cmnuShow.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.cmnuShowTitle, Me.cmnuShowDatabaseSeparator, Me.cmnuShowReload, Me.cmnuShowReloadFull, Me.cmnuShowMark, Me.cmnuShowUnmark, Me.cmnuShowWatched, Me.cmnuShowUnwatched, Me.cmnuShowLock, Me.cmnuShowUnlock, Me.cmnuShowEditSeparator, Me.cmnuShowEdit, Me.cmnuShowEditGenres, Me.cmnuShowEditTags, Me.cmnuShowEditDataFields, Me.cmnuShowScrapeSeparator, Me.cmnuShowScrape, Me.cmnuShowScrapeSelected, Me.cmnuShowScrapeSingleDataField, Me.cmnuShowGetMissingEpisodes, Me.cmnuShowChange, Me.cmnuShowLanguage, Me.cmnuShowSep3, Me.cmnuShowBrowseIMDB, Me.cmnuShowBrowseTMDB, Me.cmnuShowBrowseTVDB, Me.cmnuShowOpenFolder, Me.cmnuShowSep4, Me.cmnuShowClearCache, Me.cmnuShowRemoveSeparator, Me.cmnuShowRemove})
+        Me.cmnuShow.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.cmnuShowTitle, Me.cmnuShowDatabaseSeparator, Me.cmnuShowReload, Me.cmnuShowReloadFull, Me.cmnuShowMark, Me.cmnuShowUnmark, Me.cmnuShowWatched, Me.cmnuShowUnwatched, Me.cmnuShowLock, Me.cmnuShowUnlock, Me.cmnuShowEditSeparator, Me.cmnuShowEdit, Me.cmnuShowEditImages, Me.cmnuShowEditGenres, Me.cmnuShowEditTags, Me.cmnuShowEditDataFields, Me.cmnuShowScrapeSeparator, Me.cmnuShowScrape, Me.cmnuShowScrapeSelected, Me.cmnuShowScrapeSingleDataField, Me.cmnuShowGetMissingEpisodes, Me.cmnuShowChange, Me.cmnuShowLanguage, Me.cmnuShowSep3, Me.cmnuShowBrowseIMDB, Me.cmnuShowBrowseTMDB, Me.cmnuShowBrowseTVDB, Me.cmnuShowOpenFolder, Me.cmnuShowSep4, Me.cmnuShowClearCache, Me.cmnuShowRemoveSeparator, Me.cmnuShowRemove})
         Me.cmnuShow.Name = "mnuShows"
         Me.cmnuShow.Size = New System.Drawing.Size(249, 590)
         '
@@ -4520,7 +4539,7 @@ Partial Class frmMain
         '
         'cmnuSeason
         '
-        Me.cmnuSeason.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.cmnuSeasonTitle, Me.cmnuSeasonDatabaseSeparator, Me.cmnuSeasonReload, Me.cmnuSeasonReloadFull, Me.cmnuSeasonMark, Me.cmnuSeasonUnmark, Me.cmnuSeasonWatched, Me.cmnuSeasonUnwatched, Me.cmnuSeasonLock, Me.cmnuSeasonUnlock, Me.cmnuSeasonEditSeparator, Me.cmnuSeasonEdit, Me.cmnuSeasonEditDataFields, Me.cmnuSeasonScrapeSeparator, Me.cmnuSeasonScrape, Me.cmnuSeasonScrapeSelected, Me.cmnuSeasonScrapeSingleDataField, Me.cmnuSeasonSep3, Me.cmnuSeasonBrowseIMDB, Me.cmnuSeasonBrowseTMDB, Me.cmnuSeasonBrowseTVDB, Me.cmnuSeasonOpenFolder, Me.cmnuSeasonRemoveSeparator, Me.cmnuSeasonRemove})
+        Me.cmnuSeason.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.cmnuSeasonTitle, Me.cmnuSeasonDatabaseSeparator, Me.cmnuSeasonReload, Me.cmnuSeasonReloadFull, Me.cmnuSeasonMark, Me.cmnuSeasonUnmark, Me.cmnuSeasonWatched, Me.cmnuSeasonUnwatched, Me.cmnuSeasonLock, Me.cmnuSeasonUnlock, Me.cmnuSeasonEditSeparator, Me.cmnuSeasonEdit, Me.cmnuSeasonEditImages, Me.cmnuSeasonEditDataFields, Me.cmnuSeasonScrapeSeparator, Me.cmnuSeasonScrape, Me.cmnuSeasonScrapeSelected, Me.cmnuSeasonScrapeSingleDataField, Me.cmnuSeasonSep3, Me.cmnuSeasonBrowseIMDB, Me.cmnuSeasonBrowseTMDB, Me.cmnuSeasonBrowseTVDB, Me.cmnuSeasonOpenFolder, Me.cmnuSeasonRemoveSeparator, Me.cmnuSeasonRemove})
         Me.cmnuSeason.Name = "mnuSeasons"
         Me.cmnuSeason.Size = New System.Drawing.Size(249, 452)
         '
@@ -10594,6 +10613,7 @@ Partial Class frmMain
     Friend WithEvents cmnuMovieDatabaseSeparator As System.Windows.Forms.ToolStripSeparator
     Friend WithEvents cmnuMovieRescrapeSeparator As System.Windows.Forms.ToolStripSeparator
     Friend WithEvents cmnuMovieEdit As System.Windows.Forms.ToolStripMenuItem
+    Friend WithEvents cmnuMovieEditImages As System.Windows.Forms.ToolStripMenuItem
     Friend WithEvents btnCancel As System.Windows.Forms.Button
     Friend WithEvents prbCanceling As System.Windows.Forms.ProgressBar
     Friend WithEvents lblCanceling As System.Windows.Forms.Label
@@ -10675,10 +10695,12 @@ Partial Class frmMain
     Friend WithEvents tsSpring As System.Windows.Forms.ToolStripStatusLabel
     Friend WithEvents cmnuShow As System.Windows.Forms.ContextMenuStrip
     Friend WithEvents cmnuSeason As System.Windows.Forms.ContextMenuStrip
+    Friend WithEvents cmnuSeasonEditImages As System.Windows.Forms.ToolStripMenuItem
     Friend WithEvents cmnuEpisode As System.Windows.Forms.ContextMenuStrip
     Friend WithEvents cmnuShowTitle As System.Windows.Forms.ToolStripMenuItem
     Friend WithEvents cmnuShowDatabaseSeparator As System.Windows.Forms.ToolStripSeparator
     Friend WithEvents cmnuShowEdit As System.Windows.Forms.ToolStripMenuItem
+    Friend WithEvents cmnuShowEditImages As System.Windows.Forms.ToolStripMenuItem
     Friend WithEvents cmnuEpisodeTitle As System.Windows.Forms.ToolStripMenuItem
     Friend WithEvents cmnuEpisodeDatabaseSeparator As System.Windows.Forms.ToolStripSeparator
     Friend WithEvents cmnuEpisodeEdit As System.Windows.Forms.ToolStripMenuItem

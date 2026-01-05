@@ -274,6 +274,7 @@ Public Class dlgImgSelect
     End Sub
 
     Private Sub AddListImage(ByRef tImage As MediaContainers.Image, ByVal iIndex As Integer, ByVal ModifierType As Enums.ModifierType, Optional ByVal iSeason As Integer = -2)
+
         Dim tTag As iTag = CreateImageTag(tImage, ModifierType, iSeason, iIndex)
 
         ReDim Preserve pnlListImage_Panel(iIndex)
@@ -637,6 +638,7 @@ Public Class dlgImgSelect
     End Sub
 
     Private Sub ClearListImages()
+
         iListImage_NextLeft = iListImage_DistanceLeft
         iListImage_NextTop = iListImage_DistanceTop
 
@@ -1335,6 +1337,7 @@ Public Class dlgImgSelect
     ''' </summary>
     ''' <remarks>All other images will be downloaded while saving to DB</remarks>
     Private Sub DoneAndClose()
+
         btnOK.Enabled = False
         DeselectAllListImages()
         DeselectAllSubImages()
@@ -1749,12 +1752,20 @@ Public Class dlgImgSelect
                     End If
                 End If
                 LoadedMainFanart = True
-                bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.AllSeasonsFanart)
-                bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.EpisodeFanart)
+                ' Only report progress for types that don't require additional season/episode downloads
+                ' or when season/episode fanart downloads are not being performed. This avoids multiple
+                ' progress reports for the same images, which duplicates images in the dialog.
+                ' This fixes Bug: BL-KI-002: Edit Season Dialog - Most Images Not Selectable
+                If Not (DoSeasonFanart OrElse DoAllSeasonsFanart) Then
+                    bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.AllSeasonsFanart)
+                    bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.SeasonFanart)
+                End If
+                If Not DoEpisodeFanart Then
+                    bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.EpisodeFanart)
+                End If
                 bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.MainExtrafanarts)
                 bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.MainExtrathumbs)
                 bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.MainFanart)
-                bwImgDownload.ReportProgress(iProgress, Enums.ModifierType.SeasonFanart)
 
                 'Season Banners - Use parallel download
                 If DoSeasonBanner OrElse DoAllSeasonsBanner Then
@@ -2431,6 +2442,7 @@ Public Class dlgImgSelect
     End Sub
 
     Private Sub SetImage(ByVal tTag As iTag)
+
         Select Case tTag.ImageType
             Case Enums.ModifierType.AllSeasonsBanner, Enums.ModifierType.SeasonBanner
                 If tContentType = Enums.ContentType.TV Then

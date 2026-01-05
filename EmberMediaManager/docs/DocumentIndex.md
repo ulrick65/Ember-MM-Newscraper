@@ -6,7 +6,7 @@
 |---------------|---|
 | **Version** | 1.0 |
 | **Created** | December 31, 2025 |
-| **Updated** | January 1, 2026 |
+| **Updated** | January 4, 2026 |
 | **Author** | Eric H. Anderson |
 | **Purpose** | Master index for all project documentation |
 
@@ -19,6 +19,8 @@ Welcome! This is your one-stop navigation hub for all Ember Media Manager docume
 Whether you're looking for performance analysis, scraping process details, or release notes — you'll find it here. Documents are organized by purpose to help you quickly find what you need.
 
 **New here?** Start with the [Project Index](ProjectIndex.md) for a tour of all 24 projects in the solution.
+
+**Contributing docs?** See [DocumentationProcess.md](process-docs/DocumentationProcess.md) for standards and templates.
 
 ---
 
@@ -50,6 +52,7 @@ Whether you're looking for performance analysis, scraping process details, or re
 
 | Document | Description |
 |----------|-------------|
+| [FutureEnhancements.md](improvements-docs/FutureEnhancements.md) | Living backlog of future opportunities |
 | [PerformanceImprovements-Summary.md](improvements-docs/PerformanceImprovements-Summary.md) | Summary of all performance phases completed |
 | [PerformanceImprovements-Phase1.md](improvements-docs/PerformanceImprovements-Phase1.md) | Phase 1: Infrastructure & parallel image downloads |
 | [PerformanceImprovements-Phase2.md](improvements-docs/PerformanceImprovements-Phase2.md) | Phase 2: TV Show async support |
@@ -57,7 +60,6 @@ Whether you're looking for performance analysis, scraping process details, or re
 | [PerformanceImprovements-Phase3.md](improvements-docs/PerformanceImprovements-Phase3.md) | Phase 3: TV Show parallel scraping |
 | [PerformanceImprovements-Phase4.md](improvements-docs/PerformanceImprovements-Phase4.md) | Phase 4: IMDB optimization & tracking |
 | [NfoFileImprovements.md](improvements-docs/NfoFileImprovements.md) | Planned NFO processing improvements |
-| [FutureEnhancements.md](improvements-docs/FutureEnhancements.md) | Living backlog of future opportunities |
 | [AddonRemovalPlan.md](improvements-docs/AddonRemovalPlan.md) | Legacy scraper addon removal (complete) |
 | [IntegratedAddonRemoval.md](improvements-docs/IntegratedAddonRemoval.md) | NMT/Boxee/Kodi Addons removal plan |
 
@@ -67,9 +69,11 @@ Whether you're looking for performance analysis, scraping process details, or re
 
 | Document | Description |
 |----------|-------------|
+| [DocumentationProcess.md](process-docs/DocumentationProcess.md) | Documentation standards and guidelines |
 | [BuildProcess.md](process-docs/BuildProcess.md) | Build configuration and output |
 | [ScrapingProcessMovies.md](process-docs/ScrapingProcessMovies.md) | Movie scraping architecture |
 | [ScrapingProcessTvShows.md](process-docs/ScrapingProcessTvShows.md) | TV Show scraping architecture |
+| [ImageSelectionProcess.md](process-docs/ImageSelectionProcess.md) | Image selection dialog and download pipeline |
 | [NfoFileProcess.md](process-docs/NfoFileProcess.md) | NFO file processing analysis |
 | [GenreMappingProcess.md](process-docs/GenreMappingProcess.md) | Genre mapping system |
 | [CountryMappingProcess.md](process-docs/CountryMappingProcess.md) | Country mapping system |

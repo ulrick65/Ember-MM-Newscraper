@@ -2,9 +2,9 @@
 
 | |Document Info |
 |---------------|---|
-| **Version** | 1.2.0 |
+| **Version** | 1.2.1 |
 | **Created** | December 25, 2025 |
-| **Updated** | January 2, 2026 |
+| **Updated** | January 4, 2026 |
 | **Author** | Eric H. Anderson |
 | **Purpose** | Tracks changes made to this fork of Ember Media Manager
 
@@ -69,6 +69,7 @@ This document is your complete history of everything that's happened since forki
 | 1.12.0.0 | Dec 22, 2025 | Framework upgrade to .NET 4.8, package updates, all addons versioned, removed 3 legacy projects |
 | 1.12.1.0 | Dec 23, 2025 – Jan 1, 2026 | Bug fixes, genre mapping fix, code cleanup/reorganization, removed 9 deprecated scrapers and EmberAPI_test, **Phase 1-4 performance improvements (50-60% faster scraping)**, parallel movie/TV scraping, TVDB file contention fix, cancellation fixes, comprehensive performance tracking, documentation overhaul, project folder standardization |
 | 1.12.2.0 | Jan 2, 2026 | Version standardization release - all 24 projects aligned to 1.12.2.0, VersionConfig.json cleanup, BuildCleanup.ps1 rebuild feature, image save fix |
+| 1.12.3.0 | Jan 4, 2026 | Bug fix: TV Season image selection dialog (BL-KI-002), new documentation: ImageSelectionProcess.md, DocumentationProcess.md, documentation standards established |
 
 ---
 
@@ -191,6 +192,13 @@ The following features are deprecated and slated for removal in a future version
 | Category | Change | Files Affected |
 |----------|--------|----------------|
 | Bug Fix | Reverted `SaveToFile` race condition fix that prevented image overwrites during editing | `EmberAPI\clsAPIImages.vb` |
+| Bug Fix | MoveGenres null check | `frmMain.vb` - Added null/empty check before .Count |
+| Feature | Edit Movie Images Quick Access | See [BL-UX-001](backlog/BL-UX-001-EditImagesQuickAccess.md) |
+| Feature | Edit TV Images Quick Access | See [BL-UX-002](backlog/BL-UX-002-EditImagesQuickAccess-TVShow.md) |
+| Bug Fix | TV Season images not saved after SingleScrape | See [BL-KI-001](backlog/BL-KI-001-TVSeasonImagesSaveIssue.md) |
+| Feature | Edit Season Images Quick Access | See [BL-UX-003](backlog/BL-UX-003-EditImagesQuickAccess-TVSeason.md) |
+| Bug Fix | Edit Season dialog - images not selectable | See [BL-KI-002](backlog/BL-KI-002-EditSeasonImageSelectionBug.md) |
+
 
 **Script Updates:**
 
@@ -205,6 +213,25 @@ The following features are deprecated and slated for removal in a future version
 | Cleanup | Removed `themeScrapers` category (all projects removed) | `EmberMediaManager\scripts\VersionConfig.json` |
 | Cleanup | Fixed project paths to match standardized folder names | `EmberMediaManager\scripts\VersionConfig.json` |
 | Cleanup | Removed `ThemeScrapers` category from UpdateAssemblyVersions.ps1 | `EmberMediaManager\scripts\UpdateAssemblyVersions.ps1` |
+
+**Documentation:**
+
+| Category | Change | Files Affected |
+|----------|--------|----------------|
+| Documentation | Created Image Processing Document | `EmberMediaManager\docs\process-docs\ImageSelectionProcess.md` |
+| Documentation | Created Documentation Standards Process | `EmberMediaManager\docs\process-docs\DocumentationProcess.md` |
+| Documentation | Updated DocumentIndex.md - new documents added | `EmberMediaManager\docs\DocumentIndex.md` |
+
+**Documentation Standards Established:**
+
+- Document Info table required for all documents
+- Long-form dates (January 4, 2026)
+- Return to Document Index link after header
+- TOC return links on all `##` and `###` sections
+- Emoji status indicators (✅ ❌ ⏸️ 📋 ⚠️) instead of checkboxes
+- Friendly, welcoming tone guidelines
+- Folder organization by document type
+- Templates for standard documents and bug reports
 
 **Version Updates:**
 

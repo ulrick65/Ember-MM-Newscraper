@@ -2,9 +2,9 @@
 
 | Document Info | |
 |---------------|---|
-| **Version** | 1.1 |
+| **Version** | 2.1 |
 | **Created** | December 31, 2025 |
-| **Updated** | January 2, 2026 |
+| **Updated** | January 4, 2026 |
 | **Author** | Eric H. Anderson |
 | **Purpose** | Living backlog of deferred, planned, and potential improvements |
 
@@ -16,94 +16,113 @@
 
 This document tracks all future enhancement opportunities for Ember Media Manager. Items are organized by category with priority and effort estimates. This is a **living document** - items are added, updated, and moved to "Completed" as work progresses.
 
+### Backlog ID Format
+
+Items requiring detailed documentation use the format: `BL-XX-###`
+
+where `XX` is the category code and `###` is a sequential number.
+
+| Code | Section |
+|------|---------|
+| PE | Performance Enhancements |
+| CC | Code Cleanup |
+| UX | UI/UX Improvements |
+| FR | Feature Requests |
+| CQ | Code Quality |
+| KI | Known Issues |
+
 ---
 
 ## Table of Contents
 
-- [Performance Enhancements](#performance-enhancements)
-- [Code Cleanup](#code-cleanup)
-- [UI/UX Improvements](#uiux-improvements)
-- [Feature Requests](#feature-requests)
-- [Code Quality](#code-quality)
-- [Known Issues](#known-issues)
+- [Performance Enhancements (PE)](#performance-enhancements-pe)
+- [Code Cleanup (CC)](#code-cleanup-cc)
+- [UI/UX Improvements (UX)](#uiux-improvements-ux)
+- [Feature Requests (FR)](#feature-requests-fr)
+- [Code Quality (CQ)](#code-quality-cq)
+- [Known Issues (KI)](#known-issues-ki)
 - [Cancelled Items](#cancelled-items)
 - [Completed Items](#completed-items)
 
 ---
 
-## [↑](#table-of-contents) Performance Enhancements
+## [↑](#table-of-contents) Performance Enhancements (PE)
 
-| Item | Priority | Effort | Source | Notes |
-|------|----------|--------|--------|-------|
-| TMDB append_to_response optimization | Low | 4-8 hrs | Phase 1 | Already well-optimized; minimal ROI |
-| Batch Actor Inserts | Low | 2-3 hrs | Phase 2 | Minimal impact after indices (0.64ms each) |
-| Response Caching (scrapers) | Low | 2-4 hrs | Phase 2/4, PerformanceAnalysis | Only benefits repeat scrapes |
-| IMDB Episode Parallelization | Low | 4 hrs | Phase 4.4 | Multi-scraper mode already performant |
-| Producer-Consumer Pattern | Low | 8-16 hrs | Phase 3 | Only if save phase becomes bottleneck |
-| Configurable Concurrency Setting | Low | 2-3 hrs | Phase 3 | Default `Min(ProcessorCount, 4)` works well |
-| IMDB HTML Response Caching | Low | 2-4 hrs | PerformanceAnalysis 5.4 | Cache parsed HTML documents |
-| Parallel Scraper Execution | Medium | 4-6 hrs | PerformanceAnalysis 8 | Run TMDB+IMDB concurrent per movie |
-| Disk-based Image Cache | Low | 4-6 hrs | PerformanceAnalysis R4.3 | Reduces bandwidth on repeat scrapes |
-| Memory Pooling for Large Objects | Low | 4-8 hrs | PerformanceAnalysis 8 | Reduces GC pressure |
-
----
-
-## [↑](#table-of-contents) Code Cleanup
-
-| Item | Priority | Effort | Source | Notes |
-|------|----------|--------|--------|-------|
-| Remove NMT NFO Support | Medium | 2-4 hrs | ForkChangeLog | Legacy format, unused |
-| Remove Boxee NFO Support | Medium | 2-4 hrs | ForkChangeLog | Service discontinued 2015 |
-| Remove YAMJ NFO Support | Medium | 2-4 hrs | ForkChangeLog | Legacy format, unused |
-| Remove Kodi Addons Tab | Medium | 4-8 hrs | IntegratedAddonRemoval | Not used in newer Kodi |
-| Remove TV Tunes/Themes code | Low | 2-4 hrs | ForkChangeLog | Broken / Not needed |
-| Remove External Subtitle Download | Low | 2-4 hrs | ForkChangeLog | Broken / Not needed |
-| Remove commented code blocks | Low | 2-4 hrs | SolutionCleanupAnalysis | Multiple files identified |
-| Find/remove orphaned files | Low | 1-2 hrs | SolutionCleanupAnalysis | Script provided in doc |
-| Replace BinaryFormatter in CloneDeep | Medium | 4-6 hrs | NfoFileImprovements 3.1 | Deprecated, security vulnerabilities |
-| Fix fragile multi-episode regex | Low | 2-3 hrs | NfoFileImprovements 3.2 | Use XmlReader instead |
+| Item | Priority | Effort | Source | Notes | Details |
+|------|----------|--------|--------|-------|---------|
+| TMDB append_to_response optimization | Low | 4-8 hrs | Phase 1 | Already well-optimized; minimal ROI | |
+| Batch Actor Inserts | Low | 2-3 hrs | Phase 2 | Minimal impact after indices (0.64ms each) | |
+| Response Caching (scrapers) | Low | 2-4 hrs | Phase 2/4, PerformanceAnalysis | Only benefits repeat scrapes | |
+| IMDB Episode Parallelization | Low | 4 hrs | Phase 4.4 | Multi-scraper mode already performant | |
+| Producer-Consumer Pattern | Low | 8-16 hrs | Phase 3 | Only if save phase becomes bottleneck | |
+| Configurable Concurrency Setting | Low | 2-3 hrs | Phase 3 | Default `Min(ProcessorCount, 4)` works well | |
+| IMDB HTML Response Caching | Low | 2-4 hrs | PerformanceAnalysis 5.4 | Cache parsed HTML documents | |
+| Parallel Scraper Execution | Medium | 4-6 hrs | PerformanceAnalysis 8 | Run TMDB+IMDB concurrent per movie | |
+| Disk-based Image Cache | Low | 4-6 hrs | PerformanceAnalysis R4.3 | Reduces bandwidth on repeat scrapes | |
+| Memory Pooling for Large Objects | Low | 4-8 hrs | PerformanceAnalysis 8 | Reduces GC pressure | |
 
 ---
 
-## [↑](#table-of-contents) UI/UX Improvements
+## [↑](#table-of-contents) Code Cleanup (CC)
 
-| Item | Priority | Effort | Source | Notes |
-|------|----------|--------|--------|-------|
-| Progress Bar - Marquee mode | Low | 2-3 hrs | Phase 3 | Indeterminate progress during scrape |
-| Progress Bar - Two-phase (0-50%, 50-100%) | Medium | 3-4 hrs | Phase 3 | Better progress feedback |
-| Progress Bar - Dual bars | Low | 4-6 hrs | Phase 3 | Scrape + Save separate bars |
-
----
-
-## [↑](#table-of-contents) Feature Requests
-
-| Item | Priority | Effort | Source | Notes |
-|------|----------|--------|--------|-------|
-| Strategy pattern for NFO formats | Low | 8-12 hrs | NfoFileImprovements 4.1 | INfoWriter interface for extensibility |
-| Separate NFO reading/validation | Low | 6-10 hrs | NfoFileImprovements 4.2 | NFOValidator, NFOReader, NFONormalizer |
+| Item | Priority | Effort | Source | Notes | Details |
+|------|----------|--------|--------|-------|---------|
+| Remove NMT NFO Support | Medium | 2-4 hrs | ForkChangeLog | Legacy format, unused | |
+| Remove Boxee NFO Support | Medium | 2-4 hrs | ForkChangeLog | Service discontinued 2015 | |
+| Remove YAMJ NFO Support | Medium | 2-4 hrs | ForkChangeLog | Legacy format, unused | |
+| Remove Kodi Addons Tab | Medium | 4-8 hrs | IntegratedAddonRemoval | Not used in newer Kodi | |
+| Remove TV Tunes/Themes code | Low | 2-4 hrs | ForkChangeLog | Broken / Not needed | |
+| Remove External Subtitle Download | Low | 2-4 hrs | ForkChangeLog | Broken / Not needed | |
+| Remove commented code blocks | Low | 2-4 hrs | SolutionCleanupAnalysis | Multiple files identified | |
+| Find/remove orphaned files | Low | 1-2 hrs | SolutionCleanupAnalysis | Script provided in doc | |
+| Replace BinaryFormatter in CloneDeep | Medium | 4-6 hrs | NfoFileImprovements 3.1 | Deprecated, security vulnerabilities | |
+| Fix fragile multi-episode regex | Low | 2-3 hrs | NfoFileImprovements 3.2 | Use XmlReader instead | |
 
 ---
 
-## [↑](#table-of-contents) Code Quality
+## [↑](#table-of-contents) UI/UX Improvements (UX)
 
-| Item | Priority | Effort | Source | Notes |
-|------|----------|--------|--------|-------|
-| Add try-finally to MediaInfo handle cleanup | Low | 1 hr | MediaInfoMappingProcess | Ensure handles released |
-| Add FFmpeg version check on startup | Low | 1-2 hrs | FFmpegProcess | Display in About dialog |
-| Replace Application.DoEvents() anti-pattern | Medium | 2-4 hrs | PerformanceAnalysis 2.2 | clsScrapeIMDB.vb, clsScrapeTMDB.vb |
-| Force GC during long batch operations | Low | 1 hr | PerformanceAnalysis R6.2 | Every N items during batch scraping |
-| Specific exception handling in NFO Load | Low | 2-3 hrs | NfoFileImprovements 1.2 | Replace generic Exception catches |
-| Consistent date format handling | Low | 1-2 hrs | NfoFileImprovements 5.2 | Better invalid date handling |
+| Item | Priority | Effort | Source | Notes | Details |
+|------|----------|--------|--------|-------|---------|
+| Progress Bar - Marquee mode | Low | 2-3 hrs | Phase 3 | Indeterminate progress during scrape | |
+| Progress Bar - Two-phase (0-50%, 50-100%) | Medium | 3-4 hrs | Phase 3 | Better progress feedback | |
+| Progress Bar - Dual bars | Low | 4-6 hrs | Phase 3 | Scrape + Save separate bars | |
 
 ---
 
-## [↑](#table-of-contents) Known Issues
+## [↑](#table-of-contents) Feature Requests (FR)
+
+| Item | Priority | Effort | Source | Notes | Details |
+|------|----------|--------|--------|-------|---------|
+| Strategy pattern for NFO formats | Low | 8-12 hrs | NfoFileImprovements 4.1 | INfoWriter interface for extensibility | |
+| Separate NFO reading/validation | Low | 6-10 hrs | NfoFileImprovements 4.2 | NFOValidator, NFOReader, NFONormalizer | |
+
+---
+
+## [↑](#table-of-contents) Code Quality (CQ)
+
+| Item | Priority | Effort | Source | Notes | Details |
+|------|----------|--------|--------|-------|---------|
+| IMDB strPosterURL thread safety | **High** | 3-4 hrs | Jan 2, 2026 | Race condition with parallel scraping | [BL-CQ-001](backlog/BL-CQ-001-IMDB-ThreadSafety.md) |
+| Null check audit (.Count calls) | **High** | 2-3 hrs | Jan 2, 2026 | Multiple places call .Count without null check | [BL-CQ-002](backlog/BL-CQ-002-NullCheckAudit.md) |
+| Add try-finally to MediaInfo handle cleanup | Low | 1 hr | MediaInfoMappingProcess | Ensure handles released | |
+| Add FFmpeg version check on startup | Low | 1-2 hrs | FFmpegProcess | Display in About dialog | |
+| Replace Application.DoEvents() anti-pattern | Medium | 2-4 hrs | PerformanceAnalysis 2.2 | clsScrapeIMDB.vb, clsScrapeTMDB.vb | |
+| Force GC during long batch operations | Low | 1 hr | PerformanceAnalysis R6.2 | Every N items during batch scraping | |
+| Specific exception handling in NFO Load | Low | 2-3 hrs | NfoFileImprovements 1.2 | Replace generic Exception catches | |
+| Consistent date format handling | Low | 1-2 hrs | NfoFileImprovements 5.2 | Better invalid date handling | |
+| Reorganize the 'frmMain.vb' file | Low | 2-3 hrs | Eric | Organize the sections to group things better, like the "Friend", cmnu areas, etc | |
+
+
+---
+
+## [↑](#table-of-contents) Known Issues (KI)
 
 *Items that may need attention if problems are reported. Monitor during testing.*
 
-| Item | Priority | Source | Notes |
-|------|----------|--------|-------|
-| Parallel download race conditions in `SaveToFile` | Monitor | Phase 1 | Reverted `File.Exists` check that broke image editing; if race conditions occur during parallel scraping, implement fix at cache layer instead of in `SaveToFile` |
+| Item | Priority | Source | Notes | Details |
+|------|----------|--------|-------|---------|
+| Parallel download race conditions in `SaveToFile` | Monitor | Phase 1 | Reverted `File.Exists` check that broke image editing | |
 
 ---
 
@@ -122,17 +141,23 @@ This document tracks all future enhancement opportunities for Ember Media Manage
 
 | Item | Completed | Implementation |
 |------|-----------|----------------|
-| Legacy scraper addon removal (7 addons) | Dec 31, 2025 | [AddonRemovalPlan.md](AddonRemovalPlan.md) |
-| Performance Phase 1 - Infrastructure | Dec 29, 2025 | [PerformanceImprovements-Phase1.md](PerformanceImprovements-Phase1.md) |
-| Performance Phase 2 - TV Async | Dec 29, 2025 | [PerformanceImprovements-Phase2.md](PerformanceImprovements-Phase2.md) |
-| Performance Phase 2-2 - Parallel Movies | Dec 30, 2025 | [PerformanceImprovements-Phase2-2.md](PerformanceImprovements-Phase2-2.md) |
-| Performance Phase 3 - Parallel TV | Dec 31, 2025 | [PerformanceImprovements-Phase3.md](PerformanceImprovements-Phase3.md) |
-| Performance Phase 4 - IMDB & Tracking | Dec 31, 2025 | [PerformanceImprovements-Phase4.md](PerformanceImprovements-Phase4.md) |
-| Progress Bar - Status text updates | Dec 31, 2025 | Phase 3 Option 1 |
-| NFO XmlSerializer caching | Dec 26, 2025 | [NfoFileImprovements.md](NfoFileImprovements.md) 2.1 |
-| NFO empty catch block logging | Dec 26, 2025 | [NfoFileImprovements.md](NfoFileImprovements.md) 1.1 |
-| NFO line ending normalization | Dec 26, 2025 | [NfoFileImprovements.md](NfoFileImprovements.md) 5.1 |
+| Legacy scraper addon removal (7 addons) | December 31, 2025 | [AddonRemovalPlan.md](AddonRemovalPlan.md) |
+| Performance Phase 1 - Infrastructure | December 29, 2025 | [PerformanceImprovements-Phase1.md](PerformanceImprovements-Phase1.md) |
+| Performance Phase 2 - TV Async | December 29, 2025 | [PerformanceImprovements-Phase2.md](PerformanceImprovements-Phase2.md) |
+| Performance Phase 2-2 - Parallel Movies | December 30, 2025 | [PerformanceImprovements-Phase2-2.md](PerformanceImprovements-Phase2-2.md) |
+| Performance Phase 3 - Parallel TV | December 31, 2025 | [PerformanceImprovements-Phase3.md](PerformanceImprovements-Phase3.md) |
+| Performance Phase 4 - IMDB & Tracking | December 31, 2025 | [PerformanceImprovements-Phase4.md](PerformanceImprovements-Phase4.md) |
+| Progress Bar - Status text updates | December 31, 2025 | Phase 3 Option 1 |
+| NFO XmlSerializer caching | December 26, 2025 | [NfoFileImprovements.md](NfoFileImprovements.md) 2.1 |
+| NFO empty catch block logging | December 26, 2025 | [NfoFileImprovements.md](NfoFileImprovements.md) 1.1 |
+| NFO line ending normalization | December 26, 2025 | [NfoFileImprovements.md](NfoFileImprovements.md) 5.1 |
+| MoveGenres null check | January 2, 2026 | frmMain.vb - Added null/empty check before .Count |
+| Edit Movie Images Quick Access | January 4, 2026 | [BL-UX-001](backlog/BL-UX-001-EditImagesQuickAccess.md) |
+| Edit TV Images Quick Access | January 4, 2026 | [BL-UX-002](backlog/BL-UX-002-EditImagesQuickAccess-TVShow.md) |
+| TV Season images not saved after SingleScrape | January 4, 2026 | [BL-KI-001](backlog/BL-KI-001-TVSeasonImagesSaveIssue.md) |
+| Edit Season Images Quick Access | January 4, 2026 | [BL-UX-003](backlog/BL-UX-003-EditImagesQuickAccess-TVSeason.md) |
+| Edit Season dialog - most images not selectable | **High** | Jan 5, 2026 | Green plus icon missing on most images | [BL-KI-002](backlog/BL-KI-002-EditSeasonImageSelectionBug.md) |
 
 ---
 
-*Last Updated: January 2, 2026*
+*End of File*
