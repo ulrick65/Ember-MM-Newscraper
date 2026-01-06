@@ -83,6 +83,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.github\copilot-instructions.md = .github\copilot-instructions.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_Docs", "_Docs", "{8CBE1AD7-37F7-4964-AB3C-6F394B8FEBF9}"
+	ProjectSection(SolutionItems) = preProject
+		EmberMediaManager\docs\DocumentIndex.md = EmberMediaManager\docs\DocumentIndex.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

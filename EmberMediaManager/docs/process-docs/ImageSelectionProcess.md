@@ -1,10 +1,12 @@
 ﻿# Image Selection Process in Ember Media Manager
 
-> **Document Version:** 1.0 (Created January 4, 2026)
+> **Document Version:** 1.1 (Updated January 5, 2026)
 > **Related Documentation:** 
+> - [ImageProcessingReference.md](ImageProcessingReference.md) — Detailed technical reference
 > - [BL-KI-002-EditSeasonImageSelectionBug.md](../improvements-docs/backlog/BL-KI-002-EditSeasonImageSelectionBug.md)
+> - [BL-UX-004-FanartsForLandscape.md](../improvements-docs/backlog/BL-UX-004-FanartsForLandscape.md)
 
-##### [← Return to Document Index](DocumentIndex.md)
+##### [← Return to Document Index](../DocumentIndex.md)
 
 ---
 
@@ -29,12 +31,17 @@ The Image Selection system in Ember Media Manager handles the discovery, downloa
     User selects images (or auto-selection via preferences)
             │
             ▼
-    Save_*() downloads full-size images and writes to disk
+    DoneAndClose() downloads full-size images (including season images)
+            │
+            ▼
+    Save_*() writes images to disk
 
 **Key Insight:** Image URLs are collected during scraping, but actual image downloads happen in two phases:
 
 1. **Thumbnail downloads** - During `dlgImgSelect` for preview display
-2. **Full-size downloads** - During `Save_Movie()` / `Save_TVShow()` for persistence
+2. **Full-size downloads** - During `DoneAndClose()` for all selected images
+
+**For detailed technical specifications, see:** [ImageProcessingReference.md](ImageProcessingReference.md)
 
 ---
 
@@ -133,9 +140,13 @@ The dialog consists of three main areas:
     │  or          │  │ Img│ │ Img│ │ Img│ │ Img│ │ Img│ │ Img│      │
     │  Extrafanarts│  │  1 │ │  2 │ │  3 │ │  4 │ │  5 │ │  6 │      │
     │              │  └────┘ └────┘ └────┘ └────┘ └────┘ └────┘      │
-    │              │                                                  │
-    │              │  Grid of available images for selected type      │
-    │              │  Green plus icon = selectable                    │
+    │  [Buttons]   │                                                  │
+    │  Season Poster│  Grid of available images for selected type      │
+    │  Season Fanart│  Green plus icon = selectable                    │
+    │  Season      │                                                  │
+    │  Landscape   │                                                  │
+    │  Include     │                                                  │
+    │  Fanarts     │                                                  │
     └──────────────┴──────────────────────────────────────────────────┘
 
 ### [↑](#table-of-contents) 2.2 Key UI Components
@@ -147,6 +158,7 @@ The dialog consists of three main areas:
 | `pnlImgSelectMain` | Grid of available images for the selected type |
 | `pbListImage_Select` | Green plus icon indicating image can be selected |
 | `pnlLoading` | Loading indicator while images download |
+| `btnIncludeFanarts` | Adds fanart images to landscape selection grid |
 
 ### [↑](#table-of-contents) 2.3 Control Arrays
 
@@ -174,6 +186,23 @@ The dialog uses dynamic control arrays for flexibility:
     Private currListImage As iTag          ' Currently highlighted list image
     Private currListImageSelectedImageType As Enums.ModifierType  ' Tracks displayed list type
     Private currListImageSelectedSeason As Integer                ' Tracks displayed season
+    Private currSubImageSelectedType As Enums.ModifierType        ' Type of sub-image view
+    Private _fanartsIncludedForContext As String                  ' Tracks Include Fanarts button state
+
+### [↑](#table-of-contents) 2.5 Left Panel Button Handling
+
+The left panel buttons (`btnSeasonPoster`, `btnSeasonFanart`, `btnSeasonLandscape`, etc.) are handled by `SubImageTypeChanged()`. This method:
+
+1. Clears and rebuilds the sub-image list
+2. Deselects top images
+3. Manages the Include Fanarts button visibility
+
+**Important:** The `SeasonLandscape` type requires special handling because it's the only season type that shows the Include Fanarts button:
+
+    ElseIf currSubImageSelectedType = Enums.ModifierType.SeasonLandscape Then
+        ' Show Include Fanarts button for Season Landscape
+        btnIncludeFanarts.Visible = True
+        btnIncludeFanarts.Enabled = LoadedMainFanart AndAlso Not fanartsAlreadyIncluded
 
 ---
 
@@ -213,9 +242,13 @@ Image downloading occurs in two distinct phases:
     DoneAndClose()
         │
         ▼
-    For each image type:
+    For each main image type:
         Result.ImagesContainer.*.LoadAndCache(tContentType, True)
-        ' Downloads full-size image and caches it
+        │
+        ▼
+    For each season (TV content only):
+        Result.Seasons.*.LoadAndCache(tContentType, True)
+        ' Downloads Banner, Fanart, Landscape, Poster for each season
 
 ### [↑](#table-of-contents) 3.2 Background Worker Structure
 
@@ -249,6 +282,22 @@ This method downloads thumbnails for all image types in sequence:
     15. Episode Posters
 
 After each category downloads, progress is reported to update the UI.
+
+### [↑](#table-of-contents) 3.4 Season Images in DoneAndClose
+
+**Important:** Season images are stored in `Result.Seasons` collection, not `Result.ImagesContainer`. The `DoneAndClose()` method must download these separately:
+
+    ' Download season images (for TV content type with seasons)
+    If tContentType = Enums.ContentType.TV Then
+        For Each tSeason As MediaContainers.EpisodeOrSeasonImagesContainer In Result.Seasons
+            tSeason.Banner.LoadAndCache(tContentType, True)
+            tSeason.Fanart.LoadAndCache(tContentType, True)
+            tSeason.Landscape.LoadAndCache(tContentType, True)
+            tSeason.Poster.LoadAndCache(tContentType, True)
+        Next
+    End If
+
+Without this loop, season images (including fanarts selected as landscapes) would only have thumbnails.
 
 ---
 
@@ -310,6 +359,73 @@ Track which image categories have finished downloading:
     ' ... etc
 
 These flags are used by `CreateListImages()` to determine when to populate the UI.
+
+### [↑](#table-of-contents) 4.4 Include Fanarts Feature
+
+The "Include Fanarts" button allows users to add Fanart images as options when selecting Landscape images. This is useful because:
+
+1. Scrapers return few dedicated Landscape images
+2. Fanart images have the same aspect ratio as Landscapes
+3. Users may prefer a fanart as their landscape image
+
+**Supported Landscape Types:**
+- `MainLandscape` (Movies, TV Shows)
+- `AllSeasonsLandscape` (TV Shows)
+- `SeasonLandscape` (TV Shows, TV Seasons)
+
+**Context Tracking:** The `_fanartsIncludedForContext` field tracks which landscape type + season has had fanarts added. This allows the button to re-enable when switching to a different landscape context.
+
+**For implementation details, see:** [BL-UX-004-FanartsForLandscape.md](../improvements-docs/backlog/BL-UX-004-FanartsForLandscape.md)
+
+---
+
+## [↑](#table-of-contents) Part 4.5: Image Type Filtering in FillListImages
+
+The `FillListImages()` method controls which images appear in the main selection grid based on the selected `ModifierType`. Each image type has a corresponding case that iterates over the appropriate list from `tSearchResultsContainer`.
+
+**Basic Pattern:**
+
+    Case Enums.ModifierType.MainLandscape
+        iCount = 0
+        For Each tImage As MediaContainers.Image In tSearchResultsContainer.MainLandscapes
+            AddListImage(tImage, iCount, Enums.ModifierType.MainLandscape)
+            iCount += 1
+        Next
+
+**Fallback Pattern (used for Seasons):**
+
+Some image types include fallback images from related types. For example, `SeasonFanart` also shows `MainFanarts`:
+
+    Case Enums.ModifierType.SeasonFanart
+        Dim iSeason As Integer = tTag.iSeason
+        iCount = 0
+        ' Primary: Season-specific fanarts
+        For Each tImage In tSearchResultsContainer.SeasonFanarts.Where(Function(f) f.Season = iSeason)
+            AddListImage(tImage, iCount, Enums.ModifierType.SeasonFanart)
+            iCount += 1
+        Next
+        ' Fallback: Main fanarts (can be used as season fanart)
+        For Each tImage In tSearchResultsContainer.MainFanarts
+            AddListImage(tImage, iCount, Enums.ModifierType.SeasonFanart, iSeason)
+            iCount += 1
+        Next
+
+**Current Fallback Mappings:**
+
+| Image Type | Primary Source | Fallback Source | On-Demand Source |
+|------------|----------------|-----------------|------------------|
+| `SeasonFanart` | `SeasonFanarts` | `MainFanarts` | - |
+| `SeasonBanner` | `SeasonBanners` | (none) | - |
+| `SeasonLandscape` | `SeasonLandscapes` | (none) | `MainFanarts` via Include Fanarts button |
+| `SeasonPoster` | `SeasonPosters` | (none) | - |
+| `AllSeasonsFanart` | `SeasonFanarts (season=-1)` | `MainFanarts` | - |
+| `AllSeasonsBanner` | `SeasonBanners (season=-1)` | `MainBanners` | - |
+| `AllSeasonsLandscape` | `SeasonLandscapes (season=-1)` | `MainLandscapes` | `MainFanarts` via Include Fanarts button |
+| `AllSeasonsPoster` | `SeasonPosters (season=-1)` | `MainPosters` | - |
+| `EpisodeFanart` | `EpisodeFanarts` | `MainFanarts` | - |
+| `MainLandscape` | `MainLandscapes` | (none) | `MainFanarts` via Include Fanarts button |
+
+**Note:** The `CreateListImages()` method checks `Loaded*` flags before calling `FillListImages()` to ensure images are downloaded before display.
 
 ---
 
@@ -399,6 +515,8 @@ Holds the user's selected images:
         Public Episodes As New List(Of EpisodeOrSeasonImagesContainer)
     End Class
 
+**Important:** Season images are stored in the `Seasons` collection, not `ImagesContainer`. This is critical for proper download and save operations.
+
 ### [↑](#table-of-contents) 6.3 ImagesContainer
 
 Holds actual image data for a single item:
@@ -482,9 +600,12 @@ When user clicks an image in `dlgImgSelect`:
             Case Enums.ModifierType.MainPoster
                 Result.ImagesContainer.Poster = tTag.Image
                 RefreshTopImage(tTag)
-            Case Enums.ModifierType.SeasonFanart
-                If tContentType = Enums.ContentType.TVSeason Then
-                    Result.ImagesContainer.Fanart = tTag.Image
+            Case Enums.ModifierType.SeasonLandscape
+                If tContentType = Enums.ContentType.TV Then
+                    Result.Seasons.FirstOrDefault(Function(s) s.Season = tTag.iSeason).Landscape = tTag.Image
+                    RefreshSubImage(tTag)
+                ElseIf tContentType = Enums.ContentType.TVSeason Then
+                    Result.ImagesContainer.Landscape = tTag.Image
                     RefreshTopImage(tTag)
                 End If
             ' ... etc
@@ -500,13 +621,16 @@ When user clicks an image in `dlgImgSelect`:
     DoneAndClose() [dlgImgSelect.vb]
         │
         ▼
-    LoadAndCache() for each selected image (downloads full-size)
+    LoadAndCache() for each main image (downloads full-size)
+        │
+        ▼
+    LoadAndCache() for each season image (TV content only)
         │
         ▼
     DialogResult = DialogResult.OK
         │
         ▼
-    Caller receives Result.ImagesContainer
+    Caller receives Result (PreferredImagesContainer)
         │
         ▼
     Save_Movie() / Save_TVShow() [clsAPIDatabase.vb]
@@ -514,7 +638,39 @@ When user clicks an image in `dlgImgSelect`:
         ▼
     SaveAllImages() [clsAPIMediaContainers.vb]
 
-### [↑](#table-of-contents) 8.2 SaveAllImages Method
+### [↑](#table-of-contents) 8.2 DoneAndClose Method
+
+The `DoneAndClose()` method downloads full-size images before returning:
+
+    Private Sub DoneAndClose()
+        ' ... disable UI, cancel workers ...
+        
+        ' Download main images
+        Result.ImagesContainer.Banner.LoadAndCache(tContentType, True)
+        Result.ImagesContainer.Fanart.LoadAndCache(tContentType, True)
+        Result.ImagesContainer.Landscape.LoadAndCache(tContentType, True)
+        Result.ImagesContainer.Poster.LoadAndCache(tContentType, True)
+        ' ... other main types ...
+        
+        ' Download extrafanarts/extrathumbs
+        For Each img In Result.ImagesContainer.Extrafanarts
+            img.LoadAndCache(tContentType, True)
+        Next
+        
+        ' Download season images (TV content only)
+        If tContentType = Enums.ContentType.TV Then
+            For Each tSeason In Result.Seasons
+                tSeason.Banner.LoadAndCache(tContentType, True)
+                tSeason.Fanart.LoadAndCache(tContentType, True)
+                tSeason.Landscape.LoadAndCache(tContentType, True)
+                tSeason.Poster.LoadAndCache(tContentType, True)
+            Next
+        End If
+        
+        DialogResult = DialogResult.OK
+    End Sub
+
+### [↑](#table-of-contents) 8.3 SaveAllImages Method
 
 **Location:** `clsAPIMediaContainers.vb`
 
@@ -530,7 +686,7 @@ When user clicks an image in `dlgImgSelect`:
         ' ... extrafanarts, extrathumbs
     End Sub
 
-### [↑](#table-of-contents) 8.3 Async Save (Performance Optimized)
+### [↑](#table-of-contents) 8.4 Async Save (Performance Optimized)
 
 **Location:** `clsAPIMediaContainers.vb`
 
@@ -579,12 +735,12 @@ When editing a single season:
 
 ### [↑](#table-of-contents) 9.3 TV vs TVShow vs TVSeason
 
-| Content Type | Top Images | Sub Images | Notes |
-|--------------|------------|------------|-------|
-| `TV` | Show images | All seasons | Full scrape with seasons |
-| `TVShow` | Show images | None | Show only, no seasons |
-| `TVSeason` | Season images | None | Single season |
-| `TVEpisode` | Episode images | None | Single episode |
+| Content Type | Top Images | Sub Images | Season Downloads | Notes |
+|--------------|------------|------------|------------------|-------|
+| `TV` | Show images | All seasons | Yes | Full scrape with seasons |
+| `TVShow` | Show images | Extrafanarts | No | Show only, no seasons |
+| `TVSeason` | Season images | None | No | Single season |
+| `TVEpisode` | Episode images | None | No | Single episode |
 
 ---
 
@@ -606,6 +762,20 @@ When editing a single season:
 
 **Related Documentation:** [BL-KI-002-EditSeasonImageSelectionBug.md](../improvements-docs/backlog/BL-KI-002-EditSeasonImageSelectionBug.md)
 
+### [↑](#table-of-contents) 10.2 BL-UX-004: Fanarts for Landscape Selection
+
+**Status:** 🔄 In Testing (January 5, 2026)
+
+**Feature:** Added "Include Fanarts" button for Landscape image selection.
+
+**Key Implementation Details:**
+- Button appears only for Landscape image types
+- Creates deep copies of fanart images to prevent cache corruption
+- Tracks context to allow adding fanarts to multiple landscape types
+- Season images properly downloaded in `DoneAndClose()`
+
+**Related Documentation:** [BL-UX-004-FanartsForLandscape.md](../improvements-docs/backlog/BL-UX-004-FanartsForLandscape.md)
+
 ---
 
 ## [↑](#table-of-contents) Part 11: Debugging Guide
@@ -620,16 +790,22 @@ When editing a single season:
 | 4 | `dlgImgSelect.vb` | `CreateListImages()` | UI population |
 | 5 | `dlgImgSelect.vb` | `SetImage()` | Image selection |
 | 6 | `dlgImgSelect.vb` | `DoneAndClose()` | Final save |
+| 7 | `dlgImgSelect.vb` | `SubImageTypeChanged()` | Left panel button handling |
+| 8 | `dlgImgSelect.vb` | `btnIncludeFanarts_Click()` | Include Fanarts feature |
 
 ### [↑](#table-of-contents) 11.2 Debug Variables to Watch
 
 | Variable | Purpose |
 |----------|---------|
 | `currTopImage.ImageType` | Currently selected image type |
+| `currSubImage.ImageType` | Currently selected sub-image type |
 | `currListImageSelectedImageType` | What type is displayed in list |
+| `currSubImageSelectedType` | Type of sub-image view (e.g., SeasonLandscape) |
 | `tContentType` | Content being edited |
 | `DoSeasonFanart` | Whether season fanart is enabled |
 | `LoadedSeasonFanart` | Whether season fanarts have downloaded |
+| `LoadedMainFanart` | Whether main fanarts have downloaded |
+| `_fanartsIncludedForContext` | Which landscape context has fanarts |
 | `pnlImgSelectMain.Controls.Count` | Number of images displayed |
 
 ### [↑](#table-of-contents) 11.3 Common Issues
@@ -641,6 +817,8 @@ When editing a single season:
 | Green plus missing | `ModifierType` mismatch | `tTag.ImageType` vs `currTopImage.ImageType` |
 | Dialog hangs | Too many controls | Control count in `AddListImage` |
 | Wrong images shown | Season filtering | `DoOnlySeason` value |
+| Include Fanarts stays disabled | Context already used | `_fanartsIncludedForContext` |
+| Season images not saved | Missing download loop | `DoneAndClose()` season loop |
 
 ### [↑](#table-of-contents) 11.4 Logging
 
@@ -648,6 +826,8 @@ Add debug statements to trace flow:
 
     Debug.WriteLine($"CreateListImages: Type={tTag.ImageType}, Season={tTag.iSeason}")
     Debug.WriteLine($"Progress: {e.UserState}, currTop={currTopImage.ImageType}")
+    Debug.WriteLine($"SubImageTypeChanged: {tModifierType}")
+    Debug.WriteLine($"Include Fanarts context: {_fanartsIncludedForContext}")
 
 ---
 
@@ -657,10 +837,11 @@ The Image Selection system in Ember Media Manager:
 
 1. **Entry Points:** Edit dialogs, bulk scraping, quick access (double-click)
 2. **Dialog:** `dlgImgSelect.vb` with three-panel layout
-3. **Download Phases:** Thumbnails (preview) then full-size (save)
+3. **Download Phases:** Thumbnails (preview) then full-size (save, including seasons)
 4. **Progress Reporting:** Must avoid duplicate reports to prevent UI issues
 5. **Content Types:** Different handling for Movie, TVShow, TVSeason, TVEpisode
-6. **Saving:** `SaveAllImages()` or `SaveAllImagesAsync()` for parallel performance
+6. **Include Fanarts:** Button to add fanarts as landscape options
+7. **Saving:** `SaveAllImages()` or `SaveAllImagesAsync()` for parallel performance
 
 **Key Code Locations:**
 
@@ -671,8 +852,16 @@ The Image Selection system in Ember Media Manager:
 | Progress update | `dlgImgSelect.vb` | `bwImgDownload_ProgressChanged` |
 | Build UI | `dlgImgSelect.vb` | `CreateListImages()` |
 | Image selection | `dlgImgSelect.vb` | `SetImage()` |
+| Include Fanarts | `dlgImgSelect.vb` | `btnIncludeFanarts_Click()` |
+| Left panel buttons | `dlgImgSelect.vb` | `SubImageTypeChanged()` |
+| Save full-size | `dlgImgSelect.vb` | `DoneAndClose()` |
 | Save to disk | `clsAPIMediaContainers.vb` | `SaveAllImages()` |
+
+**Related Documentation:**
+- [ImageProcessingReference.md](ImageProcessingReference.md) — Detailed technical reference
+- [BL-UX-004-FanartsForLandscape.md](../improvements-docs/backlog/BL-UX-004-FanartsForLandscape.md) — Include Fanarts feature
 
 ---
 
-*End of document*
+*Document Version: 1.1*
+*Last Updated: January 5, 2026*

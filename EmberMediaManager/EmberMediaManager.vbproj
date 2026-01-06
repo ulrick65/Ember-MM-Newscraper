@@ -532,9 +532,12 @@
     <None Include="docs\improvements-docs\backlog\BL-CQ-002-NullCheckAudit.md" />
     <None Include="docs\improvements-docs\backlog\BL-KI-001-TVSeasonImagesSaveIssue.md" />
     <None Include="docs\improvements-docs\backlog\BL-KI-002-EditSeasonImageSelectionBug.md" />
+    <None Include="docs\improvements-docs\backlog\BL-KI-003-EditImagesAllSeasonsCrash.md" />
+    <None Include="docs\improvements-docs\backlog\BL-UX-005-ImageDialogSorting.md" />
     <None Include="docs\improvements-docs\backlog\BL-UX-001-EditImagesQuickAccess.md" />
     <None Include="docs\improvements-docs\backlog\BL-UX-002-EditImagesQuickAccess-TVShow.md" />
     <None Include="docs\improvements-docs\backlog\BL-UX-003-EditImagesQuickAccess-TVSeason.md" />
+    <None Include="docs\improvements-docs\backlog\BL-UX-004-FanartsForLandscape.md" />
     <None Include="docs\improvements-docs\FutureEnhancements.md" />
     <None Include="docs\improvements-docs\AddonRemovalPlan.md" />
     <None Include="docs\analysis-docs\IMDBScraperAnalysis.md" />
@@ -553,6 +556,7 @@
     <None Include="docs\process-docs\CountryMappingProcess.md" />
     <None Include="docs\ForkChangeLog.md" />
     <None Include="docs\improvements-docs\NfoFileImprovements.md" />
+    <None Include="docs\process-docs\ImageProcessingReference.md" />
     <None Include="docs\process-docs\ImageSelectionProcess.md" />
     <None Include="docs\process-docs\LanguageProcess.md" />
     <None Include="docs\process-docs\NfoFileProcess .md" />
@@ -5385,6 +5389,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Bin\" />
+    <Folder Include="docs\improvements-docs\images\" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">

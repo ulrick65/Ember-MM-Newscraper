@@ -3660,7 +3660,6 @@ Public Class frmMain
         RunFilter_Shows()
     End Sub
 
-
     Private Sub SetFilterYear_Movies()
         If _
             Not String.IsNullOrEmpty(cbFilterYearFrom_Movies.Text) AndAlso
@@ -5179,7 +5178,13 @@ Public Class frmMain
         Try
             Cursor = Cursors.WaitCursor
 
-            ' Validate selection
+            ' Validate selection - only works with a single movie selected
+            If dgvMovies.SelectedRows.Count <> 1 Then
+                Cursor = Cursors.Default
+                Exit Sub
+            End If
+
+            ' Validate selection - o
             If currMovie Is Nothing OrElse currMovie.ID = -1 Then
                 Cursor = Cursors.Default
                 Exit Sub
@@ -5279,12 +5284,26 @@ Public Class frmMain
     ''' Opens the image selection dialog for the selected TV show without full edit dialog.
     ''' Scrapes fresh images from configured sources and allows direct image selection.
     ''' </summary>
+    ''' <param name="sender">The menu item that raised the event.</param>
+    ''' <param name="e">Event arguments.</param>
+    ''' <remarks>
+    ''' This method provides quick access to image editing for TV shows. It:
+    ''' 1. Loads the full TV show data including seasons from the database
+    ''' 2. Sets up ScrapeModifiers with withSeasons=True to enable full TV mode in dlgImgSelect
+    ''' 3. Scrapes images for both show-level and season-level image types
+    ''' 4. Opens dlgImgSelect in TV mode (with season buttons visible)
+    ''' 5. Saves selected images to both the show and individual seasons
+    ''' 
+    ''' The key difference from a show-only edit is setting .withSeasons = True in ScrapeModifiers,
+    ''' which causes dlgImgSelect to use ContentType.TV instead of ContentType.TVShow.
+    ''' See ImageProcessingNotes.md for detailed documentation of the content type system.
+    ''' </remarks>
     Private Sub cmnuShowEditImages_Click(ByVal sender As Object, ByVal e As EventArgs) _
-        Handles cmnuShowEditImages.Click
+            Handles cmnuShowEditImages.Click
         Try
             Cursor = Cursors.WaitCursor
 
-            ' Validate selection
+            ' Validate selection - only works with single show selected
             If dgvTVShows.SelectedRows.Count <> 1 Then
                 Cursor = Cursors.Default
                 Exit Sub
@@ -5293,14 +5312,15 @@ Public Class frmMain
             Dim indX As Integer = dgvTVShows.SelectedRows(0).Index
             Dim ID As Long = Convert.ToInt64(dgvTVShows.Item("idShow", indX).Value)
 
-            ' Load full TV show data from database
+            ' Load full TV show data from database including seasons
+            ' Second parameter (True) loads seasons, third parameter (False) skips episodes
             Dim tmpDBElement As Database.DBElement = Master.DB.Load_TVShow(ID, True, False)
             If tmpDBElement Is Nothing Then
                 Cursor = Cursors.Default
                 Exit Sub
             End If
 
-            ' Check if show is online
+            ' Check if show is online (files accessible)
             If Not tmpDBElement.IsOnline AndAlso Not FileUtils.Common.CheckOnlineStatus_TVShow(tmpDBElement, True) Then
                 Cursor = Cursors.Default
                 Exit Sub
@@ -5308,53 +5328,84 @@ Public Class frmMain
 
             ' Check if show has required IDs for scraping
             If Not tmpDBElement.TVShow.UniqueIDs.IMDbIdSpecified AndAlso
-           Not tmpDBElement.TVShow.UniqueIDs.TMDbIdSpecified AndAlso
-           Not tmpDBElement.TVShow.UniqueIDs.TVDbIdSpecified Then
+               Not tmpDBElement.TVShow.UniqueIDs.TMDbIdSpecified Then
                 Cursor = Cursors.Default
-                MessageBox.Show("This TV show has no IMDB, TMDB, or TVDB ID. Please scrape the show first to retrieve metadata before editing images.",
-                            "Unable to Search for Images", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                MessageBox.Show("This tvshow has no IMDB or TMDB ID. Please scrape the tvshow first to retrieve metadata before editing images.",
+                                "Unable to Search for Images", MessageBoxButtons.OK, MessageBoxIcon.Information)
                 Exit Sub
             End If
 
-            ' Set up scrape modifiers for ALL image types
+            ' Set up scrape modifiers for ALL image types (show and season level)
+            ' Setting withSeasons = True is CRITICAL - this causes dlgImgSelect to use
+            ' ContentType.TV instead of ContentType.TVShow, enabling the season UI
             Dim nScrapeModifiers As New Structures.ScrapeModifiers With {
-            .MainBanner = Master.eSettings.TVShowBannerAnyEnabled,
-            .MainCharacterArt = Master.eSettings.TVShowCharacterArtAnyEnabled,
-            .MainClearArt = Master.eSettings.TVShowClearArtAnyEnabled,
-            .MainClearLogo = Master.eSettings.TVShowClearLogoAnyEnabled,
-            .MainExtrafanarts = Master.eSettings.TVShowExtrafanartsAnyEnabled,
-            .MainFanart = Master.eSettings.TVShowFanartAnyEnabled,
-            .MainKeyart = Master.eSettings.TVShowKeyartAnyEnabled,
-            .MainLandscape = Master.eSettings.TVShowLandscapeAnyEnabled,
-            .MainPoster = Master.eSettings.TVShowPosterAnyEnabled
-        }
+                    .MainBanner = Master.eSettings.TVShowBannerAnyEnabled,
+                    .MainCharacterArt = Master.eSettings.TVShowCharacterArtAnyEnabled,
+                    .MainClearArt = Master.eSettings.TVShowClearArtAnyEnabled,
+                    .MainClearLogo = Master.eSettings.TVShowClearLogoAnyEnabled,
+                    .MainExtrafanarts = Master.eSettings.TVShowExtrafanartsAnyEnabled,
+                    .MainFanart = Master.eSettings.TVShowFanartAnyEnabled,
+                    .MainKeyart = Master.eSettings.TVShowKeyartAnyEnabled,
+                    .MainLandscape = Master.eSettings.TVShowLandscapeAnyEnabled,
+                    .MainPoster = Master.eSettings.TVShowPosterAnyEnabled,
+                    .AllSeasonsBanner = Master.eSettings.TVAllSeasonsBannerAnyEnabled,
+                    .AllSeasonsFanart = Master.eSettings.TVAllSeasonsFanartAnyEnabled,
+                    .AllSeasonsLandscape = Master.eSettings.TVAllSeasonsLandscapeAnyEnabled,
+                    .AllSeasonsPoster = Master.eSettings.TVAllSeasonsPosterAnyEnabled,
+                    .SeasonBanner = Master.eSettings.TVSeasonBannerAnyEnabled,
+                    .SeasonFanart = Master.eSettings.TVSeasonFanartAnyEnabled,
+                    .SeasonLandscape = Master.eSettings.TVSeasonLandscapeAnyEnabled,
+                    .SeasonPoster = Master.eSettings.TVSeasonPosterAnyEnabled,
+                    .withSeasons = True
+                    }
 
             ' Scrape images from configured sources
             Dim nSearchResultsContainer As New MediaContainers.SearchResultsContainer
             If Not ModulesManager.Instance.ScrapeImage_TV(tmpDBElement, nSearchResultsContainer, nScrapeModifiers, True) Then
 
-                ' Check if any images were found
+                ' Check if any images were found (show or season level)
                 Dim bImagesFound As Boolean = nSearchResultsContainer.MainBanners.Count > 0 OrElse
-                                          nSearchResultsContainer.MainCharacterArts.Count > 0 OrElse
-                                          nSearchResultsContainer.MainClearArts.Count > 0 OrElse
-                                          nSearchResultsContainer.MainClearLogos.Count > 0 OrElse
-                                          nSearchResultsContainer.MainFanarts.Count > 0 OrElse
-                                          nSearchResultsContainer.MainKeyarts.Count > 0 OrElse
-                                          nSearchResultsContainer.MainLandscapes.Count > 0 OrElse
-                                          nSearchResultsContainer.MainPosters.Count > 0
+                                              nSearchResultsContainer.MainCharacterArts.Count > 0 OrElse
+                                              nSearchResultsContainer.MainClearArts.Count > 0 OrElse
+                                              nSearchResultsContainer.MainClearLogos.Count > 0 OrElse
+                                              nSearchResultsContainer.MainFanarts.Count > 0 OrElse
+                                              nSearchResultsContainer.MainKeyarts.Count > 0 OrElse
+                                              nSearchResultsContainer.MainLandscapes.Count > 0 OrElse
+                                              nSearchResultsContainer.MainPosters.Count > 0 OrElse
+                                              nSearchResultsContainer.SeasonBanners.Count > 0 OrElse
+                                              nSearchResultsContainer.SeasonFanarts.Count > 0 OrElse
+                                              nSearchResultsContainer.SeasonLandscapes.Count > 0 OrElse
+                                              nSearchResultsContainer.SeasonPosters.Count > 0
 
                 If bImagesFound Then
                     ' Open the image selection dialog
                     Using dlgImgS As New dlgImgSelect
                         If dlgImgS.ShowDialog(tmpDBElement, nSearchResultsContainer, nScrapeModifiers) = DialogResult.OK Then
-                            ' Apply selected images back to the TV show
+                            ' Apply selected show-level images back to the TV show
                             tmpDBElement.ImagesContainer = dlgImgS.Result.ImagesContainer
 
-                            ' Save to database (batchMode:=False, toNFO:=False, toDisk:=True, doSync:=False, forceFileCleanup:=False)
+                            ' Apply selected season-level images back to individual seasons
+                            For Each seasonResult In dlgImgS.Result.Seasons
+                                Dim dbSeason = tmpDBElement.Seasons.FirstOrDefault(
+                                    Function(s) s.TVSeason.Season = seasonResult.Season)
+                                If dbSeason IsNot Nothing Then
+                                    dbSeason.ImagesContainer.Banner = seasonResult.Banner
+                                    dbSeason.ImagesContainer.Fanart = seasonResult.Fanart
+                                    dbSeason.ImagesContainer.Landscape = seasonResult.Landscape
+                                    dbSeason.ImagesContainer.Poster = seasonResult.Poster
+                                End If
+                            Next
+
+                            ' Save to database
                             Master.DB.Save_TVShow(tmpDBElement, False, False, True, False)
 
-                            ' Save images to disk (images only, no NFO)
+                            ' Save show-level images to disk
                             tmpDBElement.ImagesContainer.SaveAllImages(tmpDBElement, False)
+
+                            ' Save season-level images to disk
+                            For Each dbSeason In tmpDBElement.Seasons
+                                dbSeason.ImagesContainer.SaveAllImages(dbSeason, False)
+                            Next
 
                             ' Refresh the display
                             RefreshRow_TVShow(tmpDBElement.ID)
@@ -5363,7 +5414,7 @@ Public Class frmMain
                     End Using
                 Else
                     MessageBox.Show(Master.eLang.GetString(970, "No Fanarts found"),
-                                String.Empty, MessageBoxButtons.OK, MessageBoxIcon.Information)
+                                    String.Empty, MessageBoxButtons.OK, MessageBoxIcon.Information)
                 End If
             End If
 
@@ -6622,7 +6673,6 @@ Public Class frmMain
             Cursor = Cursors.Default
         End Try
     End Sub
-
 
     Private Sub cmnuSeasonOpenFolder_Click(ByVal sender As Object, ByVal e As EventArgs) _
         Handles cmnuSeasonOpenFolder.Click

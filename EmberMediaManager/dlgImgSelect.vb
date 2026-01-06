@@ -29,6 +29,7 @@ Public Class dlgImgSelect
 
     Friend WithEvents bwImgDefaults As New System.ComponentModel.BackgroundWorker
     Friend WithEvents bwImgDownload As New System.ComponentModel.BackgroundWorker
+    Friend WithEvents btnIncludeFanarts As New Button
 
     Private _cancellationTokenSource As Threading.CancellationTokenSource
     Public Delegate Sub LoadImage(ByVal sDescription As String, ByVal iIndex As Integer, ByVal isChecked As Boolean, poster As MediaContainers.Image, ByVal text As String)
@@ -157,6 +158,7 @@ Public Class dlgImgSelect
     Private currListImage As New iTag
     Private currListImageSelectedSeason As Integer = -2
     Private currListImageSelectedImageType As Enums.ModifierType
+    Private _fanartsIncludedForContext As String = String.Empty
     Private currSubImage As New iTag
     Private currSubImageSelectedType As Enums.ModifierType
     Private currTopImage As New iTag
@@ -595,6 +597,90 @@ Public Class dlgImgSelect
 
     Private Sub btnSeasonPoster_Click(sender As Object, e As EventArgs) Handles btnSeasonPoster.Click
         SubImageTypeChanged(Enums.ModifierType.SeasonPoster)
+    End Sub
+
+    ''' <summary>
+    ''' Handles the Include Fanarts button click event to add fanart images as selectable options for Landscape image types.
+    ''' </summary>
+    ''' <param name="sender">The button that raised the event.</param>
+    ''' <param name="e">Event arguments.</param>
+    ''' <remarks>
+    ''' This method creates deep copies of all MainFanart images and adds them to the current Landscape image list.
+    ''' Deep copies are created with new ImageOriginal and ImageThumb instances to prevent corruption when
+    ''' LoadAndCache is called on the selected Landscape image during save. Only the URLs are copied so the
+    ''' image will be re-downloaded independently when selected.
+    ''' 
+    ''' The method determines the correct image type and season context based on whether a top image 
+    ''' (MainLandscape, AllSeasonsLandscape) or sub-image (SeasonLandscape via left panel) is currently active.
+    ''' When viewing Season Landscapes via the left panel button, currTopImage is deselected, so we use
+    ''' currSubImage instead to get the correct ModifierType and season number.
+    ''' 
+    ''' The button is disabled after use to prevent duplicate additions.
+    ''' </remarks>
+    Private Sub btnIncludeFanarts_Click(sender As Object, e As EventArgs) Handles btnIncludeFanarts.Click
+        ' Add MainFanarts to the current Landscape list as selectable options
+        ' Create deep copies of the image objects to avoid sharing references with the original Fanarts list
+        ' This prevents corruption when LoadAndCache is called on the Landscape image during save
+        If LoadedMainFanart AndAlso pnlListImage_Panel IsNot Nothing Then
+            ' Show loading panel and suspend layout to prevent scrambled display while adding images
+            pnlLoading.Visible = True
+            pnlImgSelectMain.SuspendLayout()
+            Application.DoEvents()
+            ' Determine the correct image type and season based on current selection context
+            ' When viewing Season Landscapes via left panel, currTopImage is deselected so use currSubImage
+            Dim targetImageType As Enums.ModifierType
+            Dim targetSeason As Integer
+
+            If currTopImage.ImageType = Enums.ModifierType.MainLandscape OrElse
+               currTopImage.ImageType = Enums.ModifierType.AllSeasonsLandscape OrElse
+               currTopImage.ImageType = Enums.ModifierType.SeasonLandscape Then
+                ' Top image is selected (MainLandscape or AllSeasonsLandscape from top panel)
+                targetImageType = currTopImage.ImageType
+                targetSeason = currTopImage.iSeason
+            ElseIf currSubImage.ImageType = Enums.ModifierType.SeasonLandscape OrElse
+                   currSubImage.ImageType = Enums.ModifierType.AllSeasonsLandscape Then
+                ' Sub-image is selected (SeasonLandscape via left panel button)
+                targetImageType = currSubImage.ImageType
+                targetSeason = currSubImage.iSeason
+            Else
+                ' Fallback - should not happen if button visibility is correct
+                Exit Sub
+            End If
+
+            Dim iCount As Integer = pnlListImage_Panel.Length
+            For Each tImage As MediaContainers.Image In tSearchResultsContainer.MainFanarts
+                ' Create a deep copy - do NOT share ImageOriginal/ImageThumb references
+                ' Only copy the URLs so the image will be re-downloaded independently
+                Dim tImageCopy As New MediaContainers.Image With {
+                        .Height = tImage.Height,
+                        .Width = tImage.Width,
+                        .ImageOriginal = New Images(),
+                        .ImageThumb = New Images(),
+                        .IsDuplicate = tImage.IsDuplicate,
+                        .LongLang = tImage.LongLang,
+                        .Scraper = tImage.Scraper,
+                        .Season = tImage.Season,
+                        .ShortLang = tImage.ShortLang,
+                        .URLOriginal = tImage.URLOriginal,
+                        .URLThumb = tImage.URLThumb
+                        }
+                AddListImage(tImageCopy, iCount, targetImageType, targetSeason)
+                iCount += 1
+            Next
+            ' Track which context has had fanarts included and disable button
+            ' For SeasonLandscape, track by image type only (not season) since fanarts are shared across all seasons
+            If targetImageType = Enums.ModifierType.SeasonLandscape Then
+                _fanartsIncludedForContext = "SeasonLandscape_All"
+            Else
+                _fanartsIncludedForContext = String.Format("{0}_{1}", targetImageType.ToString(), targetSeason)
+            End If
+
+            ' Resume layout and hide loading panel
+            pnlImgSelectMain.ResumeLayout()
+            pnlLoading.Visible = False
+
+            btnIncludeFanarts.Enabled = False
+        End If
     End Sub
 
     Private Sub bwImgDefaults_DoWork(ByVal sender As Object, ByVal e As System.ComponentModel.DoWorkEventArgs) Handles bwImgDefaults.DoWork
@@ -1402,6 +1488,16 @@ Public Class dlgImgSelect
         'Poster
         Result.ImagesContainer.Poster.LoadAndCache(tContentType, True)
 
+        'Season images (for TV content type with seasons)
+        If tContentType = Enums.ContentType.TV Then
+            For Each tSeason As MediaContainers.EpisodeOrSeasonImagesContainer In Result.Seasons
+                tSeason.Banner.LoadAndCache(tContentType, True)
+                tSeason.Fanart.LoadAndCache(tContentType, True)
+                tSeason.Landscape.LoadAndCache(tContentType, True)
+                tSeason.Poster.LoadAndCache(tContentType, True)
+            Next
+        End If
+
         DialogResult = DialogResult.OK
     End Sub
 
@@ -1431,6 +1527,24 @@ Public Class dlgImgSelect
         'SetImage(tTag)
     End Sub
 
+    ''' <summary>
+    ''' Handles the selection of a sub-image (season image or extra image) from the left panel.
+    ''' </summary>
+    ''' <param name="iIndex">The index of the selected sub-image panel in the array.</param>
+    ''' <param name="tTag">The iTag structure containing image metadata including type, season, and image reference.</param>
+    ''' <remarks>
+    ''' This method performs the following actions:
+    ''' <list type="bullet">
+    '''   <item><description>Deselects all top images and highlights the selected sub-image panel</description></item>
+    '''   <item><description>Enables/disables up/down buttons for Extrathumbs reordering</description></item>
+    '''   <item><description>Updates the main image list to show images for the selected type/season</description></item>
+    '''   <item><description>For SeasonLandscape/AllSeasonsLandscape types, re-adds fanart images if they were previously included via the "Include Fanarts" button</description></item>
+    '''   <item><description>Updates the "Include Fanarts" button visibility and enabled state based on the selected image type</description></item>
+    ''' </list>
+    ''' 
+    ''' The fanart re-addition uses a shared context key ("SeasonLandscape_All") for all SeasonLandscape types
+    ''' since the same fanart images are available across all seasons.
+    ''' </remarks>
     Private Sub DoSelectSubImage(ByVal iIndex As Integer, ByVal tTag As iTag)
         DeselectAllTopImages()
         For i As Integer = 0 To pnlSubImage_Panel.Count - 1
@@ -1467,9 +1581,69 @@ Public Class dlgImgSelect
         currSubImageSelectedType = tTag.ImageType
         If Not currListImageSelectedImageType = tTag.ImageType OrElse Not currListImageSelectedSeason = tTag.iSeason Then
             CreateListImages(tTag)
+
+            ' For SeasonLandscape or AllSeasonsLandscape, check if fanarts were previously included and re-add them
+            If (tTag.ImageType = Enums.ModifierType.SeasonLandscape OrElse tTag.ImageType = Enums.ModifierType.AllSeasonsLandscape) AndAlso
+               _fanartsIncludedForContext = "SeasonLandscape_All" AndAlso
+               LoadedMainFanart AndAlso pnlListImage_Panel IsNot Nothing Then
+                ' Show loading panel and suspend layout to prevent scrambled display while adding images
+                pnlLoading.Visible = True
+                pnlImgSelectMain.SuspendLayout()
+                Application.DoEvents()
+
+                Dim iCount As Integer = pnlListImage_Panel.Length
+                For Each tImage As MediaContainers.Image In tSearchResultsContainer.MainFanarts
+                    Dim tImageCopy As New MediaContainers.Image With {
+                            .Height = tImage.Height,
+                            .Width = tImage.Width,
+                            .ImageOriginal = New Images(),
+                            .ImageThumb = New Images(),
+                            .IsDuplicate = tImage.IsDuplicate,
+                            .LongLang = tImage.LongLang,
+                            .Scraper = tImage.Scraper,
+                            .Season = tImage.Season,
+                            .ShortLang = tImage.ShortLang,
+                            .URLOriginal = tImage.URLOriginal,
+                            .URLThumb = tImage.URLThumb
+                            }
+                    AddListImage(tImageCopy, iCount, tTag.ImageType, tTag.iSeason)
+                    iCount += 1
+                Next
+
+                ' Resume layout and hide loading panel
+                pnlImgSelectMain.ResumeLayout()
+                pnlLoading.Visible = False
+            End If
         End If
+
+        ' Update Include Fanarts button visibility/enabled state for Landscape types
+        Dim isLandscapeType As Boolean = (tTag.ImageType = Enums.ModifierType.SeasonLandscape OrElse
+                                          tTag.ImageType = Enums.ModifierType.AllSeasonsLandscape)
+        Dim fanartsAlreadyIncluded As Boolean = (_fanartsIncludedForContext = "SeasonLandscape_All")
+        btnIncludeFanarts.Visible = isLandscapeType
+        btnIncludeFanarts.Enabled = isLandscapeType AndAlso LoadedMainFanart AndAlso Not fanartsAlreadyIncluded
     End Sub
 
+    ''' <summary>
+    ''' Handles the selection of a top image (main image type) from the top panel.
+    ''' </summary>
+    ''' <param name="iIndex">The index of the selected top image panel in the array.</param>
+    ''' <param name="tTag">The iTag structure containing image metadata including type, season, and image reference.</param>
+    ''' <remarks>
+    ''' This method performs the following actions:
+    ''' <list type="bullet">
+    '''   <item><description>Deselects all sub-images and highlights the selected top image panel</description></item>
+    '''   <item><description>Updates the main image list to show images for the selected type</description></item>
+    '''   <item><description>For Landscape types (MainLandscape, AllSeasonsLandscape, SeasonLandscape), re-adds fanart images if they were previously included via the "Include Fanarts" button</description></item>
+    '''   <item><description>Updates the "Include Fanarts" button visibility and enabled state based on the selected image type</description></item>
+    ''' </list>
+    ''' 
+    ''' The fanart context tracking uses different keys depending on the image type:
+    ''' <list type="bullet">
+    '''   <item><description>SeasonLandscape: Uses shared key "SeasonLandscape_All" since fanarts are the same across all seasons</description></item>
+    '''   <item><description>MainLandscape/AllSeasonsLandscape: Uses format "ImageType_Season" for unique context tracking</description></item>
+    ''' </list>
+    ''' </remarks>
     Private Sub DoSelectTopImage(ByVal iIndex As Integer, ByVal tTag As iTag)
         DeselectAllSubImages()
         For i As Integer = 0 To pnlTopImage_Panel.Count - 1
@@ -1490,6 +1664,55 @@ Public Class dlgImgSelect
         If Not currListImageSelectedImageType = tTag.ImageType Then
             CreateListImages(tTag)
         End If
+
+        ' Enable and show "Include Fanarts" button only for Landscape image types
+        ' Re-enable the button if switching to a different landscape context than the one that already has fanarts included
+        Dim isLandscapeType As Boolean = (tTag.ImageType = Enums.ModifierType.MainLandscape OrElse
+                                          tTag.ImageType = Enums.ModifierType.AllSeasonsLandscape OrElse
+                                          tTag.ImageType = Enums.ModifierType.SeasonLandscape)
+        ' For SeasonLandscape, use a shared context key since fanarts are the same for all seasons
+        Dim currentContext As String
+        If tTag.ImageType = Enums.ModifierType.SeasonLandscape Then
+            currentContext = "SeasonLandscape_All"
+        Else
+            currentContext = String.Format("{0}_{1}", tTag.ImageType.ToString(), tTag.iSeason)
+        End If
+        Dim fanartsAlreadyIncluded As Boolean = (currentContext = _fanartsIncludedForContext)
+
+        ' If this Landscape context previously had fanarts included,and we just rebuilt the list,
+        ' re-add the fanarts so they appear in the list again
+        If isLandscapeType AndAlso fanartsAlreadyIncluded AndAlso LoadedMainFanart AndAlso pnlListImage_Panel IsNot Nothing Then
+            ' Show loading panel and suspend layout to prevent scrambled display while adding images
+            pnlLoading.Visible = True
+            pnlImgSelectMain.SuspendLayout()
+            Application.DoEvents()
+
+            Dim iCount As Integer = pnlListImage_Panel.Length
+            For Each tImage As MediaContainers.Image In tSearchResultsContainer.MainFanarts
+                Dim tImageCopy As New MediaContainers.Image With {
+                        .Height = tImage.Height,
+                        .Width = tImage.Width,
+                        .ImageOriginal = New Images(),
+                        .ImageThumb = New Images(),
+                        .IsDuplicate = tImage.IsDuplicate,
+                        .LongLang = tImage.LongLang,
+                        .Scraper = tImage.Scraper,
+                        .Season = tImage.Season,
+                        .ShortLang = tImage.ShortLang,
+                        .URLOriginal = tImage.URLOriginal,
+                        .URLThumb = tImage.URLThumb
+                        }
+                AddListImage(tImageCopy, iCount, tTag.ImageType, tTag.iSeason)
+                iCount += 1
+            Next
+
+            ' Resume layout and hide loading panel
+            pnlImgSelectMain.ResumeLayout()
+            pnlLoading.Visible = False
+        End If
+
+        btnIncludeFanarts.Visible = isLandscapeType
+        btnIncludeFanarts.Enabled = isLandscapeType AndAlso LoadedMainFanart AndAlso Not fanartsAlreadyIncluded
     End Sub
 
     Private Function DownloadAllImages() As Boolean
@@ -2593,6 +2816,15 @@ Public Class dlgImgSelect
         End If
     End Sub
 
+    ''' <summary>
+    ''' Initializes the dialog's UI elements with localized text and configures the Include Fanarts button.
+    ''' </summary>
+    ''' <remarks>
+    ''' This method sets up all button text using localized strings and dynamically creates the 
+    ''' "Include Fanarts" button which allows users to add fanart images as selectable options 
+    ''' when choosing Landscape images. The button is added to the left panel's table layout 
+    ''' and is initially hidden/disabled until a Landscape image type is selected.
+    ''' </remarks>
     Private Sub Setup()
         btnCancel.Text = Master.eLang.GetString(167, "Cancel")
         btnExtrafanarts.Text = Master.eLang.GetString(992, "Extrafanarts")
@@ -2602,17 +2834,56 @@ Public Class dlgImgSelect
         btnSeasonFanart.Text = Master.eLang.GetString(686, "Season Fanart")
         btnSeasonLandscape.Text = Master.eLang.GetString(1018, "Season Landscape")
         btnSeasonPoster.Text = Master.eLang.GetString(685, "Season Poster")
+
+        'Initialize "Include Fanarts" button for Landscape image selection
+        'Add to the table layout right after Season Poster button (row 7)
+        btnIncludeFanarts.Name = "btnIncludeFanarts"
+        btnIncludeFanarts.Text = Master.eLang.GetString(99996, "Include Fanarts")
+        btnIncludeFanarts.Dock = DockStyle.Fill
+        btnIncludeFanarts.Enabled = False
+        btnIncludeFanarts.Visible = False
+        tblImgSelectLeft.SetColumnSpan(btnIncludeFanarts, 2)
+        tblImgSelectLeft.Controls.Add(btnIncludeFanarts, 0, 7)
     End Sub
 
+    ''' <summary>
+    ''' Handles the change of sub-image type selection (Extrafanarts, Extrathumbs, Season images).
+    ''' </summary>
+    ''' <param name="tModifierType">The modifier type representing the selected sub-image category.</param>
+    ''' <remarks>
+    ''' When switching to any of the sub-image modes, except for Season Landscape, this method deselects
+    ''' all top images, creates the sub-image list, and hides the Include Fanarts button since it is
+    ''' only applicable to Landscape image types. The button visibility is managed here to ensure it is
+    ''' hidden when the user navigates away from a Landscape image type via the sub-image buttons.
+    ''' </remarks>
     Private Sub SubImageTypeChanged(ByVal tModifierType As Enums.ModifierType)
         If Not currSubImageSelectedType = tModifierType Then
             currSubImageSelectedType = tModifierType
             ClearListImages()
             CreateSubImages()
-            If currSubImageSelectedType = Enums.ModifierType.MainExtrafanarts OrElse currSubImageSelectedType = Enums.ModifierType.MainExtrathumbs Then
+            If currSubImageSelectedType = Enums.ModifierType.MainExtrafanarts OrElse
+               currSubImageSelectedType = Enums.ModifierType.MainExtrathumbs OrElse
+               currSubImageSelectedType = Enums.ModifierType.SeasonBanner OrElse
+               currSubImageSelectedType = Enums.ModifierType.SeasonFanart OrElse
+               currSubImageSelectedType = Enums.ModifierType.SeasonPoster Then
                 currSubImage = New iTag With {.ImageType = currSubImageSelectedType, .iSeason = -2}
                 DeselectAllTopImages()
                 CreateListImages(currSubImage)
+                ' Hide the Include Fanarts button when viewing non-Landscape sub-image types
+                btnIncludeFanarts.Visible = False
+                btnIncludeFanarts.Enabled = False
+            ElseIf currSubImageSelectedType = Enums.ModifierType.SeasonLandscape Then
+                ' SeasonLandscape needs special handling - set up context and show Include Fanarts button
+                currSubImage = New iTag With {.ImageType = currSubImageSelectedType, .iSeason = -2}
+                DeselectAllTopImages()
+                CreateListImages(currSubImage)
+                ' Show the Include Fanarts button for Season Landscape selection
+                ' Re-enable if this context hasn't had fanarts included yet
+                ' For SeasonLandscape, use a shared context key since fanarts are the same for all seasons
+                Dim currentContext As String = "SeasonLandscape_All"
+                Dim fanartsAlreadyIncluded As Boolean = (currentContext = _fanartsIncludedForContext)
+                btnIncludeFanarts.Visible = True
+                btnIncludeFanarts.Enabled = LoadedMainFanart AndAlso Not fanartsAlreadyIncluded
             End If
         End If
         pnlImgSelectMain.Focus()

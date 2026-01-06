@@ -400,11 +400,4 @@ Write-Host "  ✅ Build Cleanup Complete!" -ForegroundColor Green
 Write-Host "═══════════════════════════════════════════════════════" -ForegroundColor Green
 Write-Host ""
 
-if (-not $Rebuild) {
-    Write-Host "📋 Next steps:" -ForegroundColor Cyan
-    Write-Host "   1. Build → Rebuild Solution" -ForegroundColor White
-    Write-Host "   Or run: .\BuildCleanup.ps1 -Rebuild" -ForegroundColor Gray
-    Write-Host ""
-}
-
 #endregion

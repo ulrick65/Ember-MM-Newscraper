@@ -2,9 +2,9 @@
 
 | Document Info | |
 |---------------|---|
-| **Version** | 2.1 |
+| **Version** | 2.3 |
 | **Created** | December 31, 2025 |
-| **Updated** | January 4, 2026 |
+| **Updated** | January 6, 2026 |
 | **Author** | Eric H. Anderson |
 | **Purpose** | Living backlog of deferred, planned, and potential improvements |
 
@@ -87,6 +87,9 @@ where `XX` is the category code and `###` is a sequential number.
 | Progress Bar - Marquee mode | Low | 2-3 hrs | Phase 3 | Indeterminate progress during scrape | |
 | Progress Bar - Two-phase (0-50%, 50-100%) | Medium | 3-4 hrs | Phase 3 | Better progress feedback | |
 | Progress Bar - Dual bars | Low | 4-6 hrs | Phase 3 | Scrape + Save separate bars | |
+| Image selection dialog sorting options (resolution, language, scraper) | Low | 1 hr | Eric |Change the sort order for images  | [BL-UX-005](backlog/BL-UX-005-ImageDialogSorting.md) |
+
+- [ ] **BL-UI-003**: Image selection dialog sorting options (resolution, language, scraper)
 
 ---
 
@@ -123,6 +126,7 @@ where `XX` is the category code and `###` is a sequential number.
 | Item | Priority | Source | Notes | Details |
 |------|----------|--------|-------|---------|
 | Parallel download race conditions in `SaveToFile` | Monitor | Phase 1 | Reverted `File.Exists` check that broke image editing | |
+| Edit Images crash with All Seasons selected | Low | Jan 5, 2026 | Unscraped show + All Seasons causes ArgumentNullException | [BL-KI-003](backlog/BL-KI-003-EditImagesAllSeasonsCrash.md) |
 
 ---
 
@@ -156,7 +160,8 @@ where `XX` is the category code and `###` is a sequential number.
 | Edit TV Images Quick Access | January 4, 2026 | [BL-UX-002](backlog/BL-UX-002-EditImagesQuickAccess-TVShow.md) |
 | TV Season images not saved after SingleScrape | January 4, 2026 | [BL-KI-001](backlog/BL-KI-001-TVSeasonImagesSaveIssue.md) |
 | Edit Season Images Quick Access | January 4, 2026 | [BL-UX-003](backlog/BL-UX-003-EditImagesQuickAccess-TVSeason.md) |
-| Edit Season dialog - most images not selectable | **High** | Jan 5, 2026 | Green plus icon missing on most images | [BL-KI-002](backlog/BL-KI-002-EditSeasonImageSelectionBug.md) |
+| Edit Season dialog - most images not selectable | January 5, 2026 | [BL-KI-002](backlog/BL-KI-002-EditSeasonImageSelectionBug.md) |
+| Fanarts Available for Landscape Image Selection | January 6, 2026 | [BL-UX-004](backlog/BL-UX-004-FanartsForLandscape.md) |
 
 ---
 
