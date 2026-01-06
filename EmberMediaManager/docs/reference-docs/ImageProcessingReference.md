@@ -2,12 +2,13 @@
 
 | | Document Info |
 |---------------|---|
-| **Version** | 1.1 |
+| **Version** | 1.2 |
 | **Created** | January 5, 2026 |
 | **Updated** | January 5, 2026 |
 | **Author** | Eric H. Anderson |
 | **Purpose** | Technical reference for the image selection dialog and image processing system |
 
+##### [← Return to Image Selection Process](../process-docs/ImageSelectionProcess.md)
 ##### [← Return to Document Index](../DocumentIndex.md)
 
 ---

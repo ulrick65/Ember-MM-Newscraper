@@ -12142,16 +12142,16 @@ Public Class frmMain
             lblOriginalTitle.Text = String.Empty
         End If
 
-        lblCertifications.Text = String.Join(" / ", currTV.TVShow.Certifications.ToArray)
-        lblCountries.Text = String.Join(" / ", currTV.TVShow.Countries.ToArray)
-        lblDirectors.Text = String.Join(" / ", currTV.TVShow.Creators.ToArray)
+        lblCertifications.Text = If(currTV.TVShow.Certifications IsNot Nothing, String.Join(" / ", currTV.TVShow.Certifications.ToArray), String.Empty)
+        lblCountries.Text = If(currTV.TVShow.Countries IsNot Nothing, String.Join(" / ", currTV.TVShow.Countries.ToArray), String.Empty)
+        lblDirectors.Text = If(currTV.TVShow.Creators IsNot Nothing, String.Join(" / ", currTV.TVShow.Creators.ToArray), String.Empty)
         lblDirectorsHeader.Text = Master.eLang.GetString(744, "Creators")
         lblPremiered.Text = currTV.TVShow.Premiered
         lblPremieredHeader.Text = Master.eLang.GetString(724, "Premiered")
         'lblRuntime.Text = String.Format(Master.eLang.GetString(645, "Premiered: {0}"), If(currTV.TVShow.PremieredSpecified, Date.Parse(currTV.TVShow.Premiered).ToShortDateString, "?"))
         lblStatus.Text = currTV.TVShow.Status
         lblTagline.Text = currTV.TVShow.Tagline
-        lblTags.Text = String.Join(" / ", currTV.TVShow.Tags.ToArray)
+        lblTags.Text = If(currTV.TVShow.Tags IsNot Nothing, String.Join(" / ", currTV.TVShow.Tags.ToArray), String.Empty)
         txtIMDBID.Text = currTV.TVShow.UniqueIDs.IMDbId
         txtPlot.Text = currTV.TVShow.Plot
         txtTMDBID.Text = currTV.TVShow.UniqueIDs.TMDbId.ToString
@@ -12205,7 +12205,7 @@ Public Class frmMain
             End If
         End If
 
-        If currTV.TVShow.Genres.Count > 0 Then
+        If currTV.TVShow.Genres IsNot Nothing AndAlso currTV.TVShow.Genres.Count > 0 Then
             createGenreThumbs(currTV.TVShow.Genres)
         End If
 
@@ -12231,9 +12231,11 @@ Public Class frmMain
         End If
 
         If pbMPAA.Image IsNot Nothing Then pnlMPAA.Visible = True
-        For i As Integer = 0 To pnlGenre.Count - 1
-            pnlGenre(i).Visible = True
-        Next
+        If pnlGenre IsNot Nothing Then
+            For i As Integer = 0 To pnlGenre.Count - 1
+                pnlGenre(i).Visible = True
+            Next
+        End If
 
         ResumeLayout()
     End Sub

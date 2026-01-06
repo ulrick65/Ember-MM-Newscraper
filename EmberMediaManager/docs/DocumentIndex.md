@@ -4,7 +4,7 @@
 
 | | Document Info |
 |---------------|---|
-| **Version** | 1.0 |
+| **Version** | 2.0 |
 | **Created** | December 31, 2025 |
 | **Updated** | January 4, 2026 |
 | **Author** | Eric H. Anderson |
@@ -69,7 +69,7 @@ Whether you're looking for performance analysis, scraping process details, or re
 
 | Document | Description |
 |----------|-------------|
-| [DocumentationProcess.md](process-docs/DocumentationProcess.md) | Documentation standards and guidelines |
+| [DocumentationProcess.md](process-docs/DocumentationStandardsProcess.md) | Documentation standards and guidelines |
 | [BuildProcess.md](process-docs/BuildProcess.md) | Build configuration and output |
 | [ScrapingProcessMovies.md](process-docs/ScrapingProcessMovies.md) | Movie scraping architecture |
 | [ScrapingProcessTvShows.md](process-docs/ScrapingProcessTvShows.md) | TV Show scraping architecture |

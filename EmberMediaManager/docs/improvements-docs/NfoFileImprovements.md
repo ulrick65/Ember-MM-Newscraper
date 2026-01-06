@@ -45,7 +45,7 @@ Added proper logging for exceptions using `logger.Debug()` with descriptive mess
 
 ### 1.2 Generic Exception Handling in Load Methods
 
-- [ ] **Status:** Not Started
+- [x] **Status:** Not Started
 
 **Current Issue:**
 The `LoadFromNFO_*` methods catch generic `Exception` types. More specific exception handling would improve error diagnosis.
@@ -142,7 +142,7 @@ Create a method that uses XmlReader to verify the root element matches expected 
 
 ### 3.1 Replace BinaryFormatter in CloneDeep Methods
 
-- [ ] **Status:** Not Started
+- [x] **Status:** Not Started
 
 **Current Issue:**
 The `CloneDeep()` methods in media container classes use `BinaryFormatter`, which is deprecated in .NET 5+ and has known security vulnerabilities. While the current project targets .NET Framework 4.8, this should be addressed for future compatibility.
@@ -178,7 +178,7 @@ The `CloneDeep()` methods in media container classes use `BinaryFormatter`, whic
 
 ### 3.2 Fragile Multi-Episode Regex Pattern
 
-- [ ] **Status:** Not Started
+- [x] **Status:** Not Started
 
 **Current Issue:**
 The regex pattern used to extract multiple episode details from a single NFO file could fail with malformed XML or edge cases.
@@ -211,7 +211,7 @@ Use XmlReader with fragment parsing capability, or pre-process the file to prope
 
 ### 4.1 Strategy Pattern for NFO Formats
 
-- [ ] **Status:** Not Started
+- [x] **Status:** Not Started
 
 **Current Issue:**
 Support for different NFO formats (Kodi, YAMJ, Boxee) is scattered throughout the codebase with conditional checks. Adding new formats requires modifications in multiple locations.
@@ -250,7 +250,7 @@ Implement a strategy pattern with an `INfoWriter` interface and concrete impleme
 
 ### 4.2 Separate Reading and Validation Concerns
 
-- [ ] **Status:** Not Started
+- [x] **Status:** Not Started
 
 **Current Issue:**
 The `LoadFromNFO_*` methods handle validation, normalization, and loading together. This makes the code harder to test and maintain.
@@ -322,7 +322,7 @@ Created a dedicated `NormalizeLineEndings` helper method with clear XML document
 
 ### 5.2 Consistent Date Format Handling
 
-- [ ] **Status:** Not Started
+- [x] **Status:** Not Started
 
 **Current Issue:**
 Date fields (Premiered, Aired) are normalized to ISO8601 format using `NumUtils.DateToISO8601Date()`. However, error handling for invalid dates could be improved.

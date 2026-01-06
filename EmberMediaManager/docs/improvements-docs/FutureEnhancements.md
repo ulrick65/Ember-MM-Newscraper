@@ -75,8 +75,9 @@ where `XX` is the category code and `###` is a sequential number.
 | Remove External Subtitle Download | Low | 2-4 hrs | ForkChangeLog | Broken / Not needed | |
 | Remove commented code blocks | Low | 2-4 hrs | SolutionCleanupAnalysis | Multiple files identified | |
 | Find/remove orphaned files | Low | 1-2 hrs | SolutionCleanupAnalysis | Script provided in doc | |
-| Replace BinaryFormatter in CloneDeep | Medium | 4-6 hrs | NfoFileImprovements 3.1 | Deprecated, security vulnerabilities | |
-| Fix fragile multi-episode regex | Low | 2-3 hrs | NfoFileImprovements 3.2 | Use XmlReader instead | |
+| Replace BinaryFormatter in CloneDeep | Medium | 4-6 hrs | NfoFileImprovements 3.1 | Deprecated, security vulnerabilities | [BL-CC-001](backlog/BL-CC-001-ReplaceBinaryFormatter.md) |
+| Fix fragile multi-episode regex | Low | 2-3 hrs | NfoFileImprovements 3.2 | Use XmlReader instead | [BL-CQ-004](backlog/BL-CQ-004-MultiEpisodeRegex.md) |
+| Kodi-compliant fanart naming | Medium | 4-6 hrs | Eric | Save fanart1.jpg, fanart2.jpg, etc. per Kodi standard | [BL-CC-002](backlog/BL-CC-002-KodiFanartNaming.md) |
 
 ---
 
@@ -89,16 +90,14 @@ where `XX` is the category code and `###` is a sequential number.
 | Progress Bar - Dual bars | Low | 4-6 hrs | Phase 3 | Scrape + Save separate bars | |
 | Image selection dialog sorting options (resolution, language, scraper) | Low | 1 hr | Eric |Change the sort order for images  | [BL-UX-005](backlog/BL-UX-005-ImageDialogSorting.md) |
 
-- [ ] **BL-UI-003**: Image selection dialog sorting options (resolution, language, scraper)
-
 ---
 
 ## [↑](#table-of-contents) Feature Requests (FR)
 
 | Item | Priority | Effort | Source | Notes | Details |
 |------|----------|--------|--------|-------|---------|
-| Strategy pattern for NFO formats | Low | 8-12 hrs | NfoFileImprovements 4.1 | INfoWriter interface for extensibility | |
-| Separate NFO reading/validation | Low | 6-10 hrs | NfoFileImprovements 4.2 | NFOValidator, NFOReader, NFONormalizer | |
+| Strategy pattern for NFO formats | Low | 8-12 hrs | NfoFileImprovements 4.1 | INfoWriter interface for extensibility | [BL-FR-001](backlog/BL-FR-001-NFOStrategyPattern.md) |
+| Separate NFO reading/validation | Low | 6-10 hrs | NfoFileImprovements 4.2 | NFOValidator, NFOReader, NFONormalizer | [BL-FR-002](backlog/BL-FR-002-NFOSeparateConcerns.md) |
 
 ---
 
@@ -112,9 +111,10 @@ where `XX` is the category code and `###` is a sequential number.
 | Add FFmpeg version check on startup | Low | 1-2 hrs | FFmpegProcess | Display in About dialog | |
 | Replace Application.DoEvents() anti-pattern | Medium | 2-4 hrs | PerformanceAnalysis 2.2 | clsScrapeIMDB.vb, clsScrapeTMDB.vb | |
 | Force GC during long batch operations | Low | 1 hr | PerformanceAnalysis R6.2 | Every N items during batch scraping | |
-| Specific exception handling in NFO Load | Low | 2-3 hrs | NfoFileImprovements 1.2 | Replace generic Exception catches | |
-| Consistent date format handling | Low | 1-2 hrs | NfoFileImprovements 5.2 | Better invalid date handling | |
+| Specific exception handling in NFO Load | Low | 2-3 hrs | NfoFileImprovements 1.2 | Replace generic Exception catches | [BL-CQ-003](backlog/BL-CQ-003-NFOSpecificExceptionHandling.md) |
+| Consistent date format handling | Low | 1-2 hrs | NfoFileImprovements 5.2 | Better invalid date handling | [BL-CQ-005](backlog/BL-CQ-005-NFODateHandling.md) |
 | Reorganize the 'frmMain.vb' file | Low | 2-3 hrs | Eric | Organize the sections to group things better, like the "Friend", cmnu areas, etc | |
+
 
 
 ---

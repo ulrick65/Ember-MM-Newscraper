@@ -2,7 +2,7 @@
 
 > **Document Version:** 1.1 (Updated January 5, 2026)
 > **Related Documentation:** 
-> - [ImageProcessingReference.md](ImageProcessingReference.md) — Detailed technical reference
+> - [ImageProcessingReference.md](../reference-docs/ImageProcessingReference.md) — Detailed technical reference
 > - [BL-KI-002-EditSeasonImageSelectionBug.md](../improvements-docs/backlog/BL-KI-002-EditSeasonImageSelectionBug.md)
 > - [BL-UX-004-FanartsForLandscape.md](../improvements-docs/backlog/BL-UX-004-FanartsForLandscape.md)
 
@@ -41,7 +41,7 @@ The Image Selection system in Ember Media Manager handles the discovery, downloa
 1. **Thumbnail downloads** - During `dlgImgSelect` for preview display
 2. **Full-size downloads** - During `DoneAndClose()` for all selected images
 
-**For detailed technical specifications, see:** [ImageProcessingReference.md](ImageProcessingReference.md)
+**For detailed technical specifications, see:** [ImageProcessingReference.md](../improvements-docs/backlog/BL-UX-004-FanartsForLandscape.md)
 
 ---
 
@@ -858,7 +858,7 @@ The Image Selection system in Ember Media Manager:
 | Save to disk | `clsAPIMediaContainers.vb` | `SaveAllImages()` |
 
 **Related Documentation:**
-- [ImageProcessingReference.md](ImageProcessingReference.md) — Detailed technical reference
+- [ImageProcessingReference.md](../improvements-docs/backlog/BL-UX-004-FanartsForLandscape.md) — Detailed technical reference
 - [BL-UX-004-FanartsForLandscape.md](../improvements-docs/backlog/BL-UX-004-FanartsForLandscape.md) — Include Fanarts feature
 
 ---
