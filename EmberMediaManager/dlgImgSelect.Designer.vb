@@ -31,6 +31,7 @@ Partial Class dlgImgSelect
         Me.tblImgSelectBottom = New System.Windows.Forms.TableLayoutPanel()
         Me.btnOK = New System.Windows.Forms.Button()
         Me.btnCancel = New System.Windows.Forms.Button()
+        Me.btnIncludeFanarts = New System.Windows.Forms.Button()
         Me.pnlImgSelectLeft = New System.Windows.Forms.Panel()
         Me.tblImgSelectLeft = New System.Windows.Forms.TableLayoutPanel()
         Me.pnlSubImages = New System.Windows.Forms.Panel()
@@ -127,6 +128,7 @@ Partial Class dlgImgSelect
         Me.tblImgSelectBottom.ColumnStyles.Add(New System.Windows.Forms.ColumnStyle())
         Me.tblImgSelectBottom.ColumnStyles.Add(New System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 27.0!))
         Me.tblImgSelectBottom.ColumnStyles.Add(New System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 27.0!))
+        Me.tblImgSelectBottom.Controls.Add(Me.btnIncludeFanarts, 0, 0)
         Me.tblImgSelectBottom.Controls.Add(Me.btnOK, 1, 0)
         Me.tblImgSelectBottom.Controls.Add(Me.btnCancel, 2, 0)
         Me.tblImgSelectBottom.Dock = System.Windows.Forms.DockStyle.Fill
@@ -148,6 +150,20 @@ Partial Class dlgImgSelect
         Me.btnOK.TabIndex = 0
         Me.btnOK.Text = "OK"
         Me.btnOK.UseVisualStyleBackColor = True
+        '
+        'btnIncludeFanarts
+        '
+        Me.btnIncludeFanarts.Anchor = System.Windows.Forms.AnchorStyles.Left
+        Me.btnIncludeFanarts.AutoSize = True
+        Me.btnIncludeFanarts.Enabled = False
+        Me.btnIncludeFanarts.Location = New System.Drawing.Point(4, 4)
+        Me.btnIncludeFanarts.Margin = New System.Windows.Forms.Padding(4)
+        Me.btnIncludeFanarts.Name = "btnIncludeFanarts"
+        Me.btnIncludeFanarts.Size = New System.Drawing.Size(120, 28)
+        Me.btnIncludeFanarts.TabIndex = 2
+        Me.btnIncludeFanarts.Text = "Include Fanarts"
+        Me.btnIncludeFanarts.UseVisualStyleBackColor = True
+        Me.btnIncludeFanarts.Visible = False
         '
         'btnCancel
         '
@@ -520,6 +536,7 @@ Partial Class dlgImgSelect
     Friend WithEvents tblImgSelectBottom As System.Windows.Forms.TableLayoutPanel
     Friend WithEvents btnOK As System.Windows.Forms.Button
     Friend WithEvents btnCancel As System.Windows.Forms.Button
+    Friend WithEvents btnIncludeFanarts As System.Windows.Forms.Button
     Friend WithEvents ssImgSelect As System.Windows.Forms.StatusStrip
     Friend WithEvents tmrReorderMainList As System.Windows.Forms.Timer
     Friend WithEvents lblStatus As System.Windows.Forms.ToolStripStatusLabel

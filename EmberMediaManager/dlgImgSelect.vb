@@ -29,7 +29,6 @@ Public Class dlgImgSelect
 
     Friend WithEvents bwImgDefaults As New System.ComponentModel.BackgroundWorker
     Friend WithEvents bwImgDownload As New System.ComponentModel.BackgroundWorker
-    Friend WithEvents btnIncludeFanarts As New Button
 
     Private _cancellationTokenSource As Threading.CancellationTokenSource
     Public Delegate Sub LoadImage(ByVal sDescription As String, ByVal iIndex As Integer, ByVal isChecked As Boolean, poster As MediaContainers.Image, ByVal text As String)
@@ -2851,16 +2850,8 @@ Public Class dlgImgSelect
         btnSeasonFanart.Text = Master.eLang.GetString(686, "Season Fanart")
         btnSeasonLandscape.Text = Master.eLang.GetString(1018, "Season Landscape")
         btnSeasonPoster.Text = Master.eLang.GetString(685, "Season Poster")
-
-        'Initialize "Include Fanarts" button for Landscape image selection
-        'Add to the table layout right after Season Poster button (row 7)
-        btnIncludeFanarts.Name = "btnIncludeFanarts"
+        'Initialize "Include Fanarts" button text (control defined in Designer)
         btnIncludeFanarts.Text = Master.eLang.GetString(99996, "Include Fanarts")
-        btnIncludeFanarts.Dock = DockStyle.Fill
-        btnIncludeFanarts.Enabled = False
-        btnIncludeFanarts.Visible = False
-        tblImgSelectLeft.SetColumnSpan(btnIncludeFanarts, 2)
-        tblImgSelectLeft.Controls.Add(btnIncludeFanarts, 0, 7)
     End Sub
 
     ''' <summary>
