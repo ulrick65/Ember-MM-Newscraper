@@ -1,4 +1,4 @@
-﻿Project Coding Standards (Developer Notes) - Updated December 28, 2025
+﻿Project Coding Standards (Developer Notes) - Updated January 8, 2026
 
 These notes describe the preferred conventions, formatting rules, and documentation patterns used in this project. They are guidelines for generating code, documentation, and diffs, not strict system‑level commands. Copilot should follow them when they apply to the task at hand.
 
@@ -106,7 +106,21 @@ Documentation Preferences
 • 	Use inline code for identifiers
 • 	Use 4‑space indentation for code blocks
 • 	Use clear headings and lists
-• 	For markdown documentation standards, see: EmberMediaManager/docs/process-docs/DocumentationProcess.md
+
+Documentation Standards Reference
+When generating or updating markdown documentation files in the docs/ folder, follow the full standards in:
+EmberMediaManager/docs/process-docs/DocumentationStandardsProcess.md
+
+Critical Rules (always apply to docs/ files):
+• 	Document Info table required: Version, Created, Updated, Author, Purpose
+• 	Dates in long form only: January 4, 2026 (not 01/04/2026 or Jan 4)
+• 	Return link after info table: ##### [← Return to Document Index](../DocumentIndex.md)
+• 	Every ## and ### section after TOC needs return link: ## [↑](#table-of-contents) Section Name
+• 	Horizontal rules (---) between major sections
+• 	End marker required: *End of file*
+• 	Status indicators use emoji (✅ ❌ ⏸️ 📋 ⚠️), not checkboxes
+• 	Backlog files use naming: BL-KI-XXX-BriefTitle.md or BL-FE-XXX-BriefTitle.md
+• 	Tone: Welcoming and friendly, not stiff ("You're in the right place!" not "This document serves as...")
 
 Code Style Guidelines
 • 	Prefer specific types
@@ -133,7 +147,7 @@ Testing Considerations
 • 	Consider edge cases
 
 Comments and Documentation
-• 	Explain “why,” not “what”
+• 	Explain "why," not "what"
 • 	Keep comments up to date
 • 	Use TODO comments for planned improvements
 

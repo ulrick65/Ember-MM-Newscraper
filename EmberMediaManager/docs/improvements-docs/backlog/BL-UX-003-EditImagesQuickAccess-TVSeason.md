@@ -183,7 +183,7 @@ This ensures the menu item is only enabled when exactly one TV season is selecte
 
 - [x] Menu item appears in TV season context menu
 - [x] Menu item disabled when no season selected
-- [ ] Menu item disabled when multiple seasons selected
+- [x] Menu item disabled when multiple seasons selected
 - [x] Clicking opens `dlgImgSelect` with scraped images
 - [x] All enabled image types appear in dialog (Poster, Banner, Fanart, Landscape)
 - [x] Selecting images and clicking OK saves them

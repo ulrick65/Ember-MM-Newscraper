@@ -113,5 +113,4 @@ Both scenarios relied on a save that never happened for `SingleScrape` mode.
 
 ---
 
-*Created: January 4, 2026*  
-*Completed: January 5, 2026*
+*End of file*

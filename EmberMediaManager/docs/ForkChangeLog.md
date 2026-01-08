@@ -2,9 +2,9 @@
 
 | |Document Info |
 |---------------|---|
-| **Version** | 1.2.1 |
+| **Version** | 1.2.2 |
 | **Created** | December 25, 2025 |
-| **Updated** | January 4, 2026 |
+| **Updated** | January 7, 2026 |
 | **Author** | Eric H. Anderson |
 | **Purpose** | Tracks changes made to this fork of Ember Media Manager
 

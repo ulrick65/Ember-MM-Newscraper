@@ -225,11 +225,6 @@ From `clsAPIImages.vb`:
 - [x] Edit movie loads only correct extrafanarts (not banner, poster, etc.)
 - [x] Edit TV show loads only correct extrafanarts
 
-### [↑](#table-of-contents) Kodi Verification
-
-- [ ] Test with Kodi — verify all fanarts display
-- [ ] Verify Kodi respects fanart order
-
 ---
 
 ## [↑](#table-of-contents) Implementation Details

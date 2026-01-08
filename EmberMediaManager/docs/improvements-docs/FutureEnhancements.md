@@ -2,9 +2,9 @@
 
 | Document Info | |
 |---------------|---|
-| **Version** | 2.3 |
+| **Version** | 2.6 |
 | **Created** | December 31, 2025 |
-| **Updated** | January 6, 2026 |
+| **Updated** | January 8, 2026 |
 | **Author** | Eric H. Anderson |
 | **Purpose** | Living backlog of deferred, planned, and potential improvements |
 
@@ -31,10 +31,29 @@ where `XX` is the category code and `###` is a sequential number.
 | CQ | Code Quality |
 | KI | Known Issues |
 
+### Creating a Backlog Document
+
+**When to create a BL document:**
+- Bug fixes that required investigation or have multiple parts
+- Enhancements with implementation details worth preserving
+- Any item needing more than a one-line description
+
+**Workflow:**
+
+1. **Determine the category code** from the table above
+2. **Find the next available number** in that category (check existing `BL-XX-###` files in `backlog/`)
+3. **Create the document** using the template: [`backlog/_BL-TEMPLATE.md`](backlog/_BL-TEMPLATE.md)
+4. **Name the file:** `BL-XX-###-BriefTitle.md` (e.g., `BL-KI-005-ImageCacheBug.md`)
+5. **Add entry to this document** in the appropriate category section with link to the BL document
+6. **When completed:** Move the entry to [Completed Items](#completed-items) with date and link
+
+**Template location:** [`backlog/_BL-TEMPLATE.md`](backlog/_BL-TEMPLATE.md)
+
 ---
 
 ## Table of Contents
 
+- [Creating a Backlog Document](#creating-a-backlog-document)
 - [Performance Enhancements (PE)](#performance-enhancements-pe)
 - [Code Cleanup (CC)](#code-cleanup-cc)
 - [UI/UX Improvements (UX)](#uiux-improvements-ux)
@@ -162,6 +181,7 @@ where `XX` is the category code and `###` is a sequential number.
 | Edit Season dialog - most images not selectable | January 5, 2026 | [BL-KI-002](backlog/BL-KI-002-EditSeasonImageSelectionBug.md) |
 | Fanarts Available for Landscape Image Selection | January 6, 2026 | [BL-UX-004](backlog/BL-UX-004-FanartsForLandscape.md) |
 | Kodi-Compliant ExtraFanart Naming | January 7, 2026 | [BL-CC-002](backlog/BL-CC-002-KodiCompliantExtraFanartNaming.md) |
+| Extrafanarts/Extrathumbs Dialog Preselect Fix | January 8, 2026 | [BL-KI-004](backlog/BL-KI-004-ExtrafanartsPreselectFix.md) |
 
 ---
 

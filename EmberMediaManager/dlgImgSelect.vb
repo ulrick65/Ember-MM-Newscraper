@@ -2447,12 +2447,29 @@ Public Class dlgImgSelect
         Result.ImagesContainer.ClearLogo = tPreferredImagesContainer.ImagesContainer.ClearLogo
         Result.ImagesContainer.DiscArt = tPreferredImagesContainer.ImagesContainer.DiscArt
         With Master.eSettings
+            ' Dialog pre-selection logic for extrafanarts/extrathumbs:
+            ' - Preselect=True: Use full auto-selected set from GetPreferredImagesContainer (respects KeepExisting and Limit)
+            ' - Preselect=False: Only show existing images - user manually manages selection
+            ' Note: KeepExisting only affects auto-selection behavior when Preselect=True
+            ' Note: TVShow with seasons uses ContentType.TV, so we check both TVShow and TV
             Select Case tContentType
                 Case Enums.ContentType.Movie
-                    If .MovieExtrafanartsPreselect OrElse .MovieExtrafanartsKeepExisting Then Result.ImagesContainer.Extrafanarts.AddRange(tPreferredImagesContainer.ImagesContainer.Extrafanarts)
-                    If .MovieExtrathumbsPreselect OrElse .MovieExtrathumbsKeepExisting Then Result.ImagesContainer.Extrathumbs.AddRange(tPreferredImagesContainer.ImagesContainer.Extrathumbs)
-                Case Enums.ContentType.TV, Enums.ContentType.TVShow
-                    If .TVShowExtrafanartsPreselect OrElse .TVShowExtrafanartsKeepExisting Then Result.ImagesContainer.Extrafanarts.AddRange(tPreferredImagesContainer.ImagesContainer.Extrafanarts)
+                    If .MovieExtrafanartsPreselect Then
+                        Result.ImagesContainer.Extrafanarts.AddRange(tPreferredImagesContainer.ImagesContainer.Extrafanarts)
+                    Else
+                        Result.ImagesContainer.Extrafanarts.AddRange(tDBElement.ImagesContainer.Extrafanarts)
+                    End If
+                    If .MovieExtrathumbsPreselect Then
+                        Result.ImagesContainer.Extrathumbs.AddRange(tPreferredImagesContainer.ImagesContainer.Extrathumbs)
+                    Else
+                        Result.ImagesContainer.Extrathumbs.AddRange(tDBElement.ImagesContainer.Extrathumbs)
+                    End If
+                Case Enums.ContentType.TVShow, Enums.ContentType.TV
+                    If .TVShowExtrafanartsPreselect Then
+                        Result.ImagesContainer.Extrafanarts.AddRange(tPreferredImagesContainer.ImagesContainer.Extrafanarts)
+                    Else
+                        Result.ImagesContainer.Extrafanarts.AddRange(tDBElement.ImagesContainer.Extrafanarts)
+                    End If
             End Select
         End With
         Result.ImagesContainer.Fanart = tPreferredImagesContainer.ImagesContainer.Fanart

@@ -6,7 +6,7 @@
 | **Created** | January 3, 2026 |
 | **Priority** | Medium |
 | **Effort** | 1-2 hours |
-| **Status** | ⚠️ Partially Complete - Bug Found |
+| **Status** | ✅ Completed |
 | **Category** | UI/UX Improvements (UX) |
 | **Related Files** | [`frmMain.vb`](../../../frmMain.vb), [`frmMain.Designer.vb`](../../../frmMain.Designer.vb), [`dlgImgSelect.vb`](../../../dlgImgSelect.vb) |
 | **Depends On** | BL-UX-001 (pattern established) |
@@ -284,16 +284,16 @@ This ensures the menu item is only enabled when exactly one TV show is selected.
 - [x] CharacterArt appears (TV-specific)
 - [x] "Include Fanarts" button works for Landscape
 
-### Season Images (Not Working - Fix Required)
-- [ ] Season buttons visible in left panel (Season Banner, Season Fanart, etc.)
-- [ ] Season list appears in sub-images panel
-- [ ] Can select season-specific images
-- [ ] Season images save correctly to disk
+### Season Images
+- [x] Season buttons visible in left panel (Season Banner, Season Fanart, etc.)
+- [x] Season list appears in sub-images panel
+- [x] Can select season-specific images
+- [x] Season images save correctly to disk
 
 ### Save Functionality
 - [x] Selecting show images and clicking OK saves them
 - [x] Show images appear on disk in correct locations
-- [ ] Season images save to correct locations
+- [x] Season images save to correct locations
 - [x] Main window refreshes to show new images
 - [x] Canceling dialog makes no changes
 
