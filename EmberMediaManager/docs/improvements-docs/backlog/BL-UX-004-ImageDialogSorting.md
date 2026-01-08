@@ -1,8 +1,8 @@
-# BL-UI-005: Image Selection Dialog - Sorting Options
+# BL-UX-004: Image Selection Dialog - Sorting Options
 
 | Field | Value |
 |-------|-------|
-| **ID** | BL-UI-003 |
+| **ID** | BL-UX-004 |
 | **Category** | UI/UX (UI) |
 | **Priority** | Low |
 | **Effort** | 4-8 hrs |

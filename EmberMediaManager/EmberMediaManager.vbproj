@@ -540,12 +540,13 @@
     <None Include="docs\improvements-docs\backlog\BL-KI-002-EditSeasonImageSelectionBug.md" />
     <None Include="docs\improvements-docs\backlog\BL-KI-003-EditImagesAllSeasonsCrash.md" />
     <None Include="docs\improvements-docs\backlog\BL-KI-004-ExtrafanartsPreselectFix.md" />
-    <None Include="docs\improvements-docs\backlog\BL-UX-005-ImageDialogSorting.md" />
+    <None Include="docs\improvements-docs\backlog\BL-UX-004-ImageDialogSorting.md" />
     <None Include="docs\improvements-docs\backlog\BL-UX-001-EditImagesQuickAccess.md" />
     <None Include="docs\improvements-docs\backlog\BL-UX-002-EditImagesQuickAccess-TVShow.md" />
     <None Include="docs\improvements-docs\backlog\BL-UX-003-EditImagesQuickAccess-TVSeason.md" />
-    <None Include="docs\improvements-docs\backlog\BL-UX-004-FanartsForLandscape.md" />
-    <None Include="docs\improvements-docs\backlog\BL-CC-002-KodiCompliantExtraFanartNaming.md" />
+    <None Include="docs\improvements-docs\backlog\BL-FR-003-FanartsForLandscape.md" />
+    <None Include="docs\improvements-docs\backlog\BL-SC-001-KodiCompliantExtraFanartNaming.md" />
+    <None Include="docs\improvements-docs\backlog\BL-UX-005-ModernButtonStyles.md" />
     <None Include="docs\improvements-docs\backlog\_BL-TEMPLATE.md" />
     <None Include="docs\improvements-docs\FutureEnhancements.md" />
     <None Include="docs\improvements-docs\AddonRemovalPlan.md" />

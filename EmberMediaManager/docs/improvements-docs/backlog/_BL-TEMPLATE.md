@@ -6,10 +6,10 @@
 | **Created** | January 8, 2026 |
 | **Priority** | High / Medium / Low |
 | **Effort** | X-X hours |
-| **Status** | 📋 Open / ⚠️ In Progress / ✅ Completed |
+| **Status** | 📋 Open / 🔄 In Progress / ✅ Completed |
 | **Completed** | *(add date when completed, remove if open)* |
-| **Category** | *(see category codes below)* |
-| **Related Files** | `file1.vb`, `file2.vb` |
+| **Category** | *(see [category codes](../FutureEnhancements.md#backlog-id-format))* |
+| **Related Files** | [`file1.vb`](../../../file1.vb), [`file2.vb`](../../../file2.vb) |
 
 ##### [← Return to FutureEnhancements](../FutureEnhancements.md)
 
@@ -44,7 +44,7 @@
 
 ## [↑](#table-of-contents) Reproduction Steps
 
-*(For bugs only - remove section for enhancements)*
+*(For bugs only — remove section for enhancements)*
 
 1. Step one
 2. Step two
@@ -55,7 +55,7 @@
 
 ## [↑](#table-of-contents) Root Cause Analysis
 
-*(Technical analysis of why the issue occurs - can be brief for simple issues)*
+*(Technical analysis of why the issue occurs — can be brief for simple issues)*
 
 ---
 
@@ -63,11 +63,11 @@
 
 *(High-level description of the fix or implementation approach)*
 
-### Before (if applicable)
+### [↑](#table-of-contents) Before (if applicable)
 
     ' Code showing the problem
 
-### After (if applicable)
+### [↑](#table-of-contents) After (if applicable)
 
     ' Code showing the fix
 
@@ -77,7 +77,7 @@
 
 *(Detailed code changes, file locations, method modifications)*
 
-**File:** `filename.vb` — `MethodName()` method
+**File:** [`filename.vb`](../../../path/filename.vb) — `MethodName()` method
 
     ' Relevant code block
 
@@ -85,7 +85,7 @@
 
 ## [↑](#table-of-contents) Testing Summary
 
-*(Use table format for visibility - emoji status indicators: ⬜ Not tested, ✅ Passed, ❌ Failed, ⏸️ Skipped)*
+*(Use table format with status first — emoji indicators: ⬜ Not tested, ✅ Passed, ❌ Failed, ⏸️ Skipped)*
 
 | Status | Test Scenario |
 |:------:|---------------|
@@ -98,10 +98,12 @@
 
 ## [↑](#table-of-contents) Related Files
 
+*(Include links to all referenced files)*
+
 | File | Purpose |
 |------|---------|
-| `Path\file1.vb` | Description of relevance |
-| `Path\file2.vb` | Description of relevance |
+| [`Path\file1.vb`](../../../Path/file1.vb) | Description of relevance |
+| [`Path\file2.vb`](../../../Path/file2.vb) | Description of relevance |
 
 ---
 
@@ -111,7 +113,7 @@
 
 ---
 
-## Change History
+## [↑](#table-of-contents) Change History
 
 | Date | Description |
 |------|-------------|

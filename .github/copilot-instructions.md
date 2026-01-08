@@ -151,6 +151,14 @@ Comments and Documentation
 • 	Keep comments up to date
 • 	Use TODO comments for planned improvements
 
+Git Commit Messages
+• 	Always provide detailed, comprehensive commit messages
+• 	Include summary line followed by blank line and detailed bullet points
+• 	Group related changes under descriptive headers
+• 	List specific files, methods, or features changed
+• 	Note any file renames or follow-up actions required
+• 	Do NOT provide shortened/abbreviated versions — always use full detail
+
 Best Practices
 • 	Follow existing patterns
 • 	Extract complex logic into helper methods

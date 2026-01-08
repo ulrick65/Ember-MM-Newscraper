@@ -1,8 +1,8 @@
-﻿# BL-UX-004: Fanarts Available for Landscape Image Selection
+﻿# BL-FR-003: Fanarts Available for Landscape Image Selection
 
 | Field | Value |
 |-------|-------|
-| **ID** | BL-UX-004 |
+| **ID** | BL-FR-003 |
 | **Created** | January 4, 2026 |
 | **Priority** | Medium |
 | **Effort** | 4-5 hours |

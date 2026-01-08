@@ -284,6 +284,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <Compile Include="UIStyles.vb" />
     <Compile Include="XML Serialization\clsXMLRegexMapping.vb" />
     <Compile Include="XML Serialization\clsXMLSimpleMapping.vb" />
     <Compile Include="XML Serialization\clsXMLAdvancedSettings.vb" />

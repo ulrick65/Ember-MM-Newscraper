@@ -2850,8 +2850,22 @@ Public Class dlgImgSelect
         btnSeasonFanart.Text = Master.eLang.GetString(686, "Season Fanart")
         btnSeasonLandscape.Text = Master.eLang.GetString(1018, "Season Landscape")
         btnSeasonPoster.Text = Master.eLang.GetString(685, "Season Poster")
-        'Initialize "Include Fanarts" button text (control defined in Designer)
         btnIncludeFanarts.Text = Master.eLang.GetString(99996, "Include Fanarts")
+
+        'Apply modern button styles
+        UIStyles.ApplyPrimaryButtonStyle(btnOK)
+        UIStyles.ApplyPrimaryButtonStyle(btnIncludeFanarts)
+        UIStyles.ApplySecondaryButtonStyle(btnCancel)
+
+        'Left panel buttons - secondary style for navigation
+        UIStyles.ApplySecondaryButtonStyle(btnExtrafanarts)
+        UIStyles.ApplySecondaryButtonStyle(btnExtrathumbs)
+        UIStyles.ApplySecondaryButtonStyle(btnSeasonBanner)
+        UIStyles.ApplySecondaryButtonStyle(btnSeasonFanart)
+        UIStyles.ApplySecondaryButtonStyle(btnSeasonLandscape)
+        UIStyles.ApplySecondaryButtonStyle(btnSeasonPoster)
+        UIStyles.ApplySecondaryButtonStyle(btnSubImageUp)
+        UIStyles.ApplySecondaryButtonStyle(btnSubImageDown)
     End Sub
 
     ''' <summary>

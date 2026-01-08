@@ -231,14 +231,18 @@ Plans and implementations — what we're changing and why.
 
 ### [↑](#table-of-contents) Backlog Documents (`improvements-docs/backlog/`)
 
-Known issues and future work — tracked but not yet scheduled.
+Detailed tracking documents for bugs, enhancements, and improvements — includes root cause analysis, implementation plans, and testing checklists.
 
 | Document Type | Example | Purpose |
 |---------------|---------|---------|
 | Known Issue | `BL-KI-002-EditSeasonImageSelectionBug.md` | Bug documentation |
 | Future Enhancement | `BL-FE-001-FeatureName.md` | Feature request |
+| UI/UX Improvement | `BL-UX-006-ModernButtonStyles.md` | Interface enhancement |
 
-**Note:** See [FutureEnhancements.md](../improvements-docs/FutureEnhancements.md) for details on the backlog numbering scheme (BL-KI-XXX, BL-FE-XXX, etc.).
+**Resources:**
+- **Template:** [`_BL-TEMPLATE.md`](../improvements-docs/backlog/_BL-TEMPLATE.md) — Start here when creating a new BL document
+- **Backlog Index:** [FutureEnhancements.md](../improvements-docs/FutureEnhancements.md) — Master list and category codes (BL-KI-XXX, BL-UX-XXX, etc.)
+- **Detailed Requirements:** See [Backlog Document Template](#backlog-document-template-for-backlog) in the Templates section below
 
 ### [↑](#table-of-contents) Performance Data (`performance-data/`)
 
@@ -545,49 +549,42 @@ When creating or updating documentation, verify these items:
 
     *End of file*
 
-### [↑](#table-of-contents) Bug/Issue Document Template (for `backlog/`)
+### [↑](#table-of-contents) Backlog Document Template (for `backlog/`)
 
-    # BL-KI-XXX: Brief Issue Title
+For backlog items (bugs, enhancements, known issues), use the authoritative template:
 
-    | Field | Value |
-    |-------|-------|
-    | **ID** | BL-KI-XXX |
-    | **Created** | January 4, 2026 |
-    | **Priority** | High/Medium/Low |
-    | **Effort** | Low/Medium/High/TBD |
-    | **Status** | Open/In Progress/✅ Resolved |
-    | **Category** | Known Issues (KI) / Future Enhancement (FE) |
-    | **Related Files** | `file1.vb`, `file2.vb` |
+**Template location:** [`backlog/_BL-TEMPLATE.md`](../improvements-docs/backlog/_BL-TEMPLATE.md)
 
-    ---
+**Key requirements for BL documents:**
 
-    ## Problem Description
+| Element | Requirement |
+|---------|-------------|
+| **Header Table** | ID, Created, Priority, Effort (hours), Status, Category, Related Files |
+| **Status Emoji** | 📋 Open, 🔄 In Progress, ✅ Completed |
+| **Return Link** | `##### [← Return to FutureEnhancements](../FutureEnhancements.md)` |
+| **Related Files** | Include links: `[`file.vb`](../../../path/file.vb)` |
+| **File References** | All file mentions in body should include links |
+| **Testing Table** | Status column first, then scenario |
+| **TOC Links** | All `##` and `###` sections need `[↑](#table-of-contents)` |
 
-    Clear description of the issue...
+**Category codes** (from [FutureEnhancements.md](../improvements-docs/FutureEnhancements.md#backlog-id-format)):
 
-    ---
+| Code | Category |
+|------|----------|
+| PE | Performance Enhancements |
+| CC | Code Cleanup |
+| UX | UI/UX Improvements |
+| FR | Feature Requests |
+| CQ | Code Quality |
+| KI | Known Issues |
 
-    ## Steps to Reproduce
+**Workflow:**
 
-    1. Step one
-    2. Step two
-    3. **Observe:** What happens
-
-    ---
-
-    ## Expected Behavior
-
-    What should happen instead...
-
-    ---
-
-    ## Resolution (if resolved)
-
-    How it was fixed...
-
-    ---
-
-    *Created: January 4, 2026*
+1. Copy [`_BL-TEMPLATE.md`](../improvements-docs/backlog/_BL-TEMPLATE.md)
+2. Rename to `BL-XX-###-BriefTitle.md`
+3. Fill in all sections (remove unused sections like Reproduction Steps for enhancements)
+4. Add entry to [FutureEnhancements.md](../improvements-docs/FutureEnhancements.md)
+5. When completed, move entry to Completed Items section
 
 ---
 

@@ -1,8 +1,8 @@
-﻿# BL-CC-002: Kodi-Compliant ExtraFanart Naming
+﻿# BL-SC-001: Kodi-Compliant ExtraFanart Naming
 
 | | Document Info |
 |---------------|---|
-| **ID** | BL-CC-002 |
+| **ID** | BL-SC-001 |
 | **Category** | Code Cleanup (CC) |
 | **Priority** | Medium |
 | **Effort** | 4-6 hrs |
