@@ -5247,11 +5247,9 @@ Public Class frmMain
                             ' Apply selected images back to the movie
                             tmpDBElement.ImagesContainer = dlgImgS.Result.ImagesContainer
 
-                            ' Save to database
+                            ' Save to database and images to disk
+                            ' Note: Save_Movie with toDisk=True already calls SaveAllImages internally
                             Master.DB.Save_Movie(tmpDBElement, False, False, True, False, False)
-
-                            ' Save images to disk (images only, no NFO)
-                            tmpDBElement.ImagesContainer.SaveAllImages(tmpDBElement, False)
 
                             ' Refresh the display
                             RefreshRow_Movie(tmpDBElement.ID)
@@ -5396,16 +5394,10 @@ Public Class frmMain
                                 End If
                             Next
 
-                            ' Save to database
+                            ' Save to database and images to disk
+                            ' Note: Save_TVShow with toDisk=True already calls SaveAllImages internally
+                            ' for both show-level and season-level images (withEpisodes=False means seasons only)
                             Master.DB.Save_TVShow(tmpDBElement, False, False, True, False)
-
-                            ' Save show-level images to disk
-                            tmpDBElement.ImagesContainer.SaveAllImages(tmpDBElement, False)
-
-                            ' Save season-level images to disk
-                            For Each dbSeason In tmpDBElement.Seasons
-                                dbSeason.ImagesContainer.SaveAllImages(dbSeason, False)
-                            Next
 
                             ' Refresh the display
                             RefreshRow_TVShow(tmpDBElement.ID)

@@ -116,17 +116,40 @@ Public Class Scanner
         Next
 
         'extrafanarts
+        'BL-CC-002: Scan for Kodi-compliant numbered fanarts ([filename]-fanart1.jpg, etc.)
         Dim efList As New List(Of String)
+        Dim fileNameStack As String = Path.GetFileNameWithoutExtension(FileUtils.Common.RemoveStackingMarkers(tDBElement.Filename))
+        'Use Regex.Escape to handle special characters like [] in filenames
+        Dim numberedFanartPattern As New Regex("^" & Regex.Escape(fileNameStack) & "-fanart[0-9]+\.(jpg|png)$", RegexOptions.IgnoreCase)
+
+        'BL-CC-002: Migrate legacy extrafanart/ subfolder to new naming BEFORE scanning
+        'This ensures migrated files are picked up by the scan below
+        Dim mediaFolder As String = Directory.GetParent(tDBElement.Filename).FullName
+        Images.MigrateLegacyExtrafanarts_Movie(mediaFolder, fileNameStack)
+
         For Each a In FileUtils.GetFilenameList.Movie(tDBElement, Enums.ModifierType.MainExtrafanarts, bForced)
             If Directory.Exists(a) Then
                 Try
-                    efList.AddRange(Directory.GetFiles(a, "*.jpg"))
+                    'Get all jpg and png files, then filter with regex
+                    'Directory.GetFiles wildcards don't handle [] brackets properly
+                    For Each filePath In Directory.GetFiles(a, "*.jpg")
+                        If numberedFanartPattern.IsMatch(Path.GetFileName(filePath)) Then
+                            efList.Add(filePath)
+                        End If
+                    Next
+                    For Each filePath In Directory.GetFiles(a, "*.png")
+                        If numberedFanartPattern.IsMatch(Path.GetFileName(filePath)) Then
+                            efList.Add(filePath)
+                        End If
+                    Next
                 Catch ex As Exception
                     logger.Error(ex, New StackFrame().GetMethod().Name)
                 End Try
-                If efList.Count > 0 Then Exit For 'scan only one path to prevent image dublicates
+                If efList.Count > 0 Then Exit For 'scan only one path to prevent image duplicates
             End If
         Next
+        'Sort by fanart number to maintain order
+        efList.Sort()
         For Each ePath In efList
             tDBElement.ImagesContainer.Extrafanarts.Add(New MediaContainers.Image With {.LocalFilePath = ePath})
         Next
@@ -520,17 +543,36 @@ Public Class Scanner
         Next
 
         'extrafanarts
+        'BL-CC-002: Scan for Kodi-compliant numbered fanarts (fanart1.jpg, fanart2.jpg, etc.)
         Dim efList As New List(Of String)
+        Dim numberedFanartPattern As New Regex("^fanart[0-9]+\.(jpg|png)$", RegexOptions.IgnoreCase)
+
+        'BL-CC-002: Migrate legacy extrafanart/ subfolder to new naming BEFORE scanning
+        'This ensures migrated files are picked up by the scan below
+        Images.MigrateLegacyExtrafanarts_TVShow(tDBElement.ShowPath)
+
         For Each a In FileUtils.GetFilenameList.TVShow(tDBElement, Enums.ModifierType.MainExtrafanarts)
             If Directory.Exists(a) Then
                 Try
-                    efList.AddRange(Directory.GetFiles(a, "*.jpg"))
+                    'Only match numbered fanarts (fanart1.jpg, fanart2.png, etc.)
+                    For Each filePath In Directory.GetFiles(a, "fanart*.jpg")
+                        If numberedFanartPattern.IsMatch(Path.GetFileName(filePath)) Then
+                            efList.Add(filePath)
+                        End If
+                    Next
+                    For Each filePath In Directory.GetFiles(a, "fanart*.png")
+                        If numberedFanartPattern.IsMatch(Path.GetFileName(filePath)) Then
+                            efList.Add(filePath)
+                        End If
+                    Next
                 Catch ex As Exception
                     logger.Error(ex, New StackFrame().GetMethod().Name)
                 End Try
-                If efList.Count > 0 Then Exit For 'scan only one path to prevent image dublicates
+                If efList.Count > 0 Then Exit For 'scan only one path to prevent image duplicates
             End If
         Next
+        'Sort by fanart number to maintain order
+        efList.Sort()
         For Each ePath In efList
             tDBElement.ImagesContainer.Extrafanarts.Add(New MediaContainers.Image With {.LocalFilePath = ePath})
         Next

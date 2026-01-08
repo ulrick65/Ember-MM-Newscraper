@@ -544,7 +544,7 @@
     <None Include="docs\improvements-docs\backlog\BL-UX-002-EditImagesQuickAccess-TVShow.md" />
     <None Include="docs\improvements-docs\backlog\BL-UX-003-EditImagesQuickAccess-TVSeason.md" />
     <None Include="docs\improvements-docs\backlog\BL-UX-004-FanartsForLandscape.md" />
-    <None Include="docs\improvements-docs\backlog\BL-CC-002-KodiFanartNaming.md" />
+    <None Include="docs\improvements-docs\backlog\BL-CC-002-KodiCompliantExtraFanartNaming.md" />
     <None Include="docs\improvements-docs\FutureEnhancements.md" />
     <None Include="docs\improvements-docs\AddonRemovalPlan.md" />
     <None Include="docs\analysis-docs\IMDBScraperAnalysis.md" />

@@ -2626,8 +2626,25 @@ Public Class Database
         _movieDB.ImagesContainer.Keyart.LocalFilePath = Get_ArtForItem(_movieDB.ID, "movie", "keyart")
         _movieDB.ImagesContainer.Landscape.LocalFilePath = Get_ArtForItem(_movieDB.ID, "movie", "landscape")
         _movieDB.ImagesContainer.Poster.LocalFilePath = Get_ArtForItem(_movieDB.ID, "movie", "poster")
+        'BL-CC-002: Load extrafanarts using Kodi-compliant pattern matching
         If Not String.IsNullOrEmpty(_movieDB.ExtrafanartsPath) AndAlso Directory.Exists(_movieDB.ExtrafanartsPath) Then
-            For Each ePath As String In Directory.GetFiles(_movieDB.ExtrafanartsPath, "*.jpg")
+            Dim fileNameStack As String = Path.GetFileNameWithoutExtension(FileUtils.Common.RemoveStackingMarkers(_movieDB.Filename))
+            'Use Regex.Escape to handle special characters like [] in filenames
+            Dim numberedFanartPattern As New Regex("^" & Regex.Escape(fileNameStack) & "-fanart[0-9]+\.(jpg|png)$", RegexOptions.IgnoreCase)
+
+            Dim efList As New List(Of String)
+            For Each filePath In Directory.GetFiles(_movieDB.ExtrafanartsPath, "*.jpg")
+                If numberedFanartPattern.IsMatch(Path.GetFileName(filePath)) Then
+                    efList.Add(filePath)
+                End If
+            Next
+            For Each filePath In Directory.GetFiles(_movieDB.ExtrafanartsPath, "*.png")
+                If numberedFanartPattern.IsMatch(Path.GetFileName(filePath)) Then
+                    efList.Add(filePath)
+                End If
+            Next
+            efList.Sort()
+            For Each ePath In efList
                 _movieDB.ImagesContainer.Extrafanarts.Add(New MediaContainers.Image With {.LocalFilePath = ePath})
             Next
         End If
@@ -3316,8 +3333,24 @@ Public Class Database
         _TVDB.ImagesContainer.Keyart.LocalFilePath = Get_ArtForItem(_TVDB.ID, "tvshow", "keyart")
         _TVDB.ImagesContainer.Landscape.LocalFilePath = Get_ArtForItem(_TVDB.ID, "tvshow", "landscape")
         _TVDB.ImagesContainer.Poster.LocalFilePath = Get_ArtForItem(_TVDB.ID, "tvshow", "poster")
+        'BL-CC-002: Load extrafanarts using Kodi-compliant pattern matching for TV Shows
         If Not String.IsNullOrEmpty(_TVDB.ExtrafanartsPath) AndAlso Directory.Exists(_TVDB.ExtrafanartsPath) Then
-            For Each ePath As String In Directory.GetFiles(_TVDB.ExtrafanartsPath, "*.jpg")
+            'TV Shows use simple fanart1.jpg, fanart2.jpg pattern (no filename prefix)
+            Dim numberedFanartPattern As New Regex("^fanart[0-9]+\.(jpg|png)$", RegexOptions.IgnoreCase)
+
+            Dim efList As New List(Of String)
+            For Each filePath In Directory.GetFiles(_TVDB.ExtrafanartsPath, "*.jpg")
+                If numberedFanartPattern.IsMatch(Path.GetFileName(filePath)) Then
+                    efList.Add(filePath)
+                End If
+            Next
+            For Each filePath In Directory.GetFiles(_TVDB.ExtrafanartsPath, "*.png")
+                If numberedFanartPattern.IsMatch(Path.GetFileName(filePath)) Then
+                    efList.Add(filePath)
+                End If
+            Next
+            efList.Sort()
+            For Each ePath In efList
                 _TVDB.ImagesContainer.Extrafanarts.Add(New MediaContainers.Image With {.LocalFilePath = ePath})
             Next
         End If

@@ -21,6 +21,7 @@
 Imports System.Drawing
 Imports System.Drawing.Imaging
 Imports System.IO
+Imports System.Text.RegularExpressions
 Imports System.Threading.Tasks
 Imports System.Windows.Forms
 Imports NLog
@@ -92,6 +93,7 @@ Public Class Images
             logger.Error(ex, New StackFrame().GetMethod().Name)
         End Try
     End Sub
+
     ''' <summary>
     ''' Reset this instance to a pristine condition
     ''' </summary>
@@ -100,6 +102,7 @@ Public Class Images
         _image = Nothing
         _ms = New MemoryStream()
     End Sub
+
     ''' <summary>
     ''' Delete the given arbitrary file
     ''' </summary>
@@ -115,6 +118,7 @@ Public Class Images
             End Try
         End If
     End Sub
+
     ''' <summary>
     ''' Delete all movie images with specified image type
     ''' </summary>
@@ -132,7 +136,11 @@ Public Class Images
                         If Directory.Exists(tmpPath) Then
                             FileUtils.Delete.DeleteDirectory(tmpPath)
                         End If
-                    Case Enums.ModifierType.MainExtrafanarts, Enums.ModifierType.MainExtrathumbs
+                    Case Enums.ModifierType.MainExtrafanarts
+                        ' BL-CC-002: Clean up numbered fanarts (fanart1.jpg, etc.) instead of deleting subfolder
+                        ' The folder path now points to the media folder, not the extrafanart/ subfolder
+                        CleanupNumberedFanarts(a)
+                    Case Enums.ModifierType.MainExtrathumbs
                         If Directory.Exists(a) Then
                             FileUtils.Delete.DeleteDirectory(a)
                         End If
@@ -146,6 +154,7 @@ Public Class Images
             logger.Error(ex, New StackFrame().GetMethod().Name & Convert.ToChar(Keys.Tab) & "<" & DBMovie.Filename & ">")
         End Try
     End Sub
+
     ''' <summary>
     ''' Delete all movieset images with specified image type
     ''' </summary>
@@ -165,6 +174,7 @@ Public Class Images
             logger.Error(ex, New StackFrame().GetMethod().Name & Convert.ToChar(Keys.Tab) & "<" & DBMovieSet.MovieSet.Title & ">")
         End Try
     End Sub
+
     ''' <summary>
     ''' Delete all tv show AllSeasons images with specified image type
     ''' </summary>
@@ -184,6 +194,7 @@ Public Class Images
             logger.Error(ex, New StackFrame().GetMethod().Name & Convert.ToChar(Keys.Tab) & "<" & DBTVShow.ShowPath & ">")
         End Try
     End Sub
+
     ''' <summary>
     ''' Delete all tv episode images with specified image type
     ''' </summary>
@@ -211,6 +222,7 @@ Public Class Images
             logger.Error(ex, New StackFrame().GetMethod().Name & Convert.ToChar(Keys.Tab) & "<" & DBTVEpisode.ShowPath & ">")
         End Try
     End Sub
+
     ''' <summary>
     ''' Delete all tv season images with specified image type
     ''' </summary>
@@ -230,6 +242,7 @@ Public Class Images
             logger.Error(ex, New StackFrame().GetMethod().Name & Convert.ToChar(Keys.Tab) & "<" & DBTVSeason.ShowPath & ">")
         End Try
     End Sub
+
     ''' <summary>
     ''' Delete all tv show images with specified image type
     ''' </summary>
@@ -247,9 +260,9 @@ Public Class Images
                             FileUtils.Delete.DeleteDirectory(tmpPath)
                         End If
                     Case Enums.ModifierType.MainExtrafanarts
-                        If Directory.Exists(a) Then
-                            FileUtils.Delete.DeleteDirectory(a)
-                        End If
+                        ' BL-CC-002: Clean up numbered fanarts (fanart1.jpg, etc.) instead of deleting subfolder
+                        ' The folder path now points to the show folder, not the extrafanart/ subfolder
+                        CleanupNumberedFanarts(a)
                     Case Else
                         If File.Exists(a) Then
                             Delete(a)
@@ -260,6 +273,7 @@ Public Class Images
             logger.Error(ex, New StackFrame().GetMethod().Name & Convert.ToChar(Keys.Tab) & "<" & DBTVShow.ShowPath & ">")
         End Try
     End Sub
+
     ''' <summary>
     ''' Loads this Image from the contents of the supplied file
     ''' </summary>
@@ -313,12 +327,21 @@ Public Class Images
 
     Public Function LoadFromMemoryStream() As Boolean
         If HasMemoryStream Then
-            _image = New Bitmap(_ms)
-            Return True
+            Try
+                _ms.Position = 0 ' Ensure stream is at the beginning
+                _image = New Bitmap(_ms)
+                Return True
+            Catch ex As ArgumentException
+                ' Invalid image data - file exists but isn't a valid image
+                logger.Error(String.Format("[APIImages] [LoadFromMemoryStream]: Invalid image data - {0}", ex.Message))
+                _image = Nothing
+                Return False
+            End Try
         Else
             Return False
         End If
     End Function
+
     ''' <summary>
     ''' Loads this Image from the supplied URL
     ''' </summary>
@@ -410,6 +433,7 @@ Public Class Images
         LoadFromFile(fromPath)
         SaveToFile(toPath)
     End Sub
+
     ''' <summary>
     ''' Stores the Image to the supplied <paramref name="sPath"/>
     ''' </summary>
@@ -516,6 +540,7 @@ Public Class Images
         Clear() 'Dispose to save memory
         Return strReturn
     End Function
+
     ''' <summary>
     ''' Save the image as a MovieSet image
     ''' </summary>
@@ -580,6 +605,7 @@ Public Class Images
         Clear() 'Dispose to save memory
         Return strReturn
     End Function
+
     ''' <summary>
     ''' Save the image as a TVAllSeasons image
     ''' </summary>
@@ -639,6 +665,7 @@ Public Class Images
         Clear() 'Dispose to save memory
         Return strReturn
     End Function
+
     ''' <summary>
     ''' Save the image as a TVEpisode image
     ''' </summary>
@@ -693,6 +720,7 @@ Public Class Images
         Clear() 'Dispose to save memory
         Return strReturn
     End Function
+
     ''' <summary>
     ''' Save the image as a TVSeason image
     ''' </summary>
@@ -752,6 +780,7 @@ Public Class Images
         Clear() 'Dispose to save memory
         Return strReturn
     End Function
+
     ''' <summary>
     ''' Save the image as a TVShow image
     ''' </summary>
@@ -838,6 +867,7 @@ Public Class Images
             End If
         Next
     End Sub
+
     ''' <summary>
     ''' Save the image as an actor thumbnail
     ''' </summary>
@@ -856,47 +886,157 @@ Public Class Images
         Clear() 'Dispose to save memory
         Return tPath
     End Function
+
     ''' <summary>
-    ''' Save all movie Extrafanarts
+    ''' Deletes existing numbered fanart files from a folder while preserving the primary fanart file.
+    ''' </summary>
+    ''' <param name="folderPath">The folder path to clean up numbered fanarts from.</param>
+    ''' <param name="fileNameBase">Optional: The base filename to match for cleanup. If empty, cleans all numbered fanarts.</param>
+    ''' <remarks>
+    ''' BL-CC-002: Kodi-compliant extrafanart naming cleanup.
+    ''' Handles both patterns:
+    ''' - Simple: fanart1.jpg, fanart2.png (legacy/simple naming)
+    ''' - Prefixed: [filename]-fanart1.jpg, [filename]-fanart2.png (standard naming)
+    ''' Preserves primary fanart files (fanart.jpg or [filename]-fanart.jpg without number).
+    ''' </remarks>
+    Private Shared Sub CleanupNumberedFanarts(ByVal folderPath As String, Optional ByVal fileNameBase As String = "")
+        If String.IsNullOrEmpty(folderPath) OrElse Not Directory.Exists(folderPath) Then Return
+
+        Try
+            Dim existingFiles As New List(Of String)
+
+            ' Find all files that could be numbered fanarts
+            existingFiles.AddRange(Directory.GetFiles(folderPath, "*fanart*.jpg"))
+            existingFiles.AddRange(Directory.GetFiles(folderPath, "*fanart*.png"))
+
+            ' Build the pattern based on whether we have a specific filename base
+            Dim numberedFanartPattern As Regex
+            If Not String.IsNullOrEmpty(fileNameBase) Then
+                ' Match specific filename pattern: [filename]-fanart1.jpg, [filename]-fanart2.png
+                numberedFanartPattern = New Regex(Regex.Escape(fileNameBase) & "-fanart[0-9]+\.(jpg|png)$", RegexOptions.IgnoreCase)
+            Else
+                ' Match any numbered fanart pattern (for TV shows or generic cleanup)
+                ' - Simple: fanart1.jpg, fanart2.png
+                ' - Prefixed: anything-fanart1.jpg, anything-fanart2.png
+                numberedFanartPattern = New Regex("-?fanart[0-9]+\.(jpg|png)$", RegexOptions.IgnoreCase)
+            End If
+
+            For Each filePath In existingFiles
+                Dim fileName As String = Path.GetFileName(filePath)
+                If numberedFanartPattern.IsMatch(fileName) Then
+                    Try
+                        File.Delete(filePath)
+                        logger.Trace(String.Format("[CleanupNumberedFanarts] Deleted: {0}", fileName))
+                    Catch ex As Exception
+                        logger.Error(ex, New StackFrame().GetMethod().Name & Convert.ToChar(Keys.Tab) & "Failed to delete: " & filePath)
+                    End Try
+                End If
+            Next
+        Catch ex As Exception
+            logger.Error(ex, New StackFrame().GetMethod().Name & Convert.ToChar(Keys.Tab) & "Folder: " & folderPath)
+        End Try
+    End Sub
+
+    ''' <summary>
+    ''' Save all movie Extrafanarts using Kodi-compliant sequential naming (fanart1.jpg, fanart2.jpg, etc.)
     ''' </summary>
     ''' <param name="mMovie"><c>Database.DBElement</c> representing the movie being referred to</param>
-    ''' <returns><c>String</c> path to the saved image</returns>
-    ''' <remarks></remarks>
+    ''' <returns><c>String</c> path to the media folder where extrafanarts were saved</returns>
+    ''' <remarks>
+    ''' BL-CC-002: Implements Kodi-compliant extrafanart naming.
+    ''' Saves extrafanarts as [filename]-fanart1.jpg, [filename]-fanart2.jpg, etc. in the main media folder
+    ''' instead of the deprecated extrafanart/ subfolder with random filenames.
+    ''' Also handles migration from old extrafanart/ subfolder format.
+    ''' </remarks>
     Public Shared Function SaveMovieExtrafanarts(ByVal mMovie As Database.DBElement) As String
         Dim efPath As String = String.Empty
 
-        'First, (Down)Load all Extrafanarts from LocalFilePath or URL
-        For Each eImg As MediaContainers.Image In mMovie.ImagesContainer.Extrafanarts
-            eImg.LoadAndCache(mMovie.ContentType, True)
+        ' TODO: Logger call for troubleshooting [ulrick65, 1/7/2026]
+        logger.Trace(String.Format("[SaveMovieExtrafanarts] Called for: {0}{1}Stack trace:{1}{2}",
+                                   mMovie.Movie.Title,
+                                   Environment.NewLine,
+                                   Environment.StackTrace))
+
+        If String.IsNullOrEmpty(mMovie.Filename) Then Return efPath
+
+        ' TODO: Logger call for troubleshooting [ulrick65, 1/7/2026]
+        logger.Trace(String.Format("[SaveMovieExtrafanarts] Image count: {0}", mMovie.ImagesContainer.Extrafanarts.Count))
+        For i As Integer = 0 To mMovie.ImagesContainer.Extrafanarts.Count - 1
+            Dim eImg = mMovie.ImagesContainer.Extrafanarts(i)
+            logger.Trace(String.Format("[SaveMovieExtrafanarts] Image {0} BEFORE pre-load - LocalFilePath: {1}, HasMemoryStream: {2}, URLOriginal: {3}",
+                                       i,
+                                       If(String.IsNullOrEmpty(eImg.LocalFilePath), "(empty)", eImg.LocalFilePath),
+                                       If(eImg.ImageOriginal IsNot Nothing, eImg.ImageOriginal.HasMemoryStream.ToString(), "ImageOriginal=Nothing"),
+                                       If(String.IsNullOrEmpty(eImg.URLOriginal), "(empty)", eImg.URLOriginal)))
         Next
 
-        'Second, remove the old ones
-        Delete_Movie(mMovie, Enums.ModifierType.MainExtrafanarts, False)
-
-        'Thirdly, save all Extrafanarts
+        ' BL-CC-002: Pre-load ALL images into memory BEFORE any file operations.
+        ' This is critical because CleanupNumberedFanarts will delete files that
+        ' LocalFilePath may point to. After cleanup, we can only rely on MemoryStream.
+        ' We also clear LocalFilePath to prevent LoadAndCache from trying to reload
+        ' from files that no longer exist.
         For Each eImg As MediaContainers.Image In mMovie.ImagesContainer.Extrafanarts
-            If eImg.LoadAndCache(mMovie.ContentType, True) Then
-                efPath = eImg.ImageOriginal.SaveAsMovieExtrafanart(mMovie, If(Not String.IsNullOrEmpty(eImg.URLOriginal), Path.GetFileName(eImg.URLOriginal), Path.GetFileName(eImg.LocalFilePath)))
+            ' Load the image into memory
+            eImg.LoadAndCache(mMovie.ContentType, True)
+            ' Clear LocalFilePath so subsequent LoadAndCache calls don't try to load
+            ' from files that will be deleted by CleanupNumberedFanarts
+            eImg.LocalFilePath = String.Empty
+        Next
+
+        'Get the media folder and filename base for this movie
+        Dim mediaFolder As String = String.Empty
+        Dim fileNameStack As String = Path.GetFileNameWithoutExtension(FileUtils.Common.RemoveStackingMarkers(mMovie.Filename))
+
+        For Each folder In FileUtils.GetFilenameList.Movie(mMovie, Enums.ModifierType.MainExtrafanarts)
+            If Not String.IsNullOrEmpty(folder) AndAlso Directory.Exists(folder) Then
+                mediaFolder = folder
+                Exit For
             End If
         Next
 
-        'If efPath is empty (i.e. expert setting enabled but expert extrafanart scraping disabled) it will cause Ember to crash, therefore do check first
-        If Not String.IsNullOrEmpty(efPath) Then
-            Return Directory.GetParent(efPath).FullName
-        Else
-            Return String.Empty
-        End If
+        If String.IsNullOrEmpty(mediaFolder) Then Return efPath
+
+        'Second, clean up ALL existing numbered fanarts - the user's selection replaces them
+        CleanupNumberedFanarts(mediaFolder, fileNameStack)
+
+        'Third, save all Extrafanarts with sequential numbering
+        ' TODO: Legacy comment here [ulrick65, 1/7/2026]
+        ' Note: Legacy extrafanart/ folder migration now happens during scan (clsAPIScanner.vb)
+        Dim fanartIndex As Integer = 1
+        For Each eImg As MediaContainers.Image In mMovie.ImagesContainer.Extrafanarts
+            If eImg.LoadAndCache(mMovie.ContentType, True) Then
+                efPath = eImg.ImageOriginal.SaveAsMovieExtrafanart(mMovie, fanartIndex)
+                fanartIndex += 1
+            End If
+        Next
+
+        ' BL-CC-002: Clear all image memory after save loop completes
+        ' This replaces the Clear() calls that were removed from SaveAsMovieExtrafanart
+        ' to ensure all images remain in memory until the entire batch is saved
+        For Each eImg As MediaContainers.Image In mMovie.ImagesContainer.Extrafanarts
+            If eImg.ImageOriginal IsNot Nothing Then
+                eImg.ImageOriginal.Clear()
+            End If
+        Next
+
+        'Return the media folder path
+        Return If(Not String.IsNullOrEmpty(efPath), Path.GetDirectoryName(efPath), mediaFolder)
     End Function
+
+
     ''' <summary>
-    ''' Save the image as a movie's extrafanart
+    ''' Save the image as a movie's extrafanart using Kodi-compliant sequential naming.
     ''' </summary>
-    ''' <param name="mMovie"><c>Structures.DBMovie</c> representing the movie being referred to</param>
+    ''' <param name="mMovie"><c>Database.DBElement</c> representing the movie being referred to</param>
+    ''' <param name="fanartIndex">The sequential index for this extrafanart (1, 2, 3, etc.)</param>
     ''' <returns><c>String</c> path to the saved image</returns>
-    ''' <remarks></remarks>
-    Public Function SaveAsMovieExtrafanart(ByVal mMovie As Database.DBElement, ByVal sName As String) As String
+    ''' <remarks>
+    ''' BL-CC-002: Implements Kodi-compliant extrafanart naming.
+    ''' Saves as [filename]-fanart1.jpg, [filename]-fanart2.jpg, etc. following the same
+    ''' naming pattern as other movie images (poster, fanart, banner, etc.).
+    ''' </remarks>
+    Public Function SaveAsMovieExtrafanart(ByVal mMovie As Database.DBElement, ByVal fanartIndex As Integer) As String
         Dim efPath As String = String.Empty
-        Dim iMod As Integer = 0
-        Dim iVal As Integer = 1
 
         If String.IsNullOrEmpty(mMovie.Filename) Then Return efPath
 
@@ -909,21 +1049,19 @@ Public Class Images
         Try
             If doResize Then
                 ImageUtils.ResizeImage(_image, Master.eSettings.MovieExtrafanartsWidth, Master.eSettings.MovieExtrafanartsHeight)
-                'need to align _immage and _ms
+                'need to align _image and _ms
                 UpdateMSfromImg(_image)
             End If
 
-            For Each a In FileUtils.GetFilenameList.Movie(mMovie, Enums.ModifierType.MainExtrafanarts)
-                If Not String.IsNullOrEmpty(a) Then
-                    If Not Directory.Exists(a) Then
-                        Directory.CreateDirectory(a)
-                    End If
-                    If String.IsNullOrEmpty(sName) Then
-                        iMod = Functions.GetExtrafanartsModifier(a)
-                        iVal = iMod + 1
-                        sName = Path.Combine(a, String.Concat("extrafanart", iVal, ".jpg"))
-                    End If
-                    efPath = Path.Combine(a, sName)
+            ' Get the base filename (without extension) from the movie file to match other image naming
+            Dim fileNameStack As String = Path.GetFileNameWithoutExtension(FileUtils.Common.RemoveStackingMarkers(mMovie.Filename))
+
+            For Each mediaFolder In FileUtils.GetFilenameList.Movie(mMovie, Enums.ModifierType.MainExtrafanarts)
+                If Not String.IsNullOrEmpty(mediaFolder) AndAlso Directory.Exists(mediaFolder) Then
+                    ' BL-CC-002: Use Kodi-compliant naming with filename prefix
+                    ' Pattern: [filename]-fanart1.jpg, [filename]-fanart2.jpg, etc.
+                    Dim fileName As String = String.Format("{0}-fanart{1}.jpg", fileNameStack, fanartIndex)
+                    efPath = Path.Combine(mediaFolder, fileName)
                     SaveToFile(efPath)
                 End If
             Next
@@ -931,9 +1069,189 @@ Public Class Images
             logger.Error(ex, New StackFrame().GetMethod().Name)
         End Try
 
-        Clear() 'Dispose to save memory
+        ' BL-CC-002: Don't Clear() here - caller (SaveMovieExtrafanarts) handles cleanup
+        ' after all images are saved to prevent memory issues during batch save
         Return efPath
     End Function
+
+    ''' <summary>
+    ''' Migrates legacy extrafanart/ subfolder to Kodi-compliant naming during scan.
+    ''' Called by Scanner.GetFolderContents_Movie before scanning for extrafanarts.
+    ''' </summary>
+    ''' <param name="mediaFolder">The main media folder containing the movie file.</param>
+    ''' <param name="fileNameBase">The base filename for the new naming pattern.</param>
+    ''' <remarks>
+    ''' BL-CC-002: Automatic migration from deprecated extrafanart/ subfolder.
+    ''' This runs silently during library scan - no user action required.
+    ''' Files are moved (not copied) to conserve disk space.
+    ''' </remarks>
+    Public Shared Sub MigrateLegacyExtrafanarts_Movie(ByVal mediaFolder As String, ByVal fileNameBase As String)
+        If String.IsNullOrEmpty(mediaFolder) OrElse Not Directory.Exists(mediaFolder) Then Return
+
+        Dim legacyFolder As String = Path.Combine(mediaFolder, "extrafanart")
+        If Not Directory.Exists(legacyFolder) Then Return
+
+        Try
+            ' Get all image files from the legacy folder
+            Dim imageFiles As New List(Of String)
+            imageFiles.AddRange(Directory.GetFiles(legacyFolder, "*.jpg"))
+            imageFiles.AddRange(Directory.GetFiles(legacyFolder, "*.png"))
+
+            If imageFiles.Count = 0 Then Return
+
+            ' Sort files to ensure consistent ordering during migration
+            imageFiles.Sort()
+
+            ' Find the next available fanart index (in case some new-style files already exist)
+            Dim existingPattern As New Regex("^" & Regex.Escape(fileNameBase) & "-fanart([0-9]+)\.(jpg|png)$", RegexOptions.IgnoreCase)
+            Dim maxIndex As Integer = 0
+
+            For Each existingFile In Directory.GetFiles(mediaFolder, String.Concat(fileNameBase, "-fanart*.jpg"))
+                Dim match = existingPattern.Match(Path.GetFileName(existingFile))
+                If match.Success Then
+                    Dim idx As Integer = 0
+                    If Integer.TryParse(match.Groups(1).Value, idx) Then
+                        maxIndex = Math.Max(maxIndex, idx)
+                    End If
+                End If
+            Next
+            For Each existingFile In Directory.GetFiles(mediaFolder, String.Concat(fileNameBase, "-fanart*.png"))
+                Dim match = existingPattern.Match(Path.GetFileName(existingFile))
+                If match.Success Then
+                    Dim idx As Integer = 0
+                    If Integer.TryParse(match.Groups(1).Value, idx) Then
+                        maxIndex = Math.Max(maxIndex, idx)
+                    End If
+                End If
+            Next
+
+            Dim fanartIndex As Integer = maxIndex + 1
+            Dim migratedCount As Integer = 0
+
+            For Each sourceFile In imageFiles
+                Try
+                    Dim extension As String = Path.GetExtension(sourceFile).ToLower()
+                    If extension = ".jpeg" Then extension = ".jpg"
+
+                    ' Create new filename with Kodi-compliant naming
+                    Dim newFileName As String = String.Format("{0}-fanart{1}{2}", fileNameBase, fanartIndex, extension)
+                    Dim targetPath As String = Path.Combine(mediaFolder, newFileName)
+
+                    ' Move (not copy) the file to the new location
+                    If File.Exists(targetPath) Then
+                        File.Delete(targetPath)
+                    End If
+                    File.Move(sourceFile, targetPath)
+
+                    logger.Trace(String.Format("[MigrateLegacyExtrafanarts_Movie] Migrated: {0} -> {1}", Path.GetFileName(sourceFile), newFileName))
+                    migratedCount += 1
+                    fanartIndex += 1
+                Catch ex As Exception
+                    logger.Error(ex, New StackFrame().GetMethod().Name & " Failed to migrate: " & sourceFile)
+                End Try
+            Next
+
+            ' Delete the legacy folder (it's deprecated - remove it even if non-image files remain)
+            Try
+                Directory.Delete(legacyFolder, True) ' True = recursive delete
+                logger.Info(String.Format("[MigrateLegacyExtrafanarts_Movie] Deleted legacy folder and migrated {0} files: {1}", migratedCount, legacyFolder))
+            Catch ex As Exception
+                logger.Warn(String.Format("[MigrateLegacyExtrafanarts_Movie] Could not delete legacy folder (may have remaining files): {0}", legacyFolder))
+            End Try
+        Catch ex As Exception
+            logger.Error(ex, New StackFrame().GetMethod().Name & " Folder: " & mediaFolder)
+        End Try
+    End Sub
+
+    ''' <summary>
+    ''' Migrates legacy extrafanart/ subfolder to Kodi-compliant naming during scan.
+    ''' Called by Scanner.GetFolderContents_TVShow before scanning for extrafanarts.
+    ''' </summary>
+    ''' <param name="showPath">The TV show folder path.</param>
+    ''' <remarks>
+    ''' BL-CC-002: Automatic migration from deprecated extrafanart/ subfolder.
+    ''' TV shows use simple naming (fanart1.jpg, fanart2.jpg) without filename prefix.
+    ''' This runs silently during library scan - no user action required.
+    ''' Files are moved (not copied) to conserve disk space.
+    ''' </remarks>
+    Public Shared Sub MigrateLegacyExtrafanarts_TVShow(ByVal showPath As String)
+        If String.IsNullOrEmpty(showPath) OrElse Not Directory.Exists(showPath) Then Return
+
+        Dim legacyFolder As String = Path.Combine(showPath, "extrafanart")
+        If Not Directory.Exists(legacyFolder) Then Return
+
+        Try
+            ' Get all image files from the legacy folder
+            Dim imageFiles As New List(Of String)
+            imageFiles.AddRange(Directory.GetFiles(legacyFolder, "*.jpg"))
+            imageFiles.AddRange(Directory.GetFiles(legacyFolder, "*.png"))
+
+            If imageFiles.Count = 0 Then Return
+
+            ' Sort files to ensure consistent ordering during migration
+            imageFiles.Sort()
+
+            ' Find the next available fanart index (in case some new-style files already exist)
+            Dim existingPattern As New Regex("^fanart([0-9]+)\.(jpg|png)$", RegexOptions.IgnoreCase)
+            Dim maxIndex As Integer = 0
+
+            For Each existingFile In Directory.GetFiles(showPath, "fanart*.jpg")
+                Dim match = existingPattern.Match(Path.GetFileName(existingFile))
+                If match.Success Then
+                    Dim idx As Integer = 0
+                    If Integer.TryParse(match.Groups(1).Value, idx) Then
+                        maxIndex = Math.Max(maxIndex, idx)
+                    End If
+                End If
+            Next
+            For Each existingFile In Directory.GetFiles(showPath, "fanart*.png")
+                Dim match = existingPattern.Match(Path.GetFileName(existingFile))
+                If match.Success Then
+                    Dim idx As Integer = 0
+                    If Integer.TryParse(match.Groups(1).Value, idx) Then
+                        maxIndex = Math.Max(maxIndex, idx)
+                    End If
+                End If
+            Next
+
+            Dim fanartIndex As Integer = maxIndex + 1
+            Dim migratedCount As Integer = 0
+
+            For Each sourceFile In imageFiles
+                Try
+                    Dim extension As String = Path.GetExtension(sourceFile).ToLower()
+                    If extension = ".jpeg" Then extension = ".jpg"
+
+                    ' Create new filename with simple Kodi-compliant naming (no filename prefix for TV shows)
+                    Dim newFileName As String = String.Format("fanart{0}{1}", fanartIndex, extension)
+                    Dim targetPath As String = Path.Combine(showPath, newFileName)
+
+                    ' Move (not copy) the file to the new location
+                    If File.Exists(targetPath) Then
+                        File.Delete(targetPath)
+                    End If
+                    File.Move(sourceFile, targetPath)
+
+                    logger.Trace(String.Format("[MigrateLegacyExtrafanarts_TVShow] Migrated: {0} -> {1}", Path.GetFileName(sourceFile), newFileName))
+                    migratedCount += 1
+                    fanartIndex += 1
+                Catch ex As Exception
+                    logger.Error(ex, New StackFrame().GetMethod().Name & " Failed to migrate: " & sourceFile)
+                End Try
+            Next
+
+            ' Delete the legacy folder (it's deprecated - remove it even if non-image files remain)
+            Try
+                Directory.Delete(legacyFolder, True) ' True = recursive delete
+                logger.Info(String.Format("[MigrateLegacyExtrafanarts_TVShow] Deleted legacy folder and migrated {0} files: {1}", migratedCount, legacyFolder))
+            Catch ex As Exception
+                logger.Warn(String.Format("[MigrateLegacyExtrafanarts_TVShow] Could not delete legacy folder (may have remaining files): {0}", legacyFolder))
+            End Try
+        Catch ex As Exception
+            logger.Error(ex, New StackFrame().GetMethod().Name & " ShowPath: " & showPath)
+        End Try
+    End Sub
+
     ''' <summary>
     ''' Save all movie Extrathumbs
     ''' </summary>
@@ -965,6 +1283,7 @@ Public Class Images
             Return String.Empty
         End If
     End Function
+
     ''' <summary>
     ''' Save the image as a movie's extrathumb
     ''' </summary>
@@ -1026,6 +1345,7 @@ Public Class Images
             End If
         Next
     End Sub
+
     ''' <summary>
     ''' Save the image as an actor thumbnail
     ''' </summary>
@@ -1061,6 +1381,7 @@ Public Class Images
             End If
         Next
     End Sub
+
     ''' <summary>
     ''' Save the image as an actor thumbnail
     ''' </summary>
@@ -1080,43 +1401,72 @@ Public Class Images
         Return tPath
     End Function
 
+    ''' <summary>
+    ''' Save all TV show Extrafanarts using Kodi-compliant sequential naming (fanart1.jpg, fanart2.jpg, etc.)
+    ''' </summary>
+    ''' <param name="mShow"><c>Database.DBElement</c> representing the TV show being referred to</param>
+    ''' <returns><c>String</c> path to the show folder where extrafanarts were saved</returns>
+    ''' <remarks>
+    ''' BL-CC-002: Implements Kodi-compliant extrafanart naming.
+    ''' Saves extrafanarts as fanart1.jpg, fanart2.jpg, etc. in the main show folder
+    ''' instead of the deprecated extrafanart/ subfolder with random filenames.
+    ''' </remarks>
     Public Shared Function SaveTVShowExtrafanarts(ByVal mShow As Database.DBElement) As String
         Dim efPath As String = String.Empty
-        Dim iMod As Integer = 0
-        Dim iVal As Integer = 1
 
-        'First, (Down)Load all Extrafanarts from LocalFilePath or URL
+        If String.IsNullOrEmpty(mShow.ShowPath) Then Return efPath
+
+        ' BL-CC-002: Pre-load ALL images into memory BEFORE any file operations.
+        ' This is critical because CleanupNumberedFanarts will delete files that
+        ' LocalFilePath may point to. After cleanup, we can only rely on MemoryStream.
+        ' We also clear LocalFilePath to prevent LoadAndCache from trying to reload
+        ' from files that no longer exist.
         For Each eImg As MediaContainers.Image In mShow.ImagesContainer.Extrafanarts
             eImg.LoadAndCache(mShow.ContentType, True)
+            ' Clear LocalFilePath so subsequent LoadAndCache calls don't try to load
+            ' from files that will be deleted by CleanupNumberedFanarts
+            eImg.LocalFilePath = String.Empty
         Next
 
-        'Secound, remove the old ones
-        Images.Delete_TVShow(mShow, Enums.ModifierType.MainExtrafanarts)
+        'Second, remove old numbered fanarts (fanart1.jpg, fanart2.jpg, etc.) from the show folder
+        'BL-CC-002: Clean up numbered fanarts instead of deleting extrafanart/ subfolder
+        For Each showFolder In FileUtils.GetFilenameList.TVShow(mShow, Enums.ModifierType.MainExtrafanarts)
+            CleanupNumberedFanarts(showFolder)
+        Next
 
-        'Thirdly, save all Extrafanarts
+        'Third, save all Extrafanarts with sequential numbering
+        Dim fanartIndex As Integer = 1
         For Each eImg As MediaContainers.Image In mShow.ImagesContainer.Extrafanarts
             If eImg.LoadAndCache(mShow.ContentType, True) Then
-                efPath = eImg.ImageOriginal.SaveAsTVShowExtrafanart(mShow, If(Not String.IsNullOrEmpty(eImg.URLOriginal), Path.GetFileName(eImg.URLOriginal), Path.GetFileName(eImg.LocalFilePath)))
+                efPath = eImg.ImageOriginal.SaveAsTVShowExtrafanart(mShow, fanartIndex)
+                fanartIndex += 1
             End If
         Next
 
-        'If efPath is empty (i.e. expert setting enabled but expert extrafanart scraping disabled) it will cause Ember to crash, therefore do check first
-        If Not String.IsNullOrEmpty(efPath) Then
-            Return Directory.GetParent(efPath).FullName
-        Else
-            Return String.Empty
-        End If
+        ' BL-CC-002: Clear all image memory after save loop completes
+        For Each eImg As MediaContainers.Image In mShow.ImagesContainer.Extrafanarts
+            If eImg.ImageOriginal IsNot Nothing Then
+                eImg.ImageOriginal.Clear()
+            End If
+        Next
+
+        'Return the show folder path (not the parent of the file)
+        Return If(Not String.IsNullOrEmpty(efPath), Path.GetDirectoryName(efPath), String.Empty)
     End Function
+
     ''' <summary>
-    ''' Save the image as a tv show's extrafanart
+    ''' Save the image as a TV show's extrafanart using Kodi-compliant sequential naming.
     ''' </summary>
     ''' <param name="mShow"><c>Database.DBElement</c> representing the TV Show being referred to</param>
+    ''' <param name="fanartIndex">The sequential index for this extrafanart (1, 2, 3, etc.)</param>
     ''' <returns><c>String</c> path to the saved image</returns>
-    ''' <remarks></remarks>
-    Public Function SaveAsTVShowExtrafanart(ByVal mShow As Database.DBElement, ByVal sName As String) As String
+    ''' <remarks>
+    ''' BL-CC-002: Implements Kodi-compliant extrafanart naming.
+    ''' TV Shows use simple naming (fanart1.jpg, fanart2.jpg) since TV show images
+    ''' typically use simple names (fanart.jpg, poster.jpg) without filename prefix.
+    ''' </remarks>
+    Public Function SaveAsTVShowExtrafanart(ByVal mShow As Database.DBElement, ByVal fanartIndex As Integer) As String
         Dim efPath As String = String.Empty
-        Dim iMod As Integer = 0
-        Dim iVal As Integer = 1
 
         If String.IsNullOrEmpty(mShow.ShowPath) Then Return efPath
 
@@ -1129,21 +1479,16 @@ Public Class Images
         Try
             If doResize Then
                 ImageUtils.ResizeImage(_image, Master.eSettings.TVShowExtrafanartsWidth, Master.eSettings.TVShowExtrafanartsHeight)
-                'need to align _immage and _ms
+                'need to align _image and _ms
                 UpdateMSfromImg(_image)
             End If
 
-            For Each a In FileUtils.GetFilenameList.TVShow(mShow, Enums.ModifierType.MainExtrafanarts)
-                If Not String.IsNullOrEmpty(a) Then
-                    If Not Directory.Exists(a) Then
-                        Directory.CreateDirectory(a)
-                    End If
-                    If String.IsNullOrEmpty(sName) Then
-                        iMod = Functions.GetExtrafanartsModifier(a)
-                        iVal = iMod + 1
-                        sName = Path.Combine(a, String.Concat("extrafanart", iVal, ".jpg"))
-                    End If
-                    efPath = Path.Combine(a, sName)
+            For Each showFolder In FileUtils.GetFilenameList.TVShow(mShow, Enums.ModifierType.MainExtrafanarts)
+                If Not String.IsNullOrEmpty(showFolder) AndAlso Directory.Exists(showFolder) Then
+                    ' BL-CC-002: TV shows use simple naming (fanart1.jpg, fanart2.jpg)
+                    ' This matches how TV show images are typically named (fanart.jpg, poster.jpg)
+                    Dim fileName As String = String.Format("fanart{0}.jpg", fanartIndex)
+                    efPath = Path.Combine(showFolder, fileName)
                     SaveToFile(efPath)
                 End If
             Next
@@ -1151,7 +1496,8 @@ Public Class Images
             logger.Error(ex, New StackFrame().GetMethod().Name)
         End Try
 
-        Clear() 'Dispose to save memory
+        ' BL-CC-002: Don't Clear() here - caller (SaveTVShowExtrafanarts) handles cleanup
+        ' after all images are saved to prevent memory issues during batch save
         Return efPath
     End Function
 
@@ -1441,7 +1787,9 @@ Public Class Images
                     iLimit = Master.eSettings.TVShowExtrafanartsLimit
             End Select
 
-            If Not bKeepExisting OrElse Not DBElement.ImagesContainer.Extrafanarts.Count >= iLimit OrElse iLimit = 0 Then
+            ' BL-CC-002: When iLimit = 0, don't auto-select any extrafanarts (0 means "none", not "unlimited")
+            ' Only proceed with auto-selection if limit > 0 AND either not keeping existing OR we need more to reach the limit
+            If iLimit > 0 AndAlso (Not bKeepExisting OrElse DBElement.ImagesContainer.Extrafanarts.Count < iLimit) Then
                 iDifference = iLimit - DBElement.ImagesContainer.Extrafanarts.Count
                 Dim defImgList As New List(Of MediaContainers.Image)
                 Select Case tContentType
@@ -1485,7 +1833,8 @@ Public Class Images
                     iLimit = Master.eSettings.MovieExtrathumbsLimit
             End Select
 
-            If Not bKeepExisting OrElse Not DBElement.ImagesContainer.Extrathumbs.Count >= iLimit OrElse iLimit = 0 Then
+            ' BL-CC-002: When iLimit = 0, don't auto-select any extrathumbs (0 means "none", not "unlimited")
+            If iLimit > 0 AndAlso (Not bKeepExisting OrElse DBElement.ImagesContainer.Extrathumbs.Count < iLimit) Then
                 iDifference = iLimit - DBElement.ImagesContainer.Extrathumbs.Count
                 Dim defImgList As New List(Of MediaContainers.Image)
 
@@ -1837,6 +2186,7 @@ Public Class Images
             Next
         End If
     End Sub
+
     ''' <summary>
     ''' Determines the <c>ImageCodecInfo</c> from a given <c>ImageFormat</c>
     ''' </summary>
@@ -1854,6 +2204,7 @@ Public Class Images
 
         Return Nothing
     End Function
+
     ''' <summary>
     ''' Select the single most preferred Banner image
     ''' </summary>
@@ -1883,6 +2234,7 @@ Public Class Images
             Return False
         End If
     End Function
+
     ''' <summary>
     ''' Select the single most preferred Banner image
     ''' </summary>
@@ -1912,6 +2264,7 @@ Public Class Images
             Return False
         End If
     End Function
+
     ''' <summary>
     ''' Select the single most preferred Poster image
     ''' </summary>
@@ -1941,6 +2294,7 @@ Public Class Images
             Return False
         End If
     End Function
+
     ''' <summary>
     ''' Select the single most preferred Poster image
     ''' </summary>
@@ -2030,6 +2384,7 @@ Public Class Images
             Return False
         End If
     End Function
+
     ''' <summary>
     ''' Fetch a list of preferred extraFanart
     ''' </summary>
@@ -2103,6 +2458,7 @@ Public Class Images
             Return False
         End If
     End Function
+
     ''' <summary>
     ''' Fetch a list of preferred extrathumbs
     ''' </summary>
@@ -2187,6 +2543,7 @@ Public Class Images
             Return False
         End If
     End Function
+
     ''' <summary>
     ''' Select the single most preferred Keyart image
     ''' </summary>
@@ -2216,6 +2573,7 @@ Public Class Images
             Return False
         End If
     End Function
+
     ''' <summary>
     ''' Select the single most preferred Keyart image
     ''' </summary>
@@ -2269,6 +2627,7 @@ Public Class Images
             Return False
         End If
     End Function
+
     ''' <summary>
     ''' Select the single most preferred Fanart image
     ''' </summary>
@@ -2298,6 +2657,7 @@ Public Class Images
             Return False
         End If
     End Function
+
     ''' <summary>
     ''' Select the single most preferred Fanart image
     ''' </summary>
@@ -2520,6 +2880,7 @@ Public Class Images
             Return False
         End If
     End Function
+
     ''' <summary>
     ''' Select the single most preferred Banner image
     ''' </summary>
@@ -2620,6 +2981,7 @@ Public Class Images
             Return False
         End If
     End Function
+
     ''' <summary>
     ''' Select the single most preferred Banner image
     ''' </summary>
@@ -2739,6 +3101,7 @@ Public Class Images
             Return False
         End If
     End Function
+
     ''' <summary>
     ''' Select the single most preferred Fanart image
     ''' </summary>
@@ -2767,6 +3130,7 @@ Public Class Images
             Return False
         End If
     End Function
+
     ''' <summary>
     ''' Select the single most preferred Keyart image
     ''' </summary>
@@ -2807,6 +3171,7 @@ Public Class Images
             Return False
         End If
     End Function
+
     ''' <summary>
     ''' Select the single most preferred Poster image
     ''' </summary>

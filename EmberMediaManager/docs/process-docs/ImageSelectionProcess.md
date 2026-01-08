@@ -106,9 +106,9 @@ When editing a single item, users can manually select images via the Images tab.
 | 2 | `clsAPIModules.vb` | `ScrapeImage_TV()` (line 1476) |
 | 3 | `dlgImgSelect.vb` | `ShowDialog()` (line 193) |
 
-### [↑](#table-of-contents) 1.3 Quick Access (Double-Click on Image)
+### [↑](#table-of-contents) 1.3 Quick Access (Right Double-Click on Image)
 
-Double-clicking an image in the main window opens the image selection dialog directly.
+Right Double-clicking an image in the main window opens the image selection dialog directly, but ONLY for that image type.
 
 **Code Path:**
 

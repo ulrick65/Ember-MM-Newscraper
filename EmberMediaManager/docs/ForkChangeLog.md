@@ -198,7 +198,10 @@ The following features are deprecated and slated for removal in a future version
 | Bug Fix | TV Season images not saved after SingleScrape | See [BL-KI-001](backlog/BL-KI-001-TVSeasonImagesSaveIssue.md) |
 | Feature | Edit Season Images Quick Access | See [BL-UX-003](backlog/BL-UX-003-EditImagesQuickAccess-TVSeason.md) |
 | Bug Fix | Edit Season dialog - images not selectable | See [BL-KI-002](backlog/BL-KI-002-EditSeasonImageSelectionBug.md) |
-
+| Cleanup | Kodi-compliant extrafanart naming with automatic legacy migration | See [BL-CC-002](improvements-docs/backlog/BL-CC-002-KodiCompliantExtraFanartNaming.md) |
+| Bug Fix | Fixed wrong images loaded in Edit dialog when ExtrafanartsPath points to main folder | `clsAPIDatabase.vb` - Added regex filtering for numbered fanarts |
+| Bug Fix | Fixed images deleted before save due to cleanup/memory timing | `clsAPIImages.vb` - Pre-load images to memory before cleanup |
+| Bug Fix | Fixed duplicate SaveAllImages calls causing save failures | `frmMain.vb` - Removed duplicate calls from image edit handlers |
 
 **Script Updates:**
 

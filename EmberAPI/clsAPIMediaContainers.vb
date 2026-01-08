@@ -3988,6 +3988,10 @@ Namespace MediaContainers
                     ElseIf ImageThumb.HasMemoryStream AndAlso Not needFullsize AndAlso LoadBitmap Then
                         ImageThumb.LoadFromMemoryStream()
                     ElseIf ImageOriginal.HasMemoryStream AndAlso LoadBitmap Then
+
+                        ' TODO: Debug Logic Here [ulrick65, 1/7/2026]
+                        NLog.LogManager.GetCurrentClassLogger().Trace(String.Format("[LoadAndCache] Loading from MemoryStream for: {0}", LocalFilePath))
+
                         ImageOriginal.LoadFromMemoryStream()
                     ElseIf File.Exists(CacheThumbPath) AndAlso Not needFullsize Then
                         ImageThumb.LoadFromFile(CacheThumbPath, LoadBitmap)

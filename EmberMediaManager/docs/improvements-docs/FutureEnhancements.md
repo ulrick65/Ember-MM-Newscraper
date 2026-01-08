@@ -77,7 +77,6 @@ where `XX` is the category code and `###` is a sequential number.
 | Find/remove orphaned files | Low | 1-2 hrs | SolutionCleanupAnalysis | Script provided in doc | |
 | Replace BinaryFormatter in CloneDeep | Medium | 4-6 hrs | NfoFileImprovements 3.1 | Deprecated, security vulnerabilities | [BL-CC-001](backlog/BL-CC-001-ReplaceBinaryFormatter.md) |
 | Fix fragile multi-episode regex | Low | 2-3 hrs | NfoFileImprovements 3.2 | Use XmlReader instead | [BL-CQ-004](backlog/BL-CQ-004-MultiEpisodeRegex.md) |
-| Kodi-compliant fanart naming | Medium | 4-6 hrs | Eric | Save fanart1.jpg, fanart2.jpg, etc. per Kodi standard | [BL-CC-002](backlog/BL-CC-002-KodiFanartNaming.md) |
 
 ---
 
@@ -162,6 +161,7 @@ where `XX` is the category code and `###` is a sequential number.
 | Edit Season Images Quick Access | January 4, 2026 | [BL-UX-003](backlog/BL-UX-003-EditImagesQuickAccess-TVSeason.md) |
 | Edit Season dialog - most images not selectable | January 5, 2026 | [BL-KI-002](backlog/BL-KI-002-EditSeasonImageSelectionBug.md) |
 | Fanarts Available for Landscape Image Selection | January 6, 2026 | [BL-UX-004](backlog/BL-UX-004-FanartsForLandscape.md) |
+| Kodi-Compliant ExtraFanart Naming | January 7, 2026 | [BL-CC-002](backlog/BL-CC-002-KodiCompliantExtraFanartNaming.md) |
 
 ---
 

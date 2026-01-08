@@ -1369,34 +1369,37 @@ Namespace FileUtils
                     End With
 
                 Case Enums.ModifierType.MainExtrafanarts
+                    ' BL-CC-002: Kodi-compliant extrafanart naming
+                    ' Returns the media folder path for sequential fanart naming (fanart1.jpg, fanart2.jpg, etc.)
+                    ' instead of the deprecated extrafanart/ subfolder
                     With Master.eSettings
                         If isVideoTS Then
-                            If bForced OrElse (.MovieUseFrodo AndAlso .MovieExtrafanartsFrodo AndAlso Not .MovieXBMCProtectVTSBDMV) Then FilenameList.Add(Path.Combine(Directory.GetParent(fPath).FullName, "extrafanart"))
-                            If bForced OrElse (.MovieUseEden AndAlso .MovieExtrafanartsEden) Then FilenameList.Add(Path.Combine(Directory.GetParent(fPath).FullName, "extrafanart"))
+                            If bForced OrElse (.MovieUseFrodo AndAlso .MovieExtrafanartsFrodo AndAlso Not .MovieXBMCProtectVTSBDMV) Then FilenameList.Add(basePath)
+                            If bForced OrElse (.MovieUseEden AndAlso .MovieExtrafanartsEden) Then FilenameList.Add(basePath)
                             If .MovieUseExpert AndAlso .MovieExtrafanartsExpertVTS Then
                                 If .MovieUseBaseDirectoryExpertVTS Then
-                                    FilenameList.Add(Path.Combine(basePath, "extrafanart"))
+                                    FilenameList.Add(basePath)
                                 Else
-                                    FilenameList.Add(Path.Combine(fileParPath, "extrafanart"))
+                                    FilenameList.Add(fileParPath)
                                 End If
                             End If
                         ElseIf isBDRip Then
-                            If bForced OrElse (.MovieUseFrodo AndAlso .MovieExtrafanartsFrodo AndAlso Not .MovieXBMCProtectVTSBDMV) Then FilenameList.Add(Path.Combine(Directory.GetParent(Directory.GetParent(fPath).FullName).FullName, "extrafanart"))
-                            If bForced OrElse (.MovieUseEden AndAlso .MovieExtrafanartsEden) Then FilenameList.Add(Path.Combine(Directory.GetParent(Directory.GetParent(fPath).FullName).FullName, "extrafanart"))
+                            If bForced OrElse (.MovieUseFrodo AndAlso .MovieExtrafanartsFrodo AndAlso Not .MovieXBMCProtectVTSBDMV) Then FilenameList.Add(basePath)
+                            If bForced OrElse (.MovieUseEden AndAlso .MovieExtrafanartsEden) Then FilenameList.Add(basePath)
                             If .MovieUseExpert AndAlso .MovieExtrafanartsExpertBDMV Then
                                 If .MovieUseBaseDirectoryExpertBDMV Then
-                                    FilenameList.Add(Path.Combine(basePath, "extrafanart"))
+                                    FilenameList.Add(basePath)
                                 Else
-                                    FilenameList.Add(Path.Combine(Directory.GetParent(Directory.GetParent(fPath).FullName).FullName, "extrafanart"))
+                                    FilenameList.Add(Directory.GetParent(Directory.GetParent(fPath).FullName).FullName)
                                 End If
                             End If
                         ElseIf isSingle Then
-                            If bForced OrElse (.MovieUseFrodo AndAlso .MovieExtrafanartsFrodo) Then FilenameList.Add(Path.Combine(fileParPath, "extrafanart"))
-                            If bForced OrElse (.MovieUseEden AndAlso .MovieExtrafanartsEden) Then FilenameList.Add(Path.Combine(fileParPath, "extrafanart"))
+                            If bForced OrElse (.MovieUseFrodo AndAlso .MovieExtrafanartsFrodo) Then FilenameList.Add(fileParPath)
+                            If bForced OrElse (.MovieUseEden AndAlso .MovieExtrafanartsEden) Then FilenameList.Add(fileParPath)
                             If .MovieUseExpert AndAlso isVideoTSFile AndAlso .MovieRecognizeVTSExpertVTS AndAlso .MovieExtrafanartsExpertVTS Then
-                                FilenameList.Add(Path.Combine(fileParPath, "extrafanart"))
+                                FilenameList.Add(fileParPath)
                             ElseIf .MovieUseExpert AndAlso .MovieExtrafanartsExpertSingle Then
-                                FilenameList.Add(Path.Combine(fileParPath, "extrafanart"))
+                                FilenameList.Add(fileParPath)
                             End If
                         End If
                     End With
@@ -2390,9 +2393,12 @@ Namespace FileUtils
                     End With
 
                 Case Enums.ModifierType.MainExtrafanarts
+                    ' BL-CC-002: Kodi-compliant extrafanart naming
+                    ' Returns the show folder path for sequential fanart naming (fanart1.jpg, fanart2.jpg, etc.)
+                    ' instead of the deprecated extrafanart/ subfolder
                     With Master.eSettings
-                        If .TVUseFrodo AndAlso .TVShowExtrafanartsFrodo Then FilenameList.Add(Path.Combine(fShowPath, "extrafanart"))
-                        If .TVUseExpert AndAlso .TVShowExtrafanartsExpert Then FilenameList.Add(Path.Combine(fShowPath, "extrafanart"))
+                        If .TVUseFrodo AndAlso .TVShowExtrafanartsFrodo Then FilenameList.Add(fShowPath)
+                        If .TVUseExpert AndAlso .TVShowExtrafanartsExpert Then FilenameList.Add(fShowPath)
                     End With
 
                 Case Enums.ModifierType.MainFanart
