@@ -272,13 +272,14 @@ Public Class dlgSettings
              .Type = Master.eLang.GetString(36, "Movies"),
              .Panel = pnlMovieTrailers,
              .Order = 500})
-        SettingsPanels.Add(New Containers.SettingsPanel With {
-             .Name = "pnlMovieTheme",
-             .Text = Master.eLang.GetString(1068, "Scrapers - Themes"),
-             .ImageIndex = 11,
-             .Type = Master.eLang.GetString(36, "Movies"),
-             .Panel = pnlMovieThemes,
-             .Order = 600})
+        'TODO: BL-DR-001 - Theme scraper removed from solution, hiding panel until full cleanup
+        'SettingsPanels.Add(New Containers.SettingsPanel With {
+        '     .Name = "pnlMovieTheme",
+        '     .Text = Master.eLang.GetString(1068, "Scrapers - Themes"),
+        '     .ImageIndex = 11,
+        '     .Type = Master.eLang.GetString(36, "Movies"),
+        '     .Panel = pnlMovieThemes,
+        '     .Order = 600})
         SettingsPanels.Add(New Containers.SettingsPanel With {
              .Name = "pnlMovieSets",
              .Text = Master.eLang.GetString(38, "General"),
@@ -335,13 +336,14 @@ Public Class dlgSettings
              .Type = Master.eLang.GetString(653, "TV Shows"),
              .Panel = pnlTVImages,
              .Order = 400})
-        SettingsPanels.Add(New Containers.SettingsPanel With {
-             .Name = "pnlTVTheme",
-             .Text = Master.eLang.GetString(1068, "Scrapers - Themes"),
-             .ImageIndex = 11,
-             .Type = Master.eLang.GetString(653, "TV Shows"),
-             .Panel = pnlTVThemes,
-             .Order = 500})
+        'TODO: BL-DR-001 - Theme scraper removed from solution, hiding panel until full cleanup
+        'SettingsPanels.Add(New Containers.SettingsPanel With {
+        '     .Name = "pnlTVTheme",
+        '     .Text = Master.eLang.GetString(1068, "Scrapers - Themes"),
+        '     .ImageIndex = 11,
+        '     .Type = Master.eLang.GetString(653, "TV Shows"),
+        '     .Panel = pnlTVThemes,
+        '     .Order = 500})
         SettingsPanels.Add(New Containers.SettingsPanel With {
              .Name = "pnlGeneral",
              .Text = Master.eLang.GetString(38, "General"),
@@ -2909,7 +2911,6 @@ Public Class dlgSettings
             chkCleanPosterJPG.Checked = .CleanPosterJPG
             chkCleanPosterTBN.Checked = .CleanPosterTBN
             chkFileSystemCleanerWhitelist.Checked = .FileSystemCleanerWhitelist
-            chkGeneralCheckUpdates.Checked = .GeneralCheckUpdates
             chkGeneralDateAddedIgnoreNFO.Checked = .GeneralDateAddedIgnoreNFO
             chkGeneralDigitGrpSymbolVotes.Checked = .GeneralDigitGrpSymbolVotes
             chkGeneralImageFilter.Checked = .GeneralImageFilter
@@ -4883,7 +4884,6 @@ Public Class dlgSettings
             .FileSystemValidSubtitlesExts.AddRange(lstFileSystemValidSubtitlesExts.Items.OfType(Of String).ToList)
             .FileSystemValidThemeExts.Clear()
             .FileSystemValidThemeExts.AddRange(lstFileSystemValidThemeExts.Items.OfType(Of String).ToList)
-            .GeneralCheckUpdates = chkGeneralCheckUpdates.Checked
             .GeneralDateAddedIgnoreNFO = chkGeneralDateAddedIgnoreNFO.Checked
             .GeneralDigitGrpSymbolVotes = chkGeneralDigitGrpSymbolVotes.Checked
             .GeneralDateTime = CType(cbGeneralDateTime.SelectedItem, KeyValuePair(Of String, Enums.DateTime)).Value
@@ -6864,7 +6864,6 @@ Public Class dlgSettings
         btnTVSourcesRegexTVShowMatchingRemove.Text = Master.eLang.GetString(30, "Remove")
         btnTVSourceEdit.Text = Master.eLang.GetString(535, "Edit Source")
         chkFileSystemCleanerWhitelist.Text = Master.eLang.GetString(440, "Whitelist Video Extensions")
-        chkGeneralCheckUpdates.Text = Master.eLang.GetString(432, "Check for Updates")
         chkGeneralDateAddedIgnoreNFO.Text = Master.eLang.GetString(1209, "Ignore <dateadded> from NFO")
         chkGeneralDigitGrpSymbolVotes.Text = Master.eLang.GetString(1387, "Use digit grouping symbol for Votes count")
         chkGeneralDoubleClickScrape.Text = Master.eLang.GetString(1198, "Enable Image Scrape On Double Right Click")
@@ -6896,7 +6895,6 @@ Public Class dlgSettings
         chkGeneralNotificationScraped_TVShow.Text = Master.eLang.GetString(248, "Show Scraped")
         chkGeneralNotificationWarning.Text = Master.eLang.GetString(356, "Warning")
         chkGeneralOverwriteNfo.Text = Master.eLang.GetString(433, "Overwrite Non-conforming nfos")
-        chkGeneralDisplayGenresText.Text = Master.eLang.GetString(453, "Always Display Genre Text")
         chkGeneralDisplayLangFlags.Text = Master.eLang.GetString(489, "Display Language Flags")
         chkGeneralDisplayImgDims.Text = Master.eLang.GetString(457, "Display Image Dimensions")
         chkGeneralDisplayImgNames.Text = Master.eLang.GetString(1255, "Display Image Names")
@@ -7983,10 +7981,8 @@ Public Class dlgSettings
         chkCleanPosterJPG.CheckedChanged,
         chkCleanPosterTBN.CheckedChanged,
         chkFileSystemCleanerWhitelist.CheckedChanged,
-        chkGeneralCheckUpdates.CheckedChanged,
         chkGeneralDateAddedIgnoreNFO.CheckedChanged,
         chkGeneralDigitGrpSymbolVotes.CheckedChanged,
-        chkGeneralDisplayGenresText.CheckedChanged,
         chkGeneralDisplayImgDims.CheckedChanged,
         chkGeneralDisplayImgNames.CheckedChanged,
         chkGeneralDisplayLangFlags.CheckedChanged,

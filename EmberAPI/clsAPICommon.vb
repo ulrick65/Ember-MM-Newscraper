@@ -1045,40 +1045,6 @@ Public Class Functions
     End Function
 
     ''' <summary>
-    ''' Check for the lastest version of Ember
-    ''' </summary>
-    ''' <returns>Latest version as integer</returns>
-    ''' <remarks>Not implemented yet. This method is currently a stub, and always returns False</remarks>
-    Public Shared Function CheckNeedUpdate() As Boolean
-        'TODO STUB - Not implemented yet
-        Dim needUpdate As Boolean = False
-        'Dim sHTTP As New HTTP
-        'Dim platform As String = "x86"
-        'Dim updateXML As String = sHTTP.DownloadData(String.Format("http://pcjco.dommel.be/emm-r/{0}/versions.xml", If(IsBetaEnabled(), "updatesbeta", "updates")))
-        'sHTTP = Nothing
-        'If updateXML.Length > 0 Then
-        '    For Each v As ModulesManager.VersionItem In ModulesManager.VersionList
-        '        Dim vl As ModulesManager.VersionItem = v
-        '        Dim n As String = String.Empty
-        '        Dim xmlUpdate As XDocument
-        '        Try
-        '            xmlUpdate = XDocument.Parse(updateXML)
-        '        Catch
-        '            Return False
-        '        End Try
-        '        Dim xUdpate = From xUp In xmlUpdate...<Config>...<Modules>...<File> Where (xUp.<Version>.Value <> "" AndAlso xUp.<Name>.Value = vl.AssemblyFileName AndAlso xUp.<Platform>.Value = platform) Select xUp.<Version>.Value
-        '        Try
-        '            If Convert.ToInt16(xUdpate(0)) > Convert.ToInt16(v.Version) Then
-        '                v.NeedUpdate = True
-        '                needUpdate = True
-        '            End If
-        '        Catch ex As Exception
-        '        End Try
-        '    Next
-        'End If
-        Return needUpdate
-    End Function
-    ''' <summary>
     ''' Convert a Unix Timestamp to a VB DateTime
     ''' </summary>
     ''' <param name="timestamp">A valid unix-style timestamp</param>
@@ -1223,28 +1189,6 @@ Public Class Functions
     ''' <remarks>An example of the string returned would be "1.4.0.0", without the quotes, of course</remarks>
     Public Shared Function EmberAPIVersion() As String
         Return FileVersionInfo.GetVersionInfo(System.Reflection.Assembly.GetExecutingAssembly.Location).FileVersion
-    End Function
-
-    ''' <summary>
-    ''' Get the changelog for the latest version
-    ''' </summary>
-    ''' <returns>Changelog as string</returns>
-    ''' <remarks>Not implemented yet. Always returns "Unavailable"</remarks>
-    Public Shared Function GetChangelog() As String
-        'TODO STUB - Not implemented yet
-
-        'Try
-        '    Dim sHTTP As New HTTP
-        '    Dim strChangelog As String = sHTTP.DownloadData(String.Format("http://pcjco.dommel.be/emm-r/{0}/WhatsNew.txt", If(IsBetaEnabled(), "updatesbeta", "updates")))
-        '    sHTTP = Nothing
-
-        '    If strChangelog.Length > 0 Then
-        '        Return strChangelog
-        '    End If
-        'Catch ex As Exception
-        '    logger.Error(GetType(Functions),ex.Message, ex.StackTrace, "Error")
-        'End Try
-        Return "Unavailable"
     End Function
 
     ''' <summary>

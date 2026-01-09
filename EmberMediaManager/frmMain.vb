@@ -9775,7 +9775,7 @@ Public Class frmMain
     End Sub
 
     Private Sub dgvTVShows_Sorted(ByVal sender As Object, ByVal e As EventArgs) Handles dgvTVShows.Sorted
-        prevRow_TVShow = - 1
+        prevRow_TVShow = -1
         If dgvTVShows.RowCount > 0 Then
             dgvTVShows.CurrentCell = Nothing
             dgvTVShows.ClearSelection()
@@ -9839,34 +9839,6 @@ Public Class frmMain
         'End If
 
         SortingSave_TVShows()
-    End Sub
-
-    Private Sub mnuMainDonatePatreon_Click(ByVal sender As Object, ByVal e As EventArgs) _
-        Handles mnuMainDonatePatreon.Click
-        If Master.isWindows Then
-            Process.Start("https://www.patreon.com/embermediamanager")
-        Else
-            Using Explorer As New Process
-                Explorer.StartInfo.FileName = "xdg-open"
-                Explorer.StartInfo.Arguments = "https://www.patreon.com/embermediamanager"
-                Explorer.Start()
-            End Using
-        End If
-    End Sub
-
-    Private Sub mnuMainDonatePayPal_Click(ByVal sender As Object, ByVal e As EventArgs) _
-        Handles mnuMainDonatePayPal.Click
-        If Master.isWindows Then
-            Process.Start(
-                "https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=VWVJCUV3KAUX2&lc=CH&item_name=Ember%20Media%20Manager&currency_code=CHF&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted")
-        Else
-            Using Explorer As New Process
-                Explorer.StartInfo.FileName = "xdg-open"
-                Explorer.StartInfo.Arguments =
-                    "https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=VWVJCUV3KAUX2&lc=CH&item_name=Ember%20Media%20Manager&currency_code=CHF&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted"
-                Explorer.Start()
-            End Using
-        End If
     End Sub
 
     Private Sub DoTitleCheck()
@@ -12478,21 +12450,6 @@ Public Class frmMain
     Private Sub LoadWithGUI()
         Try
             logger.Trace("LoadWithGUI()")
-            'If Master.eSettings.CheckUpdates Then
-            '    If Functions.CheckNeedUpdate() Then
-            '        Using dNewVer As New dlgNewVersion
-            '            fLoading.Hide()
-            '            If dNewVer.ShowDialog() = Windows.Forms.DialogResult.Abort Then
-            '                tmrAppExit.Enabled = True
-            '                CloseApp = True
-            '            End If
-            '        End Using
-            '    End If
-            'End If
-
-            ' Not localized as is the Assembly file version
-            'Dim VersionNumberO As String = System.String.Format("{0}.{1}.{2}.{3}", My.Application.Info.Version.Major, My.Application.Info.Version.Minor, My.Application.Info.Version.Build, My.Application.Info.Version.Revision)
-
             If Not CloseApp Then
 
                 'moved to frmMain_Load
@@ -21017,15 +20974,12 @@ Public Class frmMain
         lblPosterTitle.Text = Master.eLang.GetString(148, "Poster")
         lblPremieredHeader.Text = Master.eLang.GetString(724, "Premiered")
         lblTrailerPathHeader.Text = Master.eLang.GetString(1058, "Trailer Path")
-        mnuMainDonate.Text = Master.eLang.GetString(708, "Donate")
-        mnuMainDonate.Text = Master.eLang.GetString(708, "Donate")
         mnuMainEdit.Text = Master.eLang.GetString(3, "&Edit")
         mnuMainEditSettings.Text = Master.eLang.GetString(4, "&Settings...")
         mnuMainFile.Text = Master.eLang.GetString(1, "&File")
         mnuMainFileExit.Text = Master.eLang.GetString(2, "E&xit")
         mnuMainHelp.Text = Master.eLang.GetString(5, "&Help")
         mnuMainHelpAbout.Text = Master.eLang.GetString(6, "&About...")
-        mnuMainHelpUpdate.Text = Master.eLang.GetString(850, "&Check For Updates...")
         mnuMainHelpVersions.Text = Master.eLang.GetString(793, "&Versions...")
         mnuMainToolsExport.Text = Master.eLang.GetString(1174, "Export")
         mnuMainToolsExportMovies.Text = Master.eLang.GetString(36, "Movies")
@@ -22023,7 +21977,7 @@ Public Class frmMain
     End Sub
 
     Private Sub mnuMainHelpBugTracker_Click(ByVal sender As Object, ByVal e As EventArgs) _
-        Handles mnuMainHelpBugTracker.Click
+        
         Functions.Launch(My.Resources.urlEmberBugTracker)
     End Sub
 
@@ -22048,21 +22002,6 @@ Public Class frmMain
     Private Sub tmrAppExit_Tick(ByVal sender As Object, ByVal e As EventArgs) Handles tmrAppExit.Tick
         tmrAppExit.Enabled = False
         Close()
-    End Sub
-
-    Private Sub CheckUpdatesToolStripMenuItem_Click(ByVal sender As Object, ByVal e As EventArgs) _
-        Handles mnuMainHelpUpdate.Click
-        If Functions.CheckNeedUpdate() Then
-            Using dNewVer As New dlgNewVersion
-                If dNewVer.ShowDialog() = DialogResult.Abort Then
-                    tmrAppExit.Enabled = True
-                    CloseApp = True
-                End If
-            End Using
-        Else
-            MessageBox.Show(Master.eLang.GetString(851, "No Updates at this time"), "Updates", MessageBoxButtons.OK,
-                            MessageBoxIcon.Information)
-        End If
     End Sub
 
     Private Sub lblIMDBHeader_Click(ByVal sender As Object, ByVal e As EventArgs) Handles lblIMDBHeader.Click

@@ -117,6 +117,7 @@ where `XX` is the category code and `###` is a sequential number.
 | Medium | Remove YAMJ NFO Support | 2-4 hrs | December 31, 2025 | ForkChangeLog | Legacy format, unused | |
 | Low | Remove External Subtitle Download | 2-4 hrs | December 31, 2025 | ForkChangeLog | Broken / Not needed | |
 | Low | Remove TV Tunes/Themes code | 2-4 hrs | December 31, 2025 | ForkChangeLog | Broken / Not needed | |
+| Low | Remove Theme Scraper Code | 2-4 hrs | January 8, 2026 | Settings cleanup | Quick fix applied (panels hidden); full removal pending | [BL-DR-001](backlog/BL-DR-001-RemoveThemeScraperCode.md) |
 
 ---
 
@@ -193,7 +194,7 @@ where `XX` is the category code and `###` is a sequential number.
 
 ---
 
-## [↑](#table-of-contents) Completed Items — 20 items
+## [↑](#table-of-contents) Completed Items — 23 items
 
 *Items moved here when completed, with Added date showing time to completion.*
 
@@ -219,6 +220,10 @@ where `XX` is the category code and `###` is a sequential number.
 | Kodi-Compliant ExtraFanart Naming | January 5, 2026 | January 7, 2026 | 2 | [BL-SC-001](backlog/BL-SC-001-KodiCompliantExtraFanartNaming.md) |
 | Extrafanarts/Extrathumbs Dialog Preselect Fix | January 8, 2026 | January 8, 2026 | 0 | [BL-KI-004](backlog/BL-KI-004-ExtrafanartsPreselectFix.md) |
 | Modern Button Styles for WinForms UI | January 8, 2026 | January 8, 2026 | 0 | [BL-UX-005](backlog/BL-UX-005-ModernButtonStyles.md) |
+| Remove Bug Tracker from Help Menu | January 8, 2026 | January 8, 2026 | 0 | [BL-DR-002](backlog/BL-DR-002-RemoveBugTrackerHelpMenu.md) |
+| Remove Check for Updates and Donate features | January 8, 2026 | January 8, 2026 | 0 | [BL-DR-003](backlog/BL-DR-003-RemoveCheckForUpdates.md) |
+| "Always Show Genre Text" setting not saving | January 9, 2026 | January 9, 2026 | 0 | [BL-KI-005](backlog/BL-KI-005-GenreTextSettingNotSaving.md) |
+
 
 ---
 

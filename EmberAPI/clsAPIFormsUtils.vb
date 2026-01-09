@@ -50,27 +50,40 @@ Namespace FormUtils
 
     End Class
 
+    ''' <summary>
+    ''' A TextBox control that displays watermark text when empty.
+    ''' </summary>
+    <DesignerCategory("Code")>
+    <ToolboxItem(True)>
+    <ToolboxBitmap(GetType(TextBox))>
     Public Class TextBox_with_Watermark
         Inherits TextBox
 
-        'Declare A Few Variables
-        Dim WaterText As String
-        Dim WaterColor As Color
-        Dim WaterFont As Font
-        Dim WaterBrush As SolidBrush
-        Dim WaterContainer As Panel
+        Private _waterText As String = "Default Watermark"
+        Private _waterColor As Color = Color.Gray
+        Private _waterFont As Font
+        Private _waterBrush As SolidBrush
+        Private _waterContainer As Panel
 
         Public Sub New()
             MyBase.New()
-            StartProcess()
+            ' Only initialize watermark functionality at runtime, not in Designer
+            If Not DesignMode AndAlso Not IsInDesignMode() Then
+                InitializeWatermark()
+            End If
         End Sub
 
-        Private Sub StartProcess()
-            'Assign Values To the Variables
-            WaterText = "Default Watermark"
-            WaterColor = Color.Gray
-            WaterFont = New Font(Font, FontStyle.Italic)
-            WaterBrush = New SolidBrush(WaterColor)
+        ''' <summary>
+        ''' Additional check for design mode that works during construction
+        ''' </summary>
+        Private Function IsInDesignMode() As Boolean
+            ' LicenseManager check works during constructor when DesignMode property doesn't
+            Return LicenseManager.UsageMode = LicenseUsageMode.Designtime
+        End Function
+
+        Private Sub InitializeWatermark()
+            _waterFont = New Font(Font, FontStyle.Italic)
+            _waterBrush = New SolidBrush(_waterColor)
 
             CreateWatermark()
 
@@ -79,14 +92,16 @@ Namespace FormUtils
         End Sub
 
         Private Sub CreateWatermark()
-            WaterContainer = New Panel
-            Controls.Add(WaterContainer)
-            AddHandler WaterContainer.Click, AddressOf Clicked
-            AddHandler WaterContainer.Paint, AddressOf Painted
+            _waterContainer = New Panel
+            Controls.Add(_waterContainer)
+            AddHandler _waterContainer.Click, AddressOf Clicked
+            AddHandler _waterContainer.Paint, AddressOf Painted
         End Sub
 
         Private Sub RemoveWatermark()
-            Controls.Remove(WaterContainer)
+            If _waterContainer IsNot Nothing Then
+                Controls.Remove(_waterContainer)
+            End If
         End Sub
 
         Private Sub ChangeText(sender As Object, e As EventArgs)
@@ -98,7 +113,7 @@ Namespace FormUtils
         End Sub
 
         Private Sub ChangeFont(sender As Object, e As EventArgs)
-            WaterFont = New Font(Font, FontStyle.Italic)
+            _waterFont = New Font(Font, FontStyle.Italic)
         End Sub
 
         Private Sub Clicked(sender As Object, e As EventArgs)
@@ -106,38 +121,47 @@ Namespace FormUtils
         End Sub
 
         Private Sub Painted(sender As Object, e As PaintEventArgs)
+            If _waterContainer Is Nothing Then Exit Sub
+
             Dim bHasBorder As Boolean = Not BorderStyle = BorderStyle.None
-            WaterContainer.Location = New Point(If(bHasBorder, 3, 2), If(bHasBorder, 1, 0))
-            WaterContainer.Anchor = AnchorStyles.Left Or AnchorStyles.Right
-            WaterContainer.Height = Height - If(bHasBorder, 2, 0)
-            WaterContainer.Width = Width - If(bHasBorder, 4, 1)
-            WaterBrush = New SolidBrush(WaterColor)
+            _waterContainer.Location = New Point(If(bHasBorder, 3, 2), If(bHasBorder, 1, 0))
+            _waterContainer.Anchor = AnchorStyles.Left Or AnchorStyles.Right
+            _waterContainer.Height = Height - If(bHasBorder, 2, 0)
+            _waterContainer.Width = Width - If(bHasBorder, 4, 1)
+            _waterBrush = New SolidBrush(_waterColor)
 
             Dim Graphic As Graphics = e.Graphics
-            Graphic.DrawString(WaterText, WaterFont, WaterBrush, New PointF(-2.0!, 1.0!))
+            Graphic.DrawString(_waterText, _waterFont, _waterBrush, New PointF(-2.0!, 1.0!))
         End Sub
 
         Protected Overrides Sub OnInvalidated(e As System.Windows.Forms.InvalidateEventArgs)
             MyBase.OnInvalidated(e)
-            WaterContainer.Invalidate()
+            If _waterContainer IsNot Nothing Then
+                _waterContainer.Invalidate()
+            End If
         End Sub
 
-        <Category("Watermark Attributes"), Description("Sets Watermark Text")> Public Property WatermarkText As String
+        <Category("Watermark Attributes")>
+        <Description("Sets Watermark Text")>
+        <DefaultValue("Default Watermark")>
+        Public Property WatermarkText As String
             Get
-                Return WaterText
+                Return _waterText
             End Get
             Set(value As String)
-                WaterText = value
+                _waterText = value
                 Invalidate()
             End Set
         End Property
 
-        <Category("Watermark Attributes"), Description("Sets Watermark Color")> Public Property WatermarkColor As Color
+        <Category("Watermark Attributes")>
+        <Description("Sets Watermark Color")>
+        Public Property WatermarkColor As Color
             Get
-                Return WaterColor
+                Return _waterColor
             End Get
             Set(value As Color)
-                WaterColor = value
+                _waterColor = value
                 Invalidate()
             End Set
         End Property

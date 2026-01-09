@@ -327,12 +327,6 @@
     <Compile Include="dlgNewSet.vb">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="dlgNewVersion.Designer.vb">
-      <DependentUpon>dlgNewVersion.vb</DependentUpon>
-    </Compile>
-    <Compile Include="dlgNewVersion.vb">
-      <SubType>Form</SubType>
-    </Compile>
     <Compile Include="dlgRestart.Designer.vb">
       <DependentUpon>dlgRestart.vb</DependentUpon>
     </Compile>
@@ -473,9 +467,6 @@
     <EmbeddedResource Include="dlgNewSet.resx">
       <DependentUpon>dlgNewSet.vb</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="dlgNewVersion.resx">
-      <DependentUpon>dlgNewVersion.vb</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="dlgRestart.resx">
       <DependentUpon>dlgRestart.vb</DependentUpon>
     </EmbeddedResource>
@@ -527,6 +518,7 @@
     <None Include="docs\analysis-docs\ImageThumbnailAnalysis.md" />
     <None Include="docs\analysis-docs\PerformanceAnalysis.md" />
     <None Include="docs\analysis-docs\AsyncImageDownloadAnalysis.md" />
+    <None Include="docs\improvements-docs\backlog\BL-DR-001-RemoveThemeScraperCode.md" />
     <None Include="docs\DocumentIndex.md" />
     <None Include="docs\improvements-docs\backlog\BL-CC-001-ReplaceBinaryFormatter.md" />
     <None Include="docs\improvements-docs\backlog\BL-CQ-001-IMDB-ThreadSafety.md" />
@@ -534,12 +526,15 @@
     <None Include="docs\improvements-docs\backlog\BL-CQ-003-NFOSpecificExceptionHandling.md" />
     <None Include="docs\improvements-docs\backlog\BL-CQ-004-MultiEpisodeRegex.md" />
     <None Include="docs\improvements-docs\backlog\BL-CQ-005-NFODateHandling.md" />
+    <None Include="docs\improvements-docs\backlog\BL-DR-002-RemoveBugTrackerHelpMenu.md" />
+    <None Include="docs\improvements-docs\backlog\BL-DR-003-RemoveCheckForUpdates.md" />
     <None Include="docs\improvements-docs\backlog\BL-FR-001-NFOStrategyPattern.md" />
     <None Include="docs\improvements-docs\backlog\BL-FR-002-NFOSeparateConcerns.md" />
     <None Include="docs\improvements-docs\backlog\BL-KI-001-TVSeasonImagesSaveIssue.md" />
     <None Include="docs\improvements-docs\backlog\BL-KI-002-EditSeasonImageSelectionBug.md" />
     <None Include="docs\improvements-docs\backlog\BL-KI-003-EditImagesAllSeasonsCrash.md" />
     <None Include="docs\improvements-docs\backlog\BL-KI-004-ExtrafanartsPreselectFix.md" />
+    <None Include="docs\improvements-docs\backlog\BL-KI-005-GenreTextSettingNotSaving.md" />
     <None Include="docs\improvements-docs\backlog\BL-UX-004-ImageDialogSorting.md" />
     <None Include="docs\improvements-docs\backlog\BL-UX-001-EditImagesQuickAccess.md" />
     <None Include="docs\improvements-docs\backlog\BL-UX-002-EditImagesQuickAccess-TVShow.md" />
@@ -586,6 +581,7 @@
     <None Include="docs\process-docs\StudioMappingProcess.md" />
     <None Include="docs\release-notes\ReleaseNotes-v1.12.2.0.md" />
     <None Include="docs\process-docs\DocumentationStandardsProcess.md" />
+    <None Include="docs\TemporaryNotepad.md" />
     <None Include="docs\version-updates\VersionUpdates_20260102_163739.csv" />
     <None Include="scripts\BuildCleanup.ps1" />
     <None Include="scripts\UpdateAssemblyVersions.ps1" />
