@@ -692,6 +692,12 @@ Public Class dlgImgSelect
         If Not e.Cancelled Then
             CreateTopImages()
 
+            ' Auto-select Extrafanarts view if it's the only enabled image type
+            ' This improves UX when user opens dialog specifically to edit extrafanarts
+            If IsOnlyExtrafanartsEnabled() Then
+                SubImageTypeChanged(Enums.ModifierType.MainExtrafanarts)
+            End If
+
             lblStatus.Text = Master.eLang.GetString(954, "(Down)Loading New Images...")
             pbStatus.Style = ProgressBarStyle.Continuous
             bwImgDownload.WorkerReportsProgress = True
@@ -2488,6 +2494,35 @@ Public Class dlgImgSelect
                                .Season = tSeason.Season})
         Next
     End Sub
+
+    ''' <summary>
+    ''' Checks if Extrafanarts is the only enabled image type.
+    ''' Used to auto-select Extrafanarts view when dialog opens for extrafanarts-only editing.
+    ''' </summary>
+    ''' <returns>True if only Extrafanarts is enabled, False otherwise.</returns>
+    Private Function IsOnlyExtrafanartsEnabled() As Boolean
+        Return DoMainExtrafanarts AndAlso
+               Not DoMainBanner AndAlso
+               Not DoMainCharacterArt AndAlso
+               Not DoMainClearArt AndAlso
+               Not DoMainClearLogo AndAlso
+               Not DoMainDiscArt AndAlso
+               Not DoMainExtrathumbs AndAlso
+               Not DoMainFanart AndAlso
+               Not DoMainKeyart AndAlso
+               Not DoMainLandscape AndAlso
+               Not DoMainPoster AndAlso
+               Not DoAllSeasonsBanner AndAlso
+               Not DoAllSeasonsFanart AndAlso
+               Not DoAllSeasonsLandscape AndAlso
+               Not DoAllSeasonsPoster AndAlso
+               Not DoSeasonBanner AndAlso
+               Not DoSeasonFanart AndAlso
+               Not DoSeasonLandscape AndAlso
+               Not DoSeasonPoster AndAlso
+               Not DoEpisodeFanart AndAlso
+               Not DoEpisodePoster
+    End Function
 
     Private Sub lblAnyImage_DoubleClick(sender As Object, e As EventArgs)
         Cursor.Current = Cursors.WaitCursor

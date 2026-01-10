@@ -102,6 +102,9 @@ where `XX` is the category code and `###` is a sequential number.
 | Low | Force GC during long batch operations | 1 hr | December 31, 2025 | PerformanceAnalysis R6.2 | Every N items during batch scraping | |
 | Low | Reorganize the frmMain.vb file | 2-3 hrs | January 8, 2026 | Eric | Organize sections to group things better | |
 | Low | Specific exception handling in NFO Load | 2-3 hrs | December 26, 2025 | NfoFileImprovements 1.2 | Replace generic Exception catches | [BL-CQ-003](backlog/BL-CQ-003-NFOSpecificExceptionHandling.md) |
+| Low | Improve logging capabilities | 4-6 hrs | January 10, 2026 | Eric | Better logging levels (Debug, Info, Trace); settings to configure; cleanup existing logs | |
+| Low | Improve logging capabilities | 4-6 hrs | January 10, 2026 | Eric | Add settings for log level/retention; enhance log viewer | [BL-CQ-006](backlog/BL-CQ-006-ImproveLogging.md) |
+| Low | Add missing certification languages as encountered | 1 hr | January 10, 2026 | Eric | Add countries to XML when "Unhandled certification language" appears in logs | [BL-CQ-007](backlog/BL-CQ-007-AddCertificationLanguages.md) |
 
 ---
 
@@ -121,7 +124,7 @@ where `XX` is the category code and `###` is a sequential number.
 
 ---
 
-## [↑](#table-of-contents) Feature Requests (FR) — 2 items
+## [↑](#table-of-contents) Feature Requests (FR) — 4 items
 
 *New functionality.*
 
@@ -129,6 +132,9 @@ where `XX` is the category code and `###` is a sequential number.
 |----------|------|--------|-------|--------|-------|---------|
 | Low | Separate NFO reading/validation | 6-10 hrs | December 26, 2025 | NfoFileImprovements 4.2 | NFOValidator, NFOReader, NFONormalizer | [BL-FR-002](backlog/BL-FR-002-NFOSeparateConcerns.md) |
 | Low | Strategy pattern for NFO formats | 8-12 hrs | December 26, 2025 | NfoFileImprovements 4.1 | INfoWriter interface for extensibility | [BL-FR-001](backlog/BL-FR-001-NFOStrategyPattern.md) |
+| Low | Keyboard Shortcuts Settings Page | 8-16 hrs | January 10, 2026 | Eric | Create settings UI to display/edit shortcuts; currently all hardcoded | [BL-FR-004](backlog/BL-FR-004-KeyboardShortcutsSettings.md) |
+| Low | Implement yt-dlp for trailer downloads | 8-12 hrs | January 10, 2026 | Eric | Auto-download trailers using yt-dlp; GitHub: https://github.com/yt-dlp/yt-dlp | |
+
 
 ---
 
@@ -158,7 +164,7 @@ where `XX` is the category code and `###` is a sequential number.
 | Low | Memory Pooling for Large Objects | 4-8 hrs | December 31, 2025 | PerformanceAnalysis 8 | Reduces GC pressure | |
 | Low | Producer-Consumer Pattern | 8-16 hrs | December 31, 2025 | Phase 3 | Only if save phase becomes bottleneck | |
 | Low | Response Caching (scrapers) | 2-4 hrs | December 29, 2025 | Phase 2/4, PerformanceAnalysis | Only benefits repeat scrapes | |
-| Low | TMDB append_to_response optimization | 4-8 hrs | December 29, 2025 | Phase 1 | Already well-optimized; minimal ROI | |
+| Medium | Edit Images Quick Access - Show progress during scrape | 2-3 hrs | January 10, 2026 | Eric | Add progress indicator while scraping images for Edit Images context menu | [BL-PE-001](backlog/BL-PE-001-EditImagesQuickAccessPerformance.md) |
 
 ---
 
@@ -172,7 +178,7 @@ where `XX` is the category code and `###` is a sequential number.
 
 ---
 
-## [↑](#table-ofcontents) UI/UX Improvements (UX) — 4 items
+## [↑](#table-ofcontents) UI/UX Improvements (UX) — 6 items
 
 *Interface enhancements, usability.*
 
@@ -182,6 +188,8 @@ where `XX` is the category code and `###` is a sequential number.
 | Low | Image selection dialog sorting options | 1 hr | January 4, 2026 | Eric | Sort by resolution, language, scraper | [BL-UX-004](backlog/BL-UX-004-ImageDialogSorting.md) |
 | Low | Modern Button Styles for WinForms UI | 2-3 hrs | January 8, 2026 | Eric | Flat-style buttons with hover effects | [BL-UX-005](backlog/BL-UX-005-ModernButtonStyles.md) |
 | Low | Progress Bar - Dual bars | 4-6 hrs | December 31, 2025 | Phase 3 | Scrape + Save separate bars | |
+| Low | Adjustable Column Widths in Main Media List | 2-3 hrs | January 10, 2026 | Eric | Allow users to resize columns | [BL-UX-005](backlog/BL-UX-006-AdjustableColumnWidths.md) |
+| Low | Auto-select Extrafanarts view when only image type enabled | 1-2 hrs | January 10, 2026 | Eric | When dlgImgSelect opens with only Extrafanarts enabled, auto-show extrafanarts panel | [BL-UX-007](backlog/BL-UX-007-AutoSelectExtrafanarts.md) |
 
 ---
 
@@ -191,10 +199,11 @@ where `XX` is the category code and `###` is a sequential number.
 |------|-------|--------|--------|
 | Language strings (1400-1403) | December 31, 2025 | Phase 3 | IDs conflict; English fallbacks work |
 | Lightweight NFO Validation | December 26, 2025 | NfoFileImprovements 2.2 | Full deserialization needed; cached serializers approach better |
+| TMDB append_to_response optimization | December 29, 2025 | Phase 1 | Already well-optimized; minimal ROI | |
 
 ---
 
-## [↑](#table-of-contents) Completed Items — 23 items
+## [↑](#table-of-contents) Completed Items — 24 items
 
 *Items moved here when completed, with Added date showing time to completion.*
 
@@ -223,6 +232,7 @@ where `XX` is the category code and `###` is a sequential number.
 | Remove Bug Tracker from Help Menu | January 8, 2026 | January 8, 2026 | 0 | [BL-DR-002](backlog/BL-DR-002-RemoveBugTrackerHelpMenu.md) |
 | Remove Check for Updates and Donate features | January 8, 2026 | January 8, 2026 | 0 | [BL-DR-003](backlog/BL-DR-003-RemoveCheckForUpdates.md) |
 | "Always Show Genre Text" setting not saving | January 9, 2026 | January 9, 2026 | 0 | [BL-KI-005](backlog/BL-KI-005-GenreTextSettingNotSaving.md) |
+| Auto-select Extrafanarts view when only image type enabled | January 10, 2026 | January 10, 2026 | 0 | [BL-UX-007](backlog/BL-UX-007-AutoSelectExtrafanarts.md) |
 
 
 ---

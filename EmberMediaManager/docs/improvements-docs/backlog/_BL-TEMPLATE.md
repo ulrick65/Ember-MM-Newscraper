@@ -85,7 +85,7 @@
 
 ## [↑](#table-of-contents) Testing Summary
 
-*(Use table format with status first — emoji indicators: ⬜ Not tested, ✅ Passed, ❌ Failed, ⏸️ Skipped)*
+**Status Legend:** ⬜ Not tested | ✅ Passed | ❌ Failed | ⏸️ Skipped
 
 | Status | Test Scenario |
 |:------:|---------------|

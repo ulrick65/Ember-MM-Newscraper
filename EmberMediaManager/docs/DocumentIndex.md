@@ -43,6 +43,7 @@ Whether you're looking for performance analysis, scraping process details, or re
 | [AsyncImageDownloadAnalysis.md](analysis-docs/AsyncImageDownloadAnalysis.md) | Async image download regression analysis |
 | [ImageThumbnailAnalysis.md](analysis-docs/ImageThumbnailAnalysis.md) | Thumbnail download efficiency analysis (resolved) |
 | [IMDBScraperAnalysis.md](analysis-docs/IMDBScraperAnalysis.md) | IMDB scraper architecture deep-dive |
+| [LoggingSystemAnalysis.md](analysis-docs/LoggingSystemAnalysis.md) | NLog logging system architecture and improvement opportunities |
 | [PerformanceAnalysis.md](analysis-docs/PerformanceAnalysis.md) | Initial performance analysis and optimization opportunities |
 | [SolutionCleanupAnalysis.md](analysis-docs/SolutionCleanupAnalysis.md) | Code cleanup opportunities and technical debt |
 
