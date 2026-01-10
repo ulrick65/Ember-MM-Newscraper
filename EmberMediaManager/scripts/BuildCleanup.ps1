@@ -366,38 +366,20 @@ if ($Rebuild) {
         "/consoleloggerparameters:Summary"
     )
 
-    $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
     & $msbuild @buildArgs
     $buildExitCode = $LASTEXITCODE
-    $stopwatch.Stop()
-
-    # Get current time and elapsed for VS-style summary
-    $completionTime = Get-Date -Format "h:mm tt"
-    $elapsedSeconds = [math]::Round($stopwatch.Elapsed.TotalSeconds, 3)
 
     Write-Host ""
     if ($buildExitCode -eq 0) {
-        Write-Host "========== Rebuild All: 24 succeeded, 0 failed, 0 skipped ==========" -ForegroundColor Green
-        Write-Host "========== Rebuild completed at $completionTime and took $elapsedSeconds seconds ==========" -ForegroundColor Green
+        Write-Host "========== Rebuild All: Build succeeded ==========" -ForegroundColor Green
     } else {
-        Write-Host "========== Rebuild All: FAILED with exit code $buildExitCode ==========" -ForegroundColor Red
-        Write-Host "========== Rebuild completed at $completionTime and took $elapsedSeconds seconds ==========" -ForegroundColor Red
+        Write-Host "========== Rebuild All: Build FAILED ==========" -ForegroundColor Red
         Pop-Location
         exit $buildExitCode
     }
-    Write-Host ""
 }
 
 #endregion
 
-#region Cleanup and Summary
-
 # Return to original directory
 Pop-Location
-
-Write-Host "═══════════════════════════════════════════════════════" -ForegroundColor Green
-Write-Host "  ✅ Build Cleanup Complete!" -ForegroundColor Green
-Write-Host "═══════════════════════════════════════════════════════" -ForegroundColor Green
-Write-Host ""
-
-#endregion
