@@ -4,7 +4,7 @@
 |---------------|---|
 | **Created** | December 31, 2025 |
 | **Updated** | December 31, 2025 |
-| **Author** | Eric H. Anderson |
+| **Author** | ulrick65 |
 | **Purpose** | Track movie scraping performance metrics over time |
 
 ---

@@ -1459,7 +1459,8 @@ Public Class Scraper
             For Each ndPlot In ndPlotEdges
                 'Only return the first outline
                 If ndPlot IsNot Nothing AndAlso ndPlot.Node IsNot Nothing AndAlso ndPlot.Node.PlotText IsNot Nothing Then
-                    Return ndPlot.Node.PlotText.plaidHtml
+                    'Clean HTML from the outline since IMDB only provides plaidHtml (not PlainText) for outlines
+                    Return StringUtils.CleanPlotOutline(ndPlot.Node.PlotText.plaidHtml)
                 End If
             Next
         End If

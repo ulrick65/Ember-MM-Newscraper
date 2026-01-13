@@ -7,7 +7,7 @@
 | **Version** | 2.1 |
 | **Created** | December 31, 2025 |
 | **Updated** | January 8, 2026 |
-| **Author** | Eric H. Anderson |
+| **Author** | ulrick65 |
 | **Purpose** | Master index for all project documentation |
 
 ---
@@ -18,9 +18,11 @@ Welcome! This is your one-stop navigation hub for all Ember Media Manager docume
 
 Whether you're looking for performance analysis, scraping process details, or release notes — you'll find it here. Documents are organized by purpose to help you quickly find what you need.
 
-**New here?** Start with the [Project Index](ProjectIndex.md) for a tour of all 24 projects in the solution.
+**New here?** Start with the [Project Index](ProjectIndex.md) for a tour of all the projects in the solution.
 
 **Contributing docs?** See [Documentation Standards](process-docs/DocumentationStandardsProcess.md) for standards and templates.
+
+**Looking for what's been enhanced?** Check out the [Future Enhancements](improvements-docs/FutureEnhancements.md) backlog for upcoming features and improvements as well as completed ones.
 
 ---
 

@@ -4,7 +4,7 @@
 |---------------|---|
 | **Version** | 1.0 |
 | **Created** | December 31, 2025 |
-| **Author** | Eric H. Anderson |
+| **Author** | ulrick65 |
 | **Status** | 📋 Planning |
 | **Branch** | TBD (new branch required) |
 
@@ -371,5 +371,5 @@ Before implementation, decide:
 
 *Document Version: 1.0*
 *Created: December 31, 2025*
-*Author: Eric H. Anderson*
+*Author: ulrick65*
 *Status: 📋 Planning*

@@ -5,7 +5,7 @@
 | **Version** | 2.0 |
 | **Created** | January 7, 2026 |
 | **Updated** | January 7, 2026 |
-| **Author** | Eric H. Anderson |
+| **Author** | ulrick65 |
 | **Purpose** | Reference guide for NFO XML structure and media file naming conventions |
 
 ##### [← Return to Document Index](../DocumentIndex.md) · [→ NFO Process Documentation](../process-docs/NfoFileProcess.md)

@@ -123,7 +123,7 @@
 	<string id="122">Cancel Copy</string>
 	<string id="123">Clear</string>
 	<string id="124">Update Regex</string>
-	<string id="125">Cleanup disabled fields</string>
+	<string id="125">Clear fields not selected to scrape</string>
 	<string id="126">Edition Mapping</string>
 	<string id="127">127-Unused</string>
 	<string id="128">128-Unused</string>
@@ -434,7 +434,7 @@
 	<string id="433">Overwrite Non-conforming nfo files</string>
 	<string id="434">(If unchecked, non-conforming nfo files will be renamed to &lt;filename&gt;.info)</string>
 	<string id="435">Language (Video)</string>
-	<string id="436">Display the best Audio Stream with the following Language</string>
+	<string id="436">Display the best Audio Stream with Language:</string>
 	<string id="437">Clean Files</string>
 	<string id="438">Standard</string>
 	<string id="439">Expert</string>

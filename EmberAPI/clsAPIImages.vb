@@ -951,24 +951,7 @@ Public Class Images
     Public Shared Function SaveMovieExtrafanarts(ByVal mMovie As Database.DBElement) As String
         Dim efPath As String = String.Empty
 
-        ' TODO: Logger call for troubleshooting [ulrick65, 1/7/2026]
-        logger.Trace(String.Format("[SaveMovieExtrafanarts] Called for: {0}{1}Stack trace:{1}{2}",
-                                   mMovie.Movie.Title,
-                                   Environment.NewLine,
-                                   Environment.StackTrace))
-
         If String.IsNullOrEmpty(mMovie.Filename) Then Return efPath
-
-        ' TODO: Logger call for troubleshooting [ulrick65, 1/7/2026]
-        logger.Trace(String.Format("[SaveMovieExtrafanarts] Image count: {0}", mMovie.ImagesContainer.Extrafanarts.Count))
-        For i As Integer = 0 To mMovie.ImagesContainer.Extrafanarts.Count - 1
-            Dim eImg = mMovie.ImagesContainer.Extrafanarts(i)
-            logger.Trace(String.Format("[SaveMovieExtrafanarts] Image {0} BEFORE pre-load - LocalFilePath: {1}, HasMemoryStream: {2}, URLOriginal: {3}",
-                                       i,
-                                       If(String.IsNullOrEmpty(eImg.LocalFilePath), "(empty)", eImg.LocalFilePath),
-                                       If(eImg.ImageOriginal IsNot Nothing, eImg.ImageOriginal.HasMemoryStream.ToString(), "ImageOriginal=Nothing"),
-                                       If(String.IsNullOrEmpty(eImg.URLOriginal), "(empty)", eImg.URLOriginal)))
-        Next
 
         ' BL-CC-002: Pre-load ALL images into memory BEFORE any file operations.
         ' This is critical because CleanupNumberedFanarts will delete files that
@@ -1000,7 +983,7 @@ Public Class Images
         CleanupNumberedFanarts(mediaFolder, fileNameStack)
 
         'Third, save all Extrafanarts with sequential numbering
-        ' TODO: Legacy comment here [ulrick65, 1/7/2026]
+        ' TODO: [ulrick65, 01/12/2026 1:49 AM] - Legacy comment here [ulrick65, 1/7/2026]
         ' Note: Legacy extrafanart/ folder migration now happens during scan (clsAPIScanner.vb)
         Dim fanartIndex As Integer = 1
         For Each eImg As MediaContainers.Image In mMovie.ImagesContainer.Extrafanarts

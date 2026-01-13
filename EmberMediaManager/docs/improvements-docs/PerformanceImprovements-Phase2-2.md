@@ -5,7 +5,7 @@
 | **Version** | 1.3 |
 | **Created** | December 30, 2025 |
 | **Updated** | December 30, 2025 |
-| **Author** | Eric H. Anderson |
+| **Author** | ulrick65 |
 | **Status** | ✅ Complete |
 | **Parent Document** | [PerformanceImprovements-Phase2.md](PerformanceImprovements-Phase2.md) |
 | **Reference** | [ScrapingProcessMovies.md](../process-docs/ScrapingProcessMovies.md), [ScrapingProcessTvShows.md](../process-docs/ScrapingProcessTvShows.md), [PerformanceImprovements-Phase1.md](PerformanceImprovements-Phase1.md) |
@@ -34,10 +34,10 @@
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
-| 1.0 | 2025-12-30 | Eric H. Anderson | Initial design document creation |
-| 1.1 | 2025-12-30 | Eric H. Anderson | Completed Phase 5.1 Thread Safety Analysis |
-| 1.2 | 2025-12-30 | Eric H. Anderson | Completed Phases 5.2, 5.3, 5.4 - Core implementation done |
-| 1.3 | 2025-12-30 | Eric H. Anderson | Phase 5.5 Testing Complete - 60% performance improvement achieved! |
+| 1.0 | 2025-12-30 | ulrick65 | Initial design document creation |
+| 1.1 | 2025-12-30 | ulrick65 | Completed Phase 5.1 Thread Safety Analysis |
+| 1.2 | 2025-12-30 | ulrick65 | Completed Phases 5.2, 5.3, 5.4 - Core implementation done |
+| 1.3 | 2025-12-30 | ulrick65 | Phase 5.5 Testing Complete - 60% performance improvement achieved! |
 
 ---
 
@@ -967,5 +967,5 @@ The following items from the original Phase 2-2 plan have been deferred to Phase
 *Document Version: 1.3*
 *Created: December 30, 2025*
 *Updated: December 30, 2025*
-*Author: Eric H. Anderson*
+*Author: ulrick65*
 *Status: ✅ Complete*

@@ -5,7 +5,7 @@
 | **Version** | 1.2.2 |
 | **Created** | December 25, 2025 |
 | **Updated** | January 7, 2026 |
-| **Author** | Eric H. Anderson |
+| **Author** | ulrick65 |
 | **Purpose** | Tracks changes made to this fork of Ember Media Manager
 
 ##### [← Return to Document Index](DocumentIndex.md)

@@ -3,7 +3,7 @@
 | Document Info | |
 |---------------|---|
 | **Test Date** | December 31, 2025 |
-| **Author** | Eric H. Anderson |
+| **Author** | ulrick65 |
 | **Branch** | feature/performance-improvements-phase4 |
 | **Purpose** | Baseline measurements for Phase 4 optimization |
 

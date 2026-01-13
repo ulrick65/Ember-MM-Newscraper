@@ -539,6 +539,7 @@
     <None Include="docs\improvements-docs\backlog\BL-KI-003-EditImagesAllSeasonsCrash.md" />
     <None Include="docs\improvements-docs\backlog\BL-KI-004-ExtrafanartsPreselectFix.md" />
     <None Include="docs\improvements-docs\backlog\BL-KI-005-GenreTextSettingNotSaving.md" />
+    <None Include="docs\improvements-docs\backlog\BL-KI-006-MovieSetCrashAfterMovieRemoval.md" />
     <None Include="docs\improvements-docs\backlog\BL-UX-004-ImageDialogSorting.md" />
     <None Include="docs\improvements-docs\backlog\BL-UX-001-EditImagesQuickAccess.md" />
     <None Include="docs\improvements-docs\backlog\BL-UX-002-EditImagesQuickAccess-TVShow.md" />
@@ -1003,16 +1004,6 @@
     <None Include="Resources\doRating.png" />
     <Content Include="Resources\menuAdd.png" />
     <None Include="scripts\VersionConfig.json" />
-    <None Include="x64\ffmpeg.exe" />
-    <None Include="x64\mediainfo-rar\mediainfo-rar.exe" />
-    <None Include="x64\mediainfo-rar\MediaInfo.dll" />
-    <None Include="x64\mediainfo-rar\unrar.exe" />
-    <None Include="x64\MediaInfo.dll" />
-    <None Include="x86\ffmpeg.exe" />
-    <None Include="x86\mediainfo-rar\mediainfo-rar.exe" />
-    <None Include="x86\mediainfo-rar\MediaInfo.dll" />
-    <None Include="x86\mediainfo-rar\unrar.exe" />
-    <None Include="x86\MediaInfo.dll" />
     <Content Include="Images\Flags\achan_1.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

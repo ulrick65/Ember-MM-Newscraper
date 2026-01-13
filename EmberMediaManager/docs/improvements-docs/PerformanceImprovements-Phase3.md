@@ -5,7 +5,7 @@
 | **Version** | 2.2 |
 | **Created** | December 30, 2025 |
 | **Updated** | December 31, 2025 |
-| **Author** | Eric H. Anderson |
+| **Author** | ulrick65 |
 | **Status** | ✅ Complete |
 | **Parent Document** | [PerformanceImprovements-Phase2.md](PerformanceImprovements-Phase2.md) |
 | **Reference** | [PerformanceImprovements-Phase2-2.md](PerformanceImprovements-Phase2-2.md), [ScrapingProcessTvShows.md](../process-docs/ScrapingProcessTvShows.md) |
@@ -30,11 +30,11 @@
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
-| 1.0 | 2025-12-30 | Eric H. Anderson | Initial document - items deferred from Phase 2-2 |
-| 2.0 | 2025-12-31 | Eric H. Anderson | TV Show parallel scraping complete, TVDB file contention fix, NFO save bug fix |
-| 2.0 | 2025-12-31 | Eric H. Anderson | TV Show parallel scraping complete, TVDB file contention fix, NFO save bug fix |
-| 2.1 | 2025-12-31 | Eric H. Anderson | Cancellation bug fixes for TV Shows and Movies |
-| 2.2 | 2025-12-31 | Eric H. Anderson | Cancelled language strings task - using English fallbacks |
+| 1.0 | 2025-12-30 | ulrick65 | Initial document - items deferred from Phase 2-2 |
+| 2.0 | 2025-12-31 | ulrick65 | TV Show parallel scraping complete, TVDB file contention fix, NFO save bug fix |
+| 2.0 | 2025-12-31 | ulrick65 | TV Show parallel scraping complete, TVDB file contention fix, NFO save bug fix |
+| 2.1 | 2025-12-31 | ulrick65 | Cancellation bug fixes for TV Shows and Movies |
+| 2.2 | 2025-12-31 | ulrick65 | Cancelled language strings task - using English fallbacks |
 
 ---
 
@@ -372,5 +372,5 @@ Added guard conditions in both completion handlers to only reload when a valid I
 *Document Version: 2.2*
 *Created: December 30, 2025*
 *Updated: December 31, 2025*
-*Author: Eric H. Anderson*
+*Author: ulrick65*
 *Status: ✅ Complete*

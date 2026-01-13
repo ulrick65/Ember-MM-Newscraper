@@ -832,7 +832,6 @@ Public Class StringUtils
 
         Try
             sReturn = Regex.Replace(sString, "\W", " ")
-            'TODO Dekker500 - This used to be "sReturn.ToLower", but didn't make sense why it did... Investigate up the chain! (What does the case have to do with punctuation anyway???)
             sReturn = Regex.Replace(sReturn, "\s\s(\s+)?", " ")
         Catch ex As Exception
             logger.Error(ex, New StackFrame().GetMethod().Name & Convert.ToChar(System.Windows.Forms.Keys.Tab) & "Source of <" & sString & "> generated an error")

@@ -55,7 +55,7 @@
     Version:      2.2.0
     Created:      December 25, 2025
     Updated:      January 2, 2026
-    Author:       Eric H. Anderson
+    Author:       ulrick65
     Purpose:      Update assembly versions across Ember Media Manager projects
     ============================================================
     

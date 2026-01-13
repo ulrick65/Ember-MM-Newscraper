@@ -5,7 +5,7 @@
 | **Version** | 2.0 |
 | **Created** | December 2025 |
 | **Updated** | January 7, 2026 |
-| **Author** | Eric H. Anderson |
+| **Author** | ulrick65 |
 | **Purpose** | Comprehensive reference for NFO file processing and media file naming conventions |
 
 ##### [← Return to Document Index](../DocumentIndex.md) · [→ NFO/File Naming Reference](../reference-docs/NfoFileReference.md)

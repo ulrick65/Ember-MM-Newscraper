@@ -5,7 +5,7 @@
 | **Version** | 3.0 |
 | **Created** | December 31, 2025 |
 | **Updated** | January 8, 2026 |
-| **Author** | Eric H. Anderson |
+| **Author** | ulrick65 |
 | **Purpose** | Living backlog of deferred, planned, and potential improvements |
 
 ##### [← Return to Document Index](../DocumentIndex.md)
@@ -31,6 +31,7 @@ where `XX` is the category code and `###` is a sequential number.
 | DR | Deprecation & Removal | Remove legacy features, old formats, broken functionality |
 | FR | Feature Requests | New functionality |
 | KI | Known Issues | Bugs and problems to monitor/fix |
+| NI | Needs Investigation | Items needing further research before dispositioning |
 | PE | Performance Enhancements | Speed/efficiency improvements |
 | SC | Standards & Compatibility | External standards compliance, format updates, compatibility |
 | UX | UI/UX Improvements | Interface enhancements, usability |
@@ -66,6 +67,7 @@ where `XX` is the category code and `###` is a sequential number.
 - [Deprecation & Removal (DR)](#deprecation--removal-dr)
 - [Feature Requests (FR)](#feature-requests-fr)
 - [Known Issues (KI)](#known-issues-ki)
+- [Needs Investigation (NI)](#needs-investigation-ni)
 - [Performance Enhancements (PE)](#performance-enhancements-pe)
 - [Standards & Compatibility (SC)](#standards--compatibility-sc)
 - [UI/UX Improvements (UX)](#uiux-improvements-ux)
@@ -74,7 +76,7 @@ where `XX` is the category code and `###` is a sequential number.
 
 ---
 
-## [↑](#table-of-contents) Code Cleanup (CC) — 3 items
+## [↑](#table-of-contents) Code Cleanup (CC)
 
 *Remove dead code, organize, simplify internal code.*
 
@@ -86,7 +88,7 @@ where `XX` is the category code and `###` is a sequential number.
 
 ---
 
-## [↑](#table-of-contents) Code Quality (CQ) — 10 items
+## [↑](#table-of-contents) Code Quality (CQ)
 
 *Thread safety, null checks, exception handling, patterns.*
 
@@ -100,15 +102,15 @@ where `XX` is the category code and `###` is a sequential number.
 | Low | Consistent date format handling | 1-2 hrs | December 26, 2025 | NfoFileImprovements 5.2 | Better invalid date handling | [BL-CQ-005](backlog/BL-CQ-005-NFODateHandling.md) |
 | Low | Fix fragile multi-episode regex | 2-3 hrs | December 26, 2025 | NfoFileImprovements 3.2 | Use XmlReader instead | [BL-CQ-004](backlog/BL-CQ-004-MultiEpisodeRegex.md) |
 | Low | Force GC during long batch operations | 1 hr | December 31, 2025 | PerformanceAnalysis R6.2 | Every N items during batch scraping | |
-| Low | Reorganize the frmMain.vb file | 2-3 hrs | January 8, 2026 | Eric | Organize sections to group things better | |
+| Low | Reorganize the frmMain.vb file | 2-3 hrs | January 8, 2026 | ulrick65 | Organize sections to group things better | |
 | Low | Specific exception handling in NFO Load | 2-3 hrs | December 26, 2025 | NfoFileImprovements 1.2 | Replace generic Exception catches | [BL-CQ-003](backlog/BL-CQ-003-NFOSpecificExceptionHandling.md) |
-| Low | Improve logging capabilities | 4-6 hrs | January 10, 2026 | Eric | Better logging levels (Debug, Info, Trace); settings to configure; cleanup existing logs | |
-| Low | Improve logging capabilities | 4-6 hrs | January 10, 2026 | Eric | Add settings for log level/retention; enhance log viewer | [BL-CQ-006](backlog/BL-CQ-006-ImproveLogging.md) |
-| Low | Add missing certification languages as encountered | 1 hr | January 10, 2026 | Eric | Add countries to XML when "Unhandled certification language" appears in logs | [BL-CQ-007](backlog/BL-CQ-007-AddCertificationLanguages.md) |
+| Low | Improve logging capabilities | 4-6 hrs | January 10, 2026 | ulrick65 | Better logging levels (Debug, Info, Trace); settings to configure; cleanup existing logs | |
+| Low | Improve logging capabilities | 4-6 hrs | January 10, 2026 | ulrick65 | Add settings for log level/retention; enhance log viewer | [BL-CQ-006](backlog/BL-CQ-006-ImproveLogging.md) |
+| Low | Add missing certification languages as encountered | 1 hr | January 10, 2026 | ulrick65 | Add countries to XML when "Unhandled certification language" appears in logs | [BL-CQ-007](backlog/BL-CQ-007-AddCertificationLanguages.md) |
 
 ---
 
-## [↑](#table-of-contents) Deprecation & Removal (DR) — 6 items
+## [↑](#table-of-contents) Deprecation & Removal (DR)
 
 *Remove legacy features, old formats, broken functionality.*
 
@@ -121,10 +123,11 @@ where `XX` is the category code and `###` is a sequential number.
 | Low | Remove External Subtitle Download | 2-4 hrs | December 31, 2025 | ForkChangeLog | Broken / Not needed | |
 | Low | Remove TV Tunes/Themes code | 2-4 hrs | December 31, 2025 | ForkChangeLog | Broken / Not needed | |
 | Low | Remove Theme Scraper Code | 2-4 hrs | January 8, 2026 | Settings cleanup | Quick fix applied (panels hidden); full removal pending | [BL-DR-001](backlog/BL-DR-001-RemoveThemeScraperCode.md) |
+| Low | Remove ISO file supprt | 2-4 hrs | January 11, 2026 | ulrick65 | We need to remove all the settings and associated code, it is not needed anymore | |
 
 ---
 
-## [↑](#table-of-contents) Feature Requests (FR) — 4 items
+## [↑](#table-of-contents) Feature Requests (FR)
 
 *New functionality.*
 
@@ -132,13 +135,13 @@ where `XX` is the category code and `###` is a sequential number.
 |----------|------|--------|-------|--------|-------|---------|
 | Low | Separate NFO reading/validation | 6-10 hrs | December 26, 2025 | NfoFileImprovements 4.2 | NFOValidator, NFOReader, NFONormalizer | [BL-FR-002](backlog/BL-FR-002-NFOSeparateConcerns.md) |
 | Low | Strategy pattern for NFO formats | 8-12 hrs | December 26, 2025 | NfoFileImprovements 4.1 | INfoWriter interface for extensibility | [BL-FR-001](backlog/BL-FR-001-NFOStrategyPattern.md) |
-| Low | Keyboard Shortcuts Settings Page | 8-16 hrs | January 10, 2026 | Eric | Create settings UI to display/edit shortcuts; currently all hardcoded | [BL-FR-004](backlog/BL-FR-004-KeyboardShortcutsSettings.md) |
-| Low | Implement yt-dlp for trailer downloads | 8-12 hrs | January 10, 2026 | Eric | Auto-download trailers using yt-dlp; GitHub: https://github.com/yt-dlp/yt-dlp | |
+| Low | Keyboard Shortcuts Settings Page | 8-16 hrs | January 10, 2026 | ulrick65 | Create settings UI to display/edit shortcuts; currently all hardcoded | [BL-FR-004](backlog/BL-FR-004-KeyboardShortcutsSettings.md) |
+| Low | Implement yt-dlp for trailer downloads | 8-12 hrs | January 10, 2026 | ulrick65 | Auto-download trailers using yt-dlp; GitHub: https://github.com/yt-dlp/yt-dlp | |
 
 
 ---
 
-## [↑](#table-of-contents) Known Issues (KI) — 2 items
+## [↑](#table-of-contents) Known Issues (KI)
 
 *Bugs and problems to monitor/fix.*
 
@@ -146,10 +149,24 @@ where `XX` is the category code and `###` is a sequential number.
 |----------|------|--------|-------|--------|-------|---------|
 | Monitor | Parallel download race conditions in SaveToFile | — | December 29, 2025 | Phase 1 | Reverted `File.Exists` check that broke image editing | |
 | Low | Edit Images crash with All Seasons selected | 2-3 hrs | January 5, 2026 | Testing | Unscraped show + All Seasons causes ArgumentNullException | [BL-KI-003](backlog/BL-KI-003-EditImagesAllSeasonsCrash.md) |
+| High | Setting "Create imdb/tmdb node in nfo file" will not stay selected | 1-2 hrs | January 11, 2026 | ulrick65 | Location is `Settings-TV Shows-Scrapers-Data` the ID of the settings are: `chkMovieScraperIdWriteNodeIMDbId` and `chkTVScraperIdWriteNodeTMDbId` |  |
+| Medium | MovieSet crash after removing movies from database | 1-2 hrs | January 11, 2026 | ulrick65 | Null collection in `FillScreenInfoWith_Movieset()` causes ArgumentNullException | [BL-KI-006](backlog/BL-KI-006-MovieSetCrashAfterMovieRemoval.md) |
 
 ---
 
-## [↑](#table-of-contents) Performance Enhancements (PE) — 10 items
+## [↑](#table-of-contents) Needs Investigation (NI)
+
+*Items needing further research before dispositioning*
+
+| Priority | Item | Effort | Added | Source | Notes | Details |
+|----------|------|--------|-------|--------|-------|---------|
+| Low | Settings: Find out what "Remove Images and NFOs with MovieSets" does  | 1-2 hrs | January 11, 2026 | ulrick65 | In `Settings-MovieSets-Files and Sources`: parameter name is `chkMovieSetCleanFiles`  | |
+| Low | Settings: Find out what "Build Episode Title Instead of Filtering" does  | 1-2 hrs | January 11, 2026 | ulrick65 | In `Settings-TVShows-General`: Parameter name is `chkTVEpisodeNoFilter` | |
+| Low | Settings: Setting indicate that Kodi Interface has to be enabled to use enhaced artwork, we need to confirm | 1-2 hrs | January 11, 2026 | ulrick65 | In `Settings-TVShows/Movies-Image Scrapers` | |
+
+---
+
+## [↑](#table-of-contents) Performance Enhancements (PE)
 
 *Speed/efficiency improvements.*
 
@@ -164,36 +181,38 @@ where `XX` is the category code and `###` is a sequential number.
 | Low | Memory Pooling for Large Objects | 4-8 hrs | December 31, 2025 | PerformanceAnalysis 8 | Reduces GC pressure | |
 | Low | Producer-Consumer Pattern | 8-16 hrs | December 31, 2025 | Phase 3 | Only if save phase becomes bottleneck | |
 | Low | Response Caching (scrapers) | 2-4 hrs | December 29, 2025 | Phase 2/4, PerformanceAnalysis | Only benefits repeat scrapes | |
-| Medium | Edit Images Quick Access - Show progress during scrape | 2-3 hrs | January 10, 2026 | Eric | Add progress indicator while scraping images for Edit Images context menu | [BL-PE-001](backlog/BL-PE-001-EditImagesQuickAccessPerformance.md) |
+| Medium | Edit Images Quick Access - Show progress during scrape | 2-3 hrs | January 10, 2026 | ulrick65 | Add progress indicator while scraping images for Edit Images context menu | [BL-PE-001](backlog/BL-PE-001-EditImagesQuickAccessPerformance.md) |
 
 ---
 
-## [↑](#table-of-contents) Standards & Compatibility (SC) — 0 items
+## [↑](#table-of-contents) Standards & Compatibility (SC)
 
 *External standards compliance, format updates, compatibility.*
 
 | Priority | Item | Effort | Added | Source | Notes | Details |
 |----------|------|--------|-------|--------|-------|---------|
-| | *No open items* | | | | | |
+| Low | Need to create a document of the SQLite database structure | 2-3 hrs | January 11, 2026 | ulrick65 | Similar to the link in the Media List Editor | SQLite can probably do it |
+
 
 ---
 
-## [↑](#table-ofcontents) UI/UX Improvements (UX) — 6 items
+## [↑](#table-ofcontents) UI/UX Improvements (UX)
 
 *Interface enhancements, usability.*
 
 | Priority | Item | Effort | Added | Source | Notes | Details |
 |----------|------|--------|-------|--------|-------|---------|
 | Medium | Progress Bar - Two-phase (0-50%, 50-100%) | 3-4 hrs | December 31, 2025 | Phase 3 | Better progress feedback | |
-| Low | Image selection dialog sorting options | 1 hr | January 4, 2026 | Eric | Sort by resolution, language, scraper | [BL-UX-004](backlog/BL-UX-004-ImageDialogSorting.md) |
-| Low | Modern Button Styles for WinForms UI | 2-3 hrs | January 8, 2026 | Eric | Flat-style buttons with hover effects | [BL-UX-005](backlog/BL-UX-005-ModernButtonStyles.md) |
+| Low | Image selection dialog sorting options | 1 hr | January 4, 2026 | ulrick65 | Sort by resolution, language, scraper | [BL-UX-004](backlog/BL-UX-004-ImageDialogSorting.md) |
+| Low | Modern Button Styles for WinForms UI | 2-3 hrs | January 8, 2026 | ulrick65 | Flat-style buttons with hover effects | [BL-UX-005](backlog/BL-UX-005-ModernButtonStyles.md) |
 | Low | Progress Bar - Dual bars | 4-6 hrs | December 31, 2025 | Phase 3 | Scrape + Save separate bars | |
-| Low | Adjustable Column Widths in Main Media List | 2-3 hrs | January 10, 2026 | Eric | Allow users to resize columns | [BL-UX-005](backlog/BL-UX-006-AdjustableColumnWidths.md) |
-| Low | Auto-select Extrafanarts view when only image type enabled | 1-2 hrs | January 10, 2026 | Eric | When dlgImgSelect opens with only Extrafanarts enabled, auto-show extrafanarts panel | [BL-UX-007](backlog/BL-UX-007-AutoSelectExtrafanarts.md) |
+| Low | Adjustable Column Widths in Main Media List | 2-3 hrs | January 10, 2026 | ulrick65 | Allow users to resize columns | [BL-UX-005](backlog/BL-UX-006-AdjustableColumnWidths.md) |
+| Low | Auto-select Extrafanarts view when only image type enabled | 1-2 hrs | January 10, 2026 | ulrick65 | When dlgImgSelect opens with only Extrafanarts enabled, auto-show extrafanarts panel | [BL-UX-007](backlog/BL-UX-007-AutoSelectExtrafanarts.md) |
+| Low | Clarify "Clean Plot/Outline" setting label and tooltip | 0.5 hrs | January 13, 2026 | ulrick65 | Current label implies HTML cleaning; should clarify it removes bracketed content like actor names; add tooltip | |
 
 ---
 
-## [↑](#table-of-contents) Cancelled Items — 2 items
+## [↑](#table-of-contents) Cancelled Items
 
 | Item | Added | Source | Reason |
 |------|-------|--------|--------|
@@ -203,7 +222,7 @@ where `XX` is the category code and `###` is a sequential number.
 
 ---
 
-## [↑](#table-of-contents) Completed Items — 24 items
+## [↑](#table-of-contents) Completed Items
 
 *Items moved here when completed, with Added date showing time to completion.*
 

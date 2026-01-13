@@ -5,7 +5,7 @@
 | **Version** | 1.4 |
 | **Created** | December 29, 2025 |
 | **Updated** | December 30, 2025 |
-| **Author** | Eric H. Anderson |
+| **Author** | ulrick65 |
 | **Status** | Complete |
 | **Reference** | [PerformanceAnalysis.md](../analysis-docs/PerformanceAnalysis.md), [ScrapingProcessTvShows.md](../process-docs/ScrapingProcessTvShows.md), [ScrapingProcessMovies.md](../process-docs/ScrapingProcessMovies.md), [PerformanceImprovements-Phase1.md](PerformanceImprovements-Phase1.md) |
 
@@ -31,11 +31,11 @@
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
-| 1.0 | 2025-12-29 | Eric H. Anderson | Initial Phase 2 plan creation |
-| 1.1 | 2025-12-29 | Eric H. Anderson | Item 1 (TV Show Async Support) completed |
-| 1.2 | 2025-12-30 | Eric H. Anderson | Added Item 1 performance results and metrics comparison |
-| 1.3 | 2025-12-30 | Eric H. Anderson | Added Item 2 design document reference |
-| 1.4 | 2025-12-30 | Eric H. Anderson | Phase 2 complete: Item 1 done, Item 2 moved to Phase 2-2, Items 3 & 4 deferred |
+| 1.0 | 2025-12-29 | ulrick65 | Initial Phase 2 plan creation |
+| 1.1 | 2025-12-29 | ulrick65 | Item 1 (TV Show Async Support) completed |
+| 1.2 | 2025-12-30 | ulrick65 | Added Item 1 performance results and metrics comparison |
+| 1.3 | 2025-12-30 | ulrick65 | Added Item 2 design document reference |
+| 1.4 | 2025-12-30 | ulrick65 | Phase 2 complete: Item 1 done, Item 2 moved to Phase 2-2, Items 3 & 4 deferred |
 
 ---
 
@@ -563,4 +563,4 @@ For each item:
 *Document Version: 1.4*
 *Created: December 29, 2025*
 *Completed: December 30, 2025*
-*Author: Eric H. Anderson*
+*Author: ulrick65*

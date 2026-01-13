@@ -5,7 +5,7 @@
 | **Version** | 1.1 |
 | **Created** | December 31, 2025 |
 | **Updated** | December 31, 2025 |
-| **Author** | Eric H. Anderson |
+| **Author** | ulrick65 |
 | **Status** | ⚠️ In Progress (Phase 4.3 Complete) - Paused |
 | **Branch** | feature/performance-improvements-phase4 |
 | **Analysis Doc** | docs/analysis-docs/IMDBScraperAnalysis.md |
@@ -627,5 +627,5 @@ After deployment, monitor for:
 *Document Version: 1.1*
 *Created: December 31, 2025*
 *Updated: December 31, 2025*
-*Author: Eric H. Anderson*
+*Author: ulrick65*
 *Status: ✅ Phase 4.3 Complete - Paused*

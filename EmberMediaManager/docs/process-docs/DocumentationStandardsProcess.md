@@ -5,7 +5,7 @@
 | **Version** | 1.0 |
 | **Created** | January 4, 2026 |
 | **Updated** | January 4, 2026 |
-| **Author** | Eric H. Anderson |
+| **Author** | ulrick65 |
 | **Purpose** | Standards and guidelines for maintaining consistent project documentation |
 
 ##### [← Return to Document Index](../DocumentIndex.md)

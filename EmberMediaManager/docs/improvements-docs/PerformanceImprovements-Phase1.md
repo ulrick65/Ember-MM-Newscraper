@@ -5,7 +5,7 @@
 | **Version** | 3.2 |
 | **Created** | December 27, 2025 |
 | **Updated** | December 29, 2025 |
-| **Author** | Eric H. Anderson |
+| **Author** | ulrick65 |
 | **Status** | Complete |
 | **Reference** | [PerformanceAnalysis.md](../analysis-docs/PerformanceAnalysis.md), [ScrapingProcessMovies.md](../process-docs/ScrapingProcessMovies.md), [ScrapingProcessTvShows.md](../process-docs/ScrapingProcessTvShows.md), [PerformanceImprovements-Phase2.md](PerformanceImprovements-Phase2.md) |
 
@@ -15,29 +15,29 @@
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
-| 1.0 | 2025-12-27 | Eric H. Anderson | Initial plan creation |
-| 1.1 | 2025-12-27 | Eric H. Anderson | Added Item 0: Performance Metrics Tracking as prerequisite |
-| 1.2 | 2025-12-27 | Eric H. Anderson | Updated progress: Item 0 steps 0.1-0.3 complete, step 0.4 partial (TMDB instrumented) |
-| 1.3 | 2025-12-28 | Eric H. Anderson | Updated progress: Step 0.4 - IMDB and Image download instrumentation complete |
-| 1.4 | 2025-12-28 | Eric H. Anderson | Updated progress: Step 0.4 complete - Database operations instrumented |
-| 1.5 | 2025-12-28 | Eric H. Anderson | Added shutdown event handler to log/export metrics on app exit |
-| 1.6 | 2025-12-28 | Eric H. Anderson | Item 0 complete - Baseline captured for 50 movies |
-| 1.7 | 2025-12-27 | Eric H. Anderson | Item 1 partial - HttpClientFactory created, scraper analysis complete |
-| 1.8 | 2025-12-27 | Eric H. Anderson | Item 1 complete - Async methods added to clsAPIHTTP.vb; Item 3 audit expanded |
-| 1.9 | 2025-12-27 | Eric H. Anderson | Item 1 testing complete - TMDB API calls 33% faster |
-| 2.0 | 2025-12-27 | Eric H. Anderson | Item 2 complete - Database indices added, 61% faster actor lookups |
-| 2.1 | 2025-12-28 | Eric H. Anderson | Item 4 implementation complete - Parallel image downloads in dlgImgSelect |
-| 2.2 | 2025-12-28 | Eric H. Anderson | Item 4 complete - Parallel downloads for dlgImgSelect dialog |
-| 2.3 | 2025-12-28 | Eric H. Anderson | Item 5 analysis complete - Infrastructure ready, integration documented |
-| 2.4 | 2025-12-28 | Eric H. Anderson | Added Item 6: Thumbnail inefficiency fix; Added step 0.7 for SaveAllImages metrics |
-| 2.5 | 2025-12-28 | Eric H. Anderson | Item 6 verified already complete - DoneAndClose() correctly downloads full-size; removed from active work |
-| 2.6 | 2025-12-28 | Eric H. Anderson | Item 5 Step 5.3 complete - Save_MovieAsync created; Updated architecture findings |
-| 2.7 | 2025-12-28 | Eric H. Anderson | Item 5 Step 5.4 complete - Architecture analysis documented to prevent re-analysis |
-| 2.8 | 2025-12-28 | Eric H. Anderson | Step 0.7 complete - RecordValue methods added to PerformanceTracker; SaveAllImages metrics instrumented |
-| 2.9 | 2025-12-29 | Eric H. Anderson | Added SaveAllImages metrics analysis; Updated projections for Item 5; Documented current metrics baseline |
-| 3.0 | 2025-12-29 | Eric H. Anderson | Item 5 Step 5.5 complete - Integrated Save_MovieAsync; Test results show 59% faster downloads, disk write regression identified |
-| 3.1 | 2025-12-29 | Eric H. Anderson | Item 5 bug fix - DownloadImagesParallelAsync was downloading thumbnails instead of fullsize; Fixed needFullsize parameter; Item 5 complete |
-| 3.2 | 2025-12-29 | Eric H. Anderson | Item 5 Steps 5.6-5.7 complete - Full 49-movie validation; 61% improvement in SaveAllImages confirmed; Phase 1 complete |
+| 1.0 | 2025-12-27 | ulrick65 | Initial plan creation |
+| 1.1 | 2025-12-27 | ulrick65 | Added Item 0: Performance Metrics Tracking as prerequisite |
+| 1.2 | 2025-12-27 | ulrick65 | Updated progress: Item 0 steps 0.1-0.3 complete, step 0.4 partial (TMDB instrumented) |
+| 1.3 | 2025-12-28 | ulrick65 | Updated progress: Step 0.4 - IMDB and Image download instrumentation complete |
+| 1.4 | 2025-12-28 | ulrick65 | Updated progress: Step 0.4 complete - Database operations instrumented |
+| 1.5 | 2025-12-28 | ulrick65 | Added shutdown event handler to log/export metrics on app exit |
+| 1.6 | 2025-12-28 | ulrick65 | Item 0 complete - Baseline captured for 50 movies |
+| 1.7 | 2025-12-27 | ulrick65 | Item 1 partial - HttpClientFactory created, scraper analysis complete |
+| 1.8 | 2025-12-27 | ulrick65 | Item 1 complete - Async methods added to clsAPIHTTP.vb; Item 3 audit expanded |
+| 1.9 | 2025-12-27 | ulrick65 | Item 1 testing complete - TMDB API calls 33% faster |
+| 2.0 | 2025-12-27 | ulrick65 | Item 2 complete - Database indices added, 61% faster actor lookups |
+| 2.1 | 2025-12-28 | ulrick65 | Item 4 implementation complete - Parallel image downloads in dlgImgSelect |
+| 2.2 | 2025-12-28 | ulrick65 | Item 4 complete - Parallel downloads for dlgImgSelect dialog |
+| 2.3 | 2025-12-28 | ulrick65 | Item 5 analysis complete - Infrastructure ready, integration documented |
+| 2.4 | 2025-12-28 | ulrick65 | Added Item 6: Thumbnail inefficiency fix; Added step 0.7 for SaveAllImages metrics |
+| 2.5 | 2025-12-28 | ulrick65 | Item 6 verified already complete - DoneAndClose() correctly downloads full-size; removed from active work |
+| 2.6 | 2025-12-28 | ulrick65 | Item 5 Step 5.3 complete - Save_MovieAsync created; Updated architecture findings |
+| 2.7 | 2025-12-28 | ulrick65 | Item 5 Step 5.4 complete - Architecture analysis documented to prevent re-analysis |
+| 2.8 | 2025-12-28 | ulrick65 | Step 0.7 complete - RecordValue methods added to PerformanceTracker; SaveAllImages metrics instrumented |
+| 2.9 | 2025-12-29 | ulrick65 | Added SaveAllImages metrics analysis; Updated projections for Item 5; Documented current metrics baseline |
+| 3.0 | 2025-12-29 | ulrick65 | Item 5 Step 5.5 complete - Integrated Save_MovieAsync; Test results show 59% faster downloads, disk write regression identified |
+| 3.1 | 2025-12-29 | ulrick65 | Item 5 bug fix - DownloadImagesParallelAsync was downloading thumbnails instead of fullsize; Fixed needFullsize parameter; Item 5 complete |
+| 3.2 | 2025-12-29 | ulrick65 | Item 5 Steps 5.6-5.7 complete - Full 49-movie validation; 61% improvement in SaveAllImages confirmed; Phase 1 complete |
 
 ---
 

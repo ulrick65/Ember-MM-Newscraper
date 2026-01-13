@@ -9452,11 +9452,11 @@ Public Class frmMain
 
             'background
             If Convert.ToBoolean(dgvTVShows.Item("Lock", e.RowIndex).Value) Then
-                e.CellStyle.BackColor = Color.LightSteelBlue
-                e.CellStyle.SelectionBackColor = Color.DarkTurquoise
+                e.CellStyle.BackColor = MediaListColors.Locked.BackColor
+                e.CellStyle.SelectionBackColor = MediaListColors.Locked.SelectionBackColor
             Else
-                e.CellStyle.BackColor = Color.White
-                e.CellStyle.SelectionBackColor = Color.FromKnownColor(KnownColor.Highlight)
+                e.CellStyle.BackColor = MediaListColors.Default.BackColor
+                e.CellStyle.SelectionBackColor = MediaListColors.Default.SelectionBackColor
             End If
 
             'path fields
@@ -11770,10 +11770,9 @@ Public Class frmMain
         SuspendLayout()
 
         'Title
-        If _
-            currMovieset.MovieSet.TitleSpecified AndAlso currMovieset.MoviesInSet IsNot Nothing AndAlso
-            currMovieset.MoviesInSet.Count > 0 Then
-            lblTitle.Text = String.Format("{0} ({1})", currMovieset.MovieSet.Title, currMovieset.MoviesInSet.Count)
+        Dim moviesInSetCount As Integer = If(currMovieset.MoviesInSet IsNot Nothing, currMovieset.MoviesInSet.Count, 0)
+        If currMovieset.MovieSet.TitleSpecified AndAlso moviesInSetCount > 0 Then
+            lblTitle.Text = String.Format("{0} ({1})", currMovieset.MovieSet.Title, moviesInSetCount)
         ElseIf currMovieset.MovieSet.TitleSpecified Then
             lblTitle.Text = currMovieset.MovieSet.Title
         Else

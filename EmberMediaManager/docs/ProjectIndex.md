@@ -8,7 +8,7 @@
 | **Version** | 1.2 |
 | **Created** | January 1, 2026 |
 | **Updated** | January 1, 2026 |
-| **Author** | Eric H. Anderson |
+| **Author** | ulrick65 |
 | **Purpose** | Index and overview for all projects in the Ember Media Manager solution
 
 ###### [← Return to Document Index](DocumentIndex.md)

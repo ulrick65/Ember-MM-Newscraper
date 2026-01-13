@@ -4,7 +4,7 @@
 |---------------|---|
 | **Version** | 1.0 |
 | **Created** | December 31, 2025 |
-| **Author** | Eric H. Anderson |
+| **Author** | ulrick65 |
 | **Status** | 📋 Analysis |
 | **Scraper File** | Addons\scraper.IMDB.Data\Scraper\clsScrapeIMDB.vb |
 
@@ -388,5 +388,5 @@ Before implementing changes, establish baseline metrics:
 
 *Document Version: 1.0*
 *Created: December 31, 2025*
-*Author: Eric H. Anderson*
+*Author: ulrick65*
 *Status: 📋 Analysis*

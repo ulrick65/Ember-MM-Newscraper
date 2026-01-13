@@ -272,7 +272,7 @@ Public Class dlgSettings
              .Type = Master.eLang.GetString(36, "Movies"),
              .Panel = pnlMovieTrailers,
              .Order = 500})
-        'TODO: BL-DR-001 - Theme scraper removed from solution, hiding panel until full cleanup
+        ' TODO: [ulrick65, 01/12/2026 1:50 AM] - BL-DR-001 - Theme scraper removed from solution, hiding panel until full cleanup
         'SettingsPanels.Add(New Containers.SettingsPanel With {
         '     .Name = "pnlMovieTheme",
         '     .Text = Master.eLang.GetString(1068, "Scrapers - Themes"),
@@ -336,7 +336,7 @@ Public Class dlgSettings
              .Type = Master.eLang.GetString(653, "TV Shows"),
              .Panel = pnlTVImages,
              .Order = 400})
-        'TODO: BL-DR-001 - Theme scraper removed from solution, hiding panel until full cleanup
+        ' TODO: [ulrick65, 01/12/2026 1:48 AM] - BL-DR-001 - Theme scraper removed from solution, hiding panel until full cleanup
         'SettingsPanels.Add(New Containers.SettingsPanel With {
         '     .Name = "pnlTVTheme",
         '     .Text = Master.eLang.GetString(1068, "Scrapers - Themes"),
@@ -5974,7 +5974,7 @@ Public Class dlgSettings
         lblTVSourcesFilenamingKodiExtendedCharacterArt.Text = strCharacterArt
 
         'Cleanup disabled fields
-        Dim strCleanUpDisabledFileds As String = Master.eLang.GetString(125, "Cleanup disabled fields")
+        Dim strCleanUpDisabledFileds As String = Master.eLang.GetString(125, "Clear fields not selected to scrape")
         chkMovieScraperCleanFields.Text = strCleanUpDisabledFileds
         chkTVScraperCleanFields.Text = strCleanUpDisabledFileds
 
@@ -6958,7 +6958,6 @@ Public Class dlgSettings
         gbMovieImagesFanartOpts.Text = Master.eLang.GetString(149, "Fanart")
         gbMovieImagesExtrathumbsCreatorOpts.Text = Master.eLang.GetString(1477, "Create Thumbnails")
         gbMovieGeneralFiltersOpts.Text = Master.eLang.GetString(451, "Folder/File Name Filters")
-        gbMovieGeneralMediaListOpts.Text = Master.eLang.GetString(460, "Media List Options")
         gbMovieScraperDefFIExtOpts.Text = Master.eLang.GetString(625, "Defaults by File Type")
         gbMovieSetScraperTitleRenamerOpts.Text = Master.eLang.GetString(1279, "Title Renamer")
         gbProxyCredsOpts.Text = Master.eLang.GetString(676, "Credentials")
@@ -7018,7 +7017,6 @@ Public Class dlgSettings
         chkTVScanOrderModify.Text = chkMovieScanOrderModify.Text
         chkTVScraperMetaDataScan.Text = chkMovieScraperMetaDataScan.Text
         chkTVShowProperCase.Text = chkMovieProperCase.Text
-        gbMovieSetGeneralMediaListOpts.Text = gbMovieGeneralMediaListOpts.Text
         gbTVScraperDefFIExtOpts.Text = gbTVScraperDefFIExtOpts.Text
         lblSettingsTopTitle.Text = Text
         lblTVSkipLessThan.Text = lblMovieSkipLessThan.Text
@@ -8483,6 +8481,22 @@ Public Class dlgSettings
         txtTVShowThemeTvTunesSubDir.TextChanged
 
         SetApplyButton(True)
+    End Sub
+
+    Private Sub tblMovieSourcesFileNamingExpert_Paint(sender As Object, e As PaintEventArgs) Handles tblMovieSourcesFileNamingExpert.Paint
+
+    End Sub
+
+    Private Sub lblTVLanguageOverlay_Click(sender As Object, e As EventArgs) Handles lblTVLanguageOverlay.Click
+
+    End Sub
+
+    Private Sub lvMovieSources_SelectedIndexChanged(sender As Object, e As EventArgs) Handles lvMovieSources.SelectedIndexChanged
+
+    End Sub
+
+    Private Sub txtTVGeneralCustomScrapeButtonScrapeType_Click(sender As Object, e As EventArgs) Handles txtTVGeneralCustomScrapeButtonScrapeType.Click
+
     End Sub
 
 #End Region 'Methods

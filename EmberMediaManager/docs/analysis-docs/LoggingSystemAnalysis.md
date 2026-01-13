@@ -5,7 +5,7 @@
 | **Version** | 1.0 |
 | **Created** | January 10, 2026 |
 | **Updated** | January 10, 2026 |
-| **Author** | Eric H. Anderson |
+| **Author** | ulrick65 |
 | **Purpose** | Analysis of current NLog implementation and improvement opportunities |
 
 ##### [← Return to Document Index](../DocumentIndex.md)

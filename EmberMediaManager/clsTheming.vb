@@ -584,6 +584,7 @@ Public Class Theming
             frmMain.dgvMovieSets.GridColor = _theme.MediaList.GridColor
             frmMain.dgvTVEpisodes.GridColor = _theme.MediaList.GridColor
             frmMain.dgvTVSeasons.GridColor = _theme.MediaList.GridColor
+            frmMain.dgvTVShows.GridColor = _theme.MediaList.GridColor
         End If
         frmMain.MediaListColors = _theme.MediaList
 

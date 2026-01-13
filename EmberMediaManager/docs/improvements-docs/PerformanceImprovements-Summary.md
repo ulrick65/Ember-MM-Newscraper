@@ -5,7 +5,7 @@
 | **Version** | 1.0 |
 | **Created** | December 31, 2025 |
 | **Updated** | December 31, 2025 |
-| **Author** | Eric H. Anderson |
+| **Author** | ulrick65 |
 | **Status** | ✅ All Phases Complete |
 
 ---
