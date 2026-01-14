@@ -208,10 +208,23 @@ Public Class StringUtils
         Return fullPath
     End Function
     ''' <summary>
-    ''' Removes all URLs and HTML tags
+    ''' Cleans HTML markup and encoded entities from plot/outline text.
     ''' </summary>
-    ''' <param name="strPlotOutline"></param>
-    ''' <remarks></remarks>
+    ''' <param name="strPlotOutline">The <c>String</c> plot or outline text to clean</param>
+    ''' <returns>A cleaned <c>String</c> with HTML tags removed and entities decoded.
+    ''' Returns <c>String.Empty</c> if input is null or empty.</returns>
+    ''' <remarks>
+    ''' Performs the following cleaning operations:
+    ''' <list type="bullet">
+    '''   <item>Extracts text content from anchor tags (removes links but keeps text)</item>
+    '''   <item>Removes HTML tags: b, br, p, strong</item>
+    '''   <item>Normalizes line breaks to spaces</item>
+    '''   <item>Collapses multiple spaces to single space</item>
+    '''   <item>Decodes HTML entities (e.g., &amp;quot; → ", &amp;amp; → &amp;)</item>
+    ''' </list>
+    ''' Used primarily for cleaning scraped plot/outline data from IMDB where the 
+    ''' plaidHtml field contains HTML markup that should not appear in NFO files.
+    ''' </remarks>
     Public Shared Function CleanPlotOutline(ByVal strPlotOutline As String) As String
         Dim strResult As String = String.Empty
         Try
@@ -232,6 +245,8 @@ Public Class StringUtils
                 strPlotOutline = strPlotOutline.Replace(Convert.ToChar(13), " ")    'vbCrLf
                 strPlotOutline = strPlotOutline.Replace(Environment.NewLine, " ")
                 strPlotOutline = strPlotOutline.Replace("  ", " ")
+                'Decode HTML entities (e.g., &quot; -> ", &amp; -> &)
+                strPlotOutline = Web.HttpUtility.HtmlDecode(strPlotOutline)
                 strResult = strPlotOutline.Trim()
             End If
         Catch ex As Exception

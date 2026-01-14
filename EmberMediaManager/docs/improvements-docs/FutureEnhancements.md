@@ -137,6 +137,7 @@ where `XX` is the category code and `###` is a sequential number.
 | Low | Strategy pattern for NFO formats | 8-12 hrs | December 26, 2025 | NfoFileImprovements 4.1 | INfoWriter interface for extensibility | [BL-FR-001](backlog/BL-FR-001-NFOStrategyPattern.md) |
 | Low | Keyboard Shortcuts Settings Page | 8-16 hrs | January 10, 2026 | ulrick65 | Create settings UI to display/edit shortcuts; currently all hardcoded | [BL-FR-004](backlog/BL-FR-004-KeyboardShortcutsSettings.md) |
 | Low | Implement yt-dlp for trailer downloads | 8-12 hrs | January 10, 2026 | ulrick65 | Auto-download trailers using yt-dlp; GitHub: https://github.com/yt-dlp/yt-dlp | |
+| Low | Migrate to .NET 8 LTS | 30-60 hrs | January 14, 2026 | ulrick65 | Requires: BL-CC-001 (BinaryFormatter), package updates, `My.*` replacements, SDK-style projects, addon testing; enables EF Core | |
 
 
 ---
@@ -163,6 +164,7 @@ where `XX` is the category code and `###` is a sequential number.
 | Low | Settings: Find out what "Remove Images and NFOs with MovieSets" does  | 1-2 hrs | January 11, 2026 | ulrick65 | In `Settings-MovieSets-Files and Sources`: parameter name is `chkMovieSetCleanFiles`  | |
 | Low | Settings: Find out what "Build Episode Title Instead of Filtering" does  | 1-2 hrs | January 11, 2026 | ulrick65 | In `Settings-TVShows-General`: Parameter name is `chkTVEpisodeNoFilter` | |
 | Low | Settings: Setting indicate that Kodi Interface has to be enabled to use enhaced artwork, we need to confirm | 1-2 hrs | January 11, 2026 | ulrick65 | In `Settings-TVShows/Movies-Image Scrapers` | |
+| Low | Settings: Setting "also use Trailer Scrapers" doesn't work. If it is `false` the trailer scrapers still run if enabled. | 1-2 hrs | January 14, 2026 | ulrick65 | In `Settings-Movies-Scrapers-Data` | |
 
 ---
 

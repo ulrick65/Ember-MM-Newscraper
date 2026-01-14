@@ -24,6 +24,24 @@ Removing movies from the database and then clicking on MovieSets crashes the app
 
 When movies are removed from the database, the MovieSet records still reference those movies. When the user selects a MovieSet in the UI, the code attempts to call `.Count` on a null collection (likely the list of movies in the set), causing the application to crash.
 
+After investigation, it appears that regardless of whether movies are missing or not, it crashes as soon as the user clicks on the MovieSet tab, with this exception:
+
+    EXCEPTION OCCURRED:System.ArgumentNullException: Value cannot be null.
+    Parameter name: source
+       at System.Linq.Enumerable.Count[TSource](IEnumerable`1 source)
+       at Ember_Media_Manager.frmMain.FillScreenInfoWith_Movieset()
+       at Ember_Media_Manager.frmMain.DataGridView_SelectRow_MovieSet(Int32 iRow)
+       at Ember_Media_Manager.frmMain.tmrLoad_MovieSet_Tick(Object sender, EventArgs e)
+       at System.Windows.Forms.Timer.OnTick(EventArgs e)
+       at System.Windows.Forms.Timer.TimerNativeWindow.WndProc(Message& m)
+       at System.Windows.Forms.NativeWindow.Callback(IntPtr hWnd, Int32 msg, IntPtr wparam, IntPtr lparam)*   at System.Linq.Enumerable.Count[TSource](IEnumerable`1 source)
+       at Ember_Media_Manager.frmMain.FillScreenInfoWith_Movieset()
+       at Ember_Media_Manager.frmMain.DataGridView_SelectRow_MovieSet(Int32 iRow)
+       at Ember_Media_Manager.frmMain.tmrLoad_MovieSet_Tick(Object sender, EventArgs e)
+       at System.Windows.Forms.Timer.OnTick(EventArgs e)
+       at System.Windows.Forms.Timer.TimerNativeWindow.WndProc(Message& m)
+       at System.Windows.Forms.NativeWindow.Callback(IntPtr hWnd, Int32 msg, IntPtr wparam, IntPtr lparam)
+
 **Steps to Reproduce:**
 
 1. Have movies that belong to a MovieSet in the database
