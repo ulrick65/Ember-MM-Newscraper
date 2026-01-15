@@ -562,18 +562,7 @@ Public Class dlgIMDBSearchResults_Movie
     End Sub
 
     Private Function GetMovieClone(ByVal original As MediaContainers.Movie) As MediaContainers.Movie
-        Try
-            Using mem As New MemoryStream()
-                Dim bin As New Runtime.Serialization.Formatters.Binary.BinaryFormatter(Nothing, New Runtime.Serialization.StreamingContext(Runtime.Serialization.StreamingContextStates.Clone))
-                bin.Serialize(mem, original)
-                mem.Seek(0, SeekOrigin.Begin)
-                Return DirectCast(bin.Deserialize(mem), MediaContainers.Movie)
-            End Using
-        Catch ex As Exception
-            logger.Error(ex, New StackFrame().GetMethod().Name)
-        End Try
-
-        Return Nothing
+        Return CType(original.CloneDeep(), MediaContainers.Movie)
     End Function
 
 

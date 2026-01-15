@@ -702,8 +702,6 @@ Public Class Scraper
         _Fallback_Movieset = Nothing
         Return nMovieSet
 
-        _Fallback_Movieset = Nothing
-        Return Nothing
     End Function
 
     Public Sub SearchAsync_Movie(ByVal sMovie As String, ByRef filterOptions As Structures.ScrapeOptions, Optional ByVal sYear As String = "")

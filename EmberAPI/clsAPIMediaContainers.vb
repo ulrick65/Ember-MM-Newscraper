@@ -2450,6 +2450,7 @@ Namespace MediaContainers
     <Serializable()>
     <XmlRoot("movieset")>
     Public Class Movieset
+        Implements ICloneable
 
 #Region "Fields"
 
@@ -2567,6 +2568,25 @@ Namespace MediaContainers
 #End Region 'Group 6: Internal Only
 
 #End Region 'Properties
+
+#Region "Methods"
+
+        ''' <summary>
+        ''' Creates a deep copy of this Movieset instance.
+        ''' </summary>
+        ''' <returns>A new Movieset object with all properties copied.</returns>
+        ''' <remarks>
+        ''' Uses JSON serialization via Newtonsoft.Json to perform the deep clone.
+        ''' This replaces the deprecated BinaryFormatter approach for security and 
+        ''' future .NET compatibility.
+        ''' </remarks>
+        Public Function CloneDeep() As Object Implements ICloneable.Clone
+            'Use JSON serialization for deep cloning (replaces deprecated BinaryFormatter)
+            Dim json As String = JsonConvert.SerializeObject(Me)
+            Return JsonConvert.DeserializeObject(Of Movieset)(json)
+        End Function
+
+#End Region 'Methods
 
     End Class
 
@@ -5392,7 +5412,6 @@ Namespace MediaContainers
                     sPath = Path.Combine(Master.TempPath, String.Concat("Shows", Path.DirectorySeparatorChar, sID))
                 Case Else
                     Throw New ArgumentOutOfRangeException("wrong tContentType", "value must be Movie, MovieSet or TV")
-                    Return
             End Select
 
             For Each tImg As Image In EpisodeFanarts

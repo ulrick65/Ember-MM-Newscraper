@@ -7,7 +7,7 @@
 | **Updated** | January 14, 2026 |
 | **Category** | Code Cleanup (CC) |
 | **Priority** | Medium |
-| **Effort** | 4-6 hours |
+| **Effort** | 3 hours |
 | **Status** | ✅ Complete |
 | **Completed** | January 14, 2026 |
 
@@ -60,15 +60,16 @@ While Ember currently targets .NET Framework 4.8, addressing this now will ease 
 | `CloneDeep()` | `MediaContainers.EpisodeDetails` | clsAPIMediaContainers.vb | ✅ |
 | `CloneDeep()` | `MediaContainers.TVShow` | clsAPIMediaContainers.vb | ✅ |
 | `CloneDeep()` | `MediaContainers.Fileinfo` | clsAPIMediaContainers.vb | ✅ |
+| `CloneDeep()` | `MediaContainers.Movieset` | clsAPIMediaContainers.vb | ✅ |
 
-### Phase 2: Additional Discovered Items
+### Phase 2: Additional Discovered Items (Completed ✅)
 
 | Method | Class | File | Status |
 |--------|-------|------|:------:|
-| `CloneDeep()` | `clsXMLSimpleMapping` | XML Serialization\clsXMLSimpleMapping.vb | 📋 |
-| `CloneDeep()` | `clsXMLRegexMapping` | XML Serialization\clsXMLRegexMapping.vb | 📋 |
-| `CloneDeep()` | `clsXMLGenreMapping` | XML Serialization\clsXMLGenreMapping.vb | 📋 |
-| `CloneDeep()` | `Database.DBElement` | clsAPIDatabase.vb | 📋 |
+| `CloneDeep()` | `clsXMLSimpleMapping` | XML Serialization\clsXMLSimpleMapping.vb | ✅ |
+| `CloneDeep()` | `clsXMLRegexMapping` | XML Serialization\clsXMLRegexMapping.vb | ✅ |
+| `CloneDeep()` | `clsXMLGenreMapping` | XML Serialization\clsXMLGenreMapping.vb | ✅ |
+| `CloneDeep()` | `Database.DBElement` | clsAPIDatabase.vb | ✅ |
 
 ---
 
@@ -133,25 +134,26 @@ If the file doesn't have this import, use fully qualified names instead:
 
 ## [↑](#table-of-contents) Implementation Progress
 
-### Phase 1 Complete — January 14, 2026
+### Phase 1 Complete — January 15, 2026
 
-All four `CloneDeep()` methods in `clsAPIMediaContainers.vb` have been updated using the pattern shown in [Implementation Reference](#implementation-reference).
+All five `CloneDeep()` methods in `clsAPIMediaContainers.vb` have been updated using the pattern shown in [Implementation Reference](#implementation-reference).
 
 **Classes Updated:**
 - `Movie` 
 - `EpisodeDetails`
 - `TVShow`
 - `Fileinfo`
+- `Movieset` (added `Implements ICloneable` and `CloneDeep()` method)
 
-### Phase 2 — Pending
+### Phase 2 Complete — January 14, 2026
 
-Four additional `CloneDeep()` methods discovered:
+Four additional `CloneDeep()` methods updated:
 
 | Class | File | Notes |
 |-------|------|-------|
-| `clsXMLSimpleMapping` | [`clsXMLSimpleMapping.vb`](../../../../EmberAPI/XML%20Serialization/clsXMLSimpleMapping.vb) | Add `Imports Newtonsoft.Json` |
-| `clsXMLRegexMapping` | [`clsXMLRegexMapping.vb`](../../../../EmberAPI/XML%20Serialization/clsXMLRegexMapping.vb) | Add `Imports Newtonsoft.Json` |
-| `clsXMLGenreMapping` | [`clsXMLGenreMapping.vb`](../../../../EmberAPI/XML%20Serialization/clsXMLGenreMapping.vb) | Add `Imports Newtonsoft.Json` |
+| `clsXMLSimpleMapping` | [`clsXMLSimpleMapping.vb`](../../../../EmberAPI/XML%20Serialization/clsXMLSimpleMapping.vb) | Added `Imports Newtonsoft.Json` |
+| `clsXMLRegexMapping` | [`clsXMLRegexMapping.vb`](../../../../EmberAPI/XML%20Serialization/clsXMLRegexMapping.vb) | Added `Imports Newtonsoft.Json` |
+| `clsXMLGenreMapping` | [`clsXMLGenreMapping.vb`](../../../../EmberAPI/XML%20Serialization/clsXMLGenreMapping.vb) | Added `Imports Newtonsoft.Json` |
 | `Database.DBElement` | [`clsAPIDatabase.vb`](../../../../EmberAPI/clsAPIDatabase.vb) | Nested class within `Database` class |
 
 ---
@@ -192,6 +194,14 @@ Four additional `CloneDeep()` methods discovered:
 |:------:|---------------|
 | ✅ | Edit file info → Cancel → Original unchanged |
 | ✅ | Edit file info → Save → Changes persisted |
+
+#### Movieset
+
+| Status | Test Scenario |
+|:------:|---------------|
+| ✅ | Search movieset → Select result → Details displayed correctly |
+| ✅ | Search movieset → Select different result → Cache works correctly |
+| ✅ | Edit movieset → Cancel → Original unchanged |
 
 ### Phase 2: Additional Classes
 
@@ -323,6 +333,7 @@ Use libraries like FastDeepCloner:
 
 **Phase 1 Implementation Notes:**
 - `Movie` class required `<JsonIgnore>` attributes on `Set_Kodi` and `Sets_YAMJ` properties because these are computed properties that return `XmlDocument`/`SetContainer` for NFO serialization — JSON cannot properly serialize/deserialize these types. The actual data is stored in the `Sets` property which JSON handles correctly.
+- `Movieset` class did not previously implement `ICloneable` — added `Implements ICloneable` and `CloneDeep()` method to enable cloning in search result dialogs.
 
 **Phase 2 Implementation Notes:**
 - XML Serialization classes don't have `Imports Newtonsoft.Json` — use fully qualified names
@@ -338,7 +349,9 @@ Use libraries like FastDeepCloner:
 | January 14, 2026 | Completed Phase 1: All four CloneDeep methods in clsAPIMediaContainers.vb updated and tested |
 | January 14, 2026 | Added Phase 2: Discovered four additional BinaryFormatter usages in XML Serialization classes and clsAPIDatabase.vb |
 | January 14, 2026 | Added `<JsonIgnore>` to `Movie.Set_Kodi` and `Movie.Sets_YAMJ` to fix JSON serialization error for movies in sets |
-| January 14, 2026 | All testing complete — Phase 1 and Phase 2 fully verified ✅ |
+| January 14, 2026 | Phase 2 testing complete — all classes verified ✅ |
+| January 15, 2026 | Added `Movieset` class: Implemented `ICloneable` and `CloneDeep()` method (class previously lacked cloning support) |
+| January 15, 2026 | All implementation complete — BL-CC-001 fully closed ✅ |
 
 ---
 

@@ -1926,7 +1926,6 @@ Public Class Database
             Using SQLreader As SQLiteDataReader = SQLcommand.ExecuteReader()
                 While SQLreader.Read
                     Return SQLreader("url").ToString
-                    Exit While
                 End While
             End Using
         End Using
@@ -5121,7 +5120,6 @@ Public Class Database
                         logger.Error("Something very wrong here: SaveTVEpToDB", dbElement.ToString, "Error")
                         dbElement.ID = -1
                         Return dbElement
-                        Exit Function
                     End If
                 End Using
             Else
@@ -6177,7 +6175,6 @@ Public Class Database
                         dbElement.ID = -1
                         dbElement.ShowID = dbElement.ID
                         Return dbElement
-                        Exit Function
                     End If
                 End Using
             Else

@@ -708,7 +708,6 @@ Public Class ModulesManager
                 Return externalScraperModule.ProcessorModule.QueryScraperCapabilities(ImageType)
         End Select
 
-        Return False
     End Function
 
     Function QueryScraperCapabilities_Image_MovieSet(ByVal externalScraperModule As _externalScraperModuleClass_Image_MovieSet, ByVal ScrapeModifiers As Structures.ScrapeModifiers) As Boolean
@@ -740,7 +739,6 @@ Public Class ModulesManager
                 Return externalScraperModule.ProcessorModule.QueryScraperCapabilities(ImageType)
         End Select
 
-        Return False
     End Function
 
     Function QueryScraperCapabilities_Image_TV(ByVal externalScraperModule As _externalScraperModuleClass_Image_TV, ByVal ScrapeModifiers As Structures.ScrapeModifiers) As Boolean
@@ -798,7 +796,6 @@ Public Class ModulesManager
                 Return externalScraperModule.ProcessorModule.QueryScraperCapabilities(ImageType)
         End Select
 
-        Return False
     End Function
     ''' <summary>
     ''' Calls all the generic modules of the supplied type (if one is defined), passing the supplied _params.
