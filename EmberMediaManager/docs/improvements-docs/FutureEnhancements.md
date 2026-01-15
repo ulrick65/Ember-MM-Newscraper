@@ -96,6 +96,9 @@ Each category table uses this column order:
 
 | Priority | Item | Effort | Added | Source | Notes | Details |
 |----------|------|--------|-------|--------|-------|---------|
+| Medium | Audit My.* namespace usage | 4-6 hrs | January 14, 2026 | .NET 8 Migration Prep | Prerequisite for BL-FR-005; replace `My.Computer`, `My.Settings`, etc. | [BL-CC-002](backlog/BL-CC-002-AuditMyNamespaceUsage.md) |
+| Medium | Review NuGet packages for .NET 8 compatibility | 2-4 hrs | January 14, 2026 | .NET 8 Migration Prep | Prerequisite for BL-FR-005; identify packages needing updates | [BL-CC-003](backlog/BL-CC-003-NuGetCompatibilityReview.md) |
+| Medium | Convert to SDK-style projects | 4-8 hrs | January 14, 2026 | .NET 8 Migration Prep | Prerequisite for BL-FR-005; modernize project files | [BL-CC-004](backlog/BL-CC-004-ConvertToSDKStyleProjects.md) |
 | Low | Find/remove orphaned files | 1-2 hrs | December 31, 2025 | SolutionCleanupAnalysis | Script provided in doc | |
 | Low | Remove commented code blocks | 2-4 hrs | December 31, 2025 | SolutionCleanupAnalysis | Multiple files identified | |
 
@@ -108,7 +111,6 @@ Each category table uses this column order:
 | Priority | Item | Effort | Added | Source | Notes | Details |
 |----------|------|--------|-------|--------|-------|---------|
 | **High** | IMDB strPosterURL thread safety | 3-4 hrs | January 2, 2026 | Analysis | Race condition with parallel scraping | [BL-CQ-001](backlog/BL-CQ-001-IMDB-ThreadSafety.md) |
-| **High** | Null check audit (.Count calls) | 2-3 hrs | January 2, 2026 | Analysis | Multiple places call .Count without null check | [BL-CQ-002](backlog/BL-CQ-002-NullCheckAudit.md) |
 | Medium | Replace Application.DoEvents() anti-pattern | 2-4 hrs | December 31, 2025 | PerformanceAnalysis 2.2 | clsScrapeIMDB.vb, clsScrapeTMDB.vb | |
 | Low | Add FFmpeg version check on startup | 1-2 hrs | December 31, 2025 | FFmpegProcess | Display in About dialog | |
 | Low | Add try-finally to MediaInfo handle cleanup | 1 hr | December 31, 2025 | MediaInfoMappingProcess | Ensure handles released | |
@@ -146,11 +148,12 @@ Each category table uses this column order:
 
 | Priority | Item | Effort | Added | Source | Notes | Details |
 |----------|------|--------|-------|--------|-------|---------|
+| Medium | Migrate to .NET 8 LTS | 30-60 hrs | January 14, 2026 | ulrick65 | Requires: BL-CC-001 (BinaryFormatter), package updates, `My.*` replacements, SDK-style projects, addon testing; enables EF Core | [BL-FR-005](backlog/BL-FR-005-DotNet8Migration.md) |
 | Low | Separate NFO reading/validation | 6-10 hrs | December 26, 2025 | NfoFileImprovements 4.2 | NFOValidator, NFOReader, NFONormalizer | [BL-FR-002](backlog/BL-FR-002-NFOSeparateConcerns.md) |
 | Low | Strategy pattern for NFO formats | 8-12 hrs | December 26, 2025 | NfoFileImprovements 4.1 | INfoWriter interface for extensibility | [BL-FR-001](backlog/BL-FR-001-NFOStrategyPattern.md) |
 | Low | Keyboard Shortcuts Settings Page | 8-16 hrs | January 10, 2026 | ulrick65 | Create settings UI to display/edit shortcuts; currently all hardcoded | [BL-FR-004](backlog/BL-FR-004-KeyboardShortcutsSettings.md) |
 | Low | Implement yt-dlp for trailer downloads | 8-12 hrs | January 10, 2026 | ulrick65 | Auto-download trailers using yt-dlp; GitHub: https://github.com/yt-dlp/yt-dlp | |
-| Low | Migrate to .NET 8 LTS | 30-60 hrs | January 14, 2026 | ulrick65 | Requires: BL-CC-001 (BinaryFormatter), package updates, `My.*` replacements, SDK-style projects, addon testing; enables EF Core | |
+| Low | Setting to hide missing Season 00 (Specials) episodes | 1-2 hrs | January 14, 2026 | ulrick65 | Add option to exclude Season 00 from missing episode display | |
 
 
 ---
@@ -162,9 +165,8 @@ Each category table uses this column order:
 | Priority | Item | Effort | Added | Source | Notes | Details |
 |----------|------|--------|-------|--------|-------|---------|
 | High | Setting "Create imdb/tmdb node in nfo file" will not stay selected | 1-2 hrs | January 11, 2026 | ulrick65 | Location is `Settings-TV Shows-Scrapers-Data` the ID of the settings are: `chkMovieScraperIdWriteNodeIMDbId` and `chkTVScraperIdWriteNodeTMDbId` | |
-| Medium | MovieSet crash after removing movies from database | 1-2 hrs | January 11, 2026 | ulrick65 | Null collection in `FillScreenInfoWith_Movieset()` causes ArgumentNullException | [BL-KI-006](backlog/BL-KI-006-MovieSetCrashAfterMovieRemoval.md) |
 | Low | Edit Images crash with All Seasons selected | 2-3 hrs | January 5, 2026 | Testing | Unscraped show + All Seasons causes ArgumentNullException | [BL-KI-003](backlog/BL-KI-003-EditImagesAllSeasonsCrash.md) |
-| Low | Simple Mapping NullReference on Empty Row | 1-2 hrs | January 14, 2026 | BL-CC-001 Testing | Certification/Country/Status/Studio mapping dialogs crash when saving cleared rows | [BL-KI-007](backlog/BL-KI-007-SimpleMappingNullReference.md) |
+| Low | MovieSets scraping data but not images | 2-4 hrs | January 14, 2026 | ulrick65 | MovieSet scraper fetches metadata but no images are downloaded | |
 | Monitor | Parallel download race conditions in SaveToFile | — | December 29, 2025 | Phase 1 | Reverted `File.Exists` check that broke image editing | |
 
 
@@ -190,6 +192,7 @@ Each category table uses this column order:
 | Priority | Item | Effort | Added | Source | Notes | Details |
 |----------|------|--------|-------|--------|-------|---------|
 | Medium | Parallel Scraper Execution | 4-6 hrs | December 31, 2025 | PerformanceAnalysis 8 | Run TMDB+IMDB concurrent per movie | |
+| Medium | Edit Images Quick Access - Show progress during scrape | 2-3 hrs | January 10, 2026 | ulrick65 | Add progress indicator while scraping images for Edit Images context menu | [BL-PE-001](backlog/BL-PE-001-EditImagesQuickAccessPerformance.md) |
 | Low | Batch Actor Inserts | 2-3 hrs | December 29, 2025 | Phase 2 | Minimal impact after indices (0.64ms each) | |
 | Low | Configurable Concurrency Setting | 2-3 hrs | December 31, 2025 | Phase 3 | Default `Min(ProcessorCount, 4)` works well | |
 | Low | Disk-based Image Cache | 4-6 hrs | December 31, 2025 | PerformanceAnalysis R4.3 | Reduces bandwidth on repeat scrapes | |
@@ -198,7 +201,6 @@ Each category table uses this column order:
 | Low | Memory Pooling for Large Objects | 4-8 hrs | December 31, 2025 | PerformanceAnalysis 8 | Reduces GC pressure | |
 | Low | Producer-Consumer Pattern | 8-16 hrs | December 31, 2025 | Phase 3 | Only if save phase becomes bottleneck | |
 | Low | Response Caching (scrapers) | 2-4 hrs | December 29, 2025 | Phase 2/4, PerformanceAnalysis | Only benefits repeat scrapes | |
-| Medium | Edit Images Quick Access - Show progress during scrape | 2-3 hrs | January 10, 2026 | ulrick65 | Add progress indicator while scraping images for Edit Images context menu | [BL-PE-001](backlog/BL-PE-001-EditImagesQuickAccessPerformance.md) |
 
 ---
 
@@ -270,11 +272,9 @@ Each category table uses this column order:
 | "Always Show Genre Text" setting not saving | January 9, 2026 | January 9, 2026 | 0 | [BL-KI-005](backlog/BL-KI-005-GenreTextSettingNotSaving.md) |
 | Auto-select Extrafanarts view when only image type enabled | January 10, 2026 | January 10, 2026 | 0 | [BL-UX-007](backlog/BL-UX-007-AutoSelectExtrafanarts.md) |
 | Replace BinaryFormatter in CloneDeep | December 26, 2025 | January 14, 2026 | 19 | [BL-CC-001](backlog/BL-CC-001-ReplaceBinaryFormatter.md) |
-
-
----
-
-*End of file*
+| Simple Mapping NullReference on Empty Row | January 14, 2026 | January 14, 2026 | 0 | [BL-KI-007](backlog/BL-KI-007-SimpleMappingNullReference.md) |
+| MovieSet Crash When Opening MovieSets Tab | January 11, 2026 | January 14, 2026 | 0 | [BL-KI-006](backlog/BL-KI-006-MovieSetCrashAfterMovieRemoval.md) |
+| Null check audit (.Count calls) | 2-3 hrs | January 2, 2026 | January 14, 2026 | 12 | [BL-CQ-002](backlog/BL-CQ-002-NullCheckAudit.md) |
 
 
 

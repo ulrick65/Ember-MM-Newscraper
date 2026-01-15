@@ -105,15 +105,24 @@ Public Class dlgSimpleMapping
         dgvMappings.ClearSelection()
     End Sub
 
+    ''' <summary>
+    ''' Saves all valid mapping entries from the grid to the appropriate XML configuration.
+    ''' </summary>
+    ''' <remarks>
+    ''' Skips rows where the input cell is null or empty (handles cleared/deleted rows gracefully).
+    ''' </remarks>
     Public Sub SaveChanges()
         Dim nSimpleMapping As New List(Of SimpleMapping)
         For Each aRow As DataGridViewRow In dgvMappings.Rows
-            If Not aRow.IsNewRow AndAlso Not String.IsNullOrEmpty(aRow.Cells(0).Value.ToString.Trim) Then
-                nSimpleMapping.Add(New SimpleMapping With {
-                                   .Input = aRow.Cells(0).Value.ToString.Trim,
-                                   .MappedTo = aRow.Cells(1).Value.ToString.Trim
-                                   })
-            End If
+            'Skip new row placeholder and rows with null/empty input values
+            If aRow.IsNewRow Then Continue For
+            If aRow.Cells(0).Value Is Nothing OrElse String.IsNullOrEmpty(aRow.Cells(0).Value.ToString.Trim) Then Continue For
+            If aRow.Cells(1).Value Is Nothing Then Continue For
+
+            nSimpleMapping.Add(New SimpleMapping With {
+                                  .Input = aRow.Cells(0).Value.ToString.Trim,
+                                  .MappedTo = If(aRow.Cells(1).Value IsNot Nothing, aRow.Cells(1).Value.ToString.Trim, String.Empty)
+                                  })
         Next
         Select Case _Type
             Case MappingType.CertificationMapping

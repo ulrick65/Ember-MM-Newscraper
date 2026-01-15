@@ -409,8 +409,6 @@ Public Class dlgTMDBSearchResults_Movie
             mem.Seek(0, IO.SeekOrigin.Begin)
             Return DirectCast(bin.Deserialize(mem), MediaContainers.Movie)
         End Using
-
-        Return Nothing
     End Function
 
 

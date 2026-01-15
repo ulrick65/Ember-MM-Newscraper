@@ -68,9 +68,14 @@ namespace XBMCRPC.List.Item
             if (reader.TokenType == JsonToken.Null)
                 return null;
 
-            var jObject = (JObject)serializer.Deserialize(reader);
+            var jObject = serializer.Deserialize(reader) as JObject;
+            if (jObject == null)
+                return null;
+
             var localReader = new JTokenReader(jObject);
-            var val = (XBMCRPC.List.Item.Base)base.ReadJson(localReader, objectType, existingValue, serializer);
+            var val = base.ReadJson(localReader, objectType, existingValue, serializer) as XBMCRPC.List.Item.Base;
+            if (val == null)
+                return null;
 
             localReader = new JTokenReader(jObject);
             val.AsVideoDetailsFile = serializer.Deserialize<XBMCRPC.Video.Details.File>(localReader);
@@ -82,7 +87,7 @@ namespace XBMCRPC.List.Item
             return val;
         }
 
-		  public override bool CanConvert(Type objectType)
+        public override bool CanConvert(Type objectType)
         {
             return objectType == typeof(XBMCRPC.List.Item.Base);
         }

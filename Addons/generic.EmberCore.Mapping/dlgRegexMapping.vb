@@ -96,15 +96,24 @@ Public Class dlgRegexMapping
         dgvMappings.ClearSelection()
     End Sub
 
+    ''' <summary>
+    ''' Saves all valid regex mapping entries from the grid to the appropriate XML configuration.
+    ''' </summary>
+    ''' <remarks>
+    ''' Skips rows where the regex cell is null or empty (handles cleared/deleted rows gracefully).
+    ''' </remarks>
     Public Sub SaveChanges()
         Dim nRegexMapping As New List(Of RegexMapping)
         For Each aRow As DataGridViewRow In dgvMappings.Rows
-            If Not aRow.IsNewRow AndAlso Not String.IsNullOrEmpty(aRow.Cells(0).Value.ToString.Trim) Then
-                nRegexMapping.Add(New RegexMapping With {
-                                  .RegExp = aRow.Cells(0).Value.ToString.Trim,
-                                  .Result = aRow.Cells(1).Value.ToString.Trim
-                                  })
-            End If
+            'Skip new row placeholder and rows with null/empty regex values
+            If aRow.IsNewRow Then Continue For
+            If aRow.Cells(0).Value Is Nothing OrElse String.IsNullOrEmpty(aRow.Cells(0).Value.ToString.Trim) Then Continue For
+            If aRow.Cells(1).Value Is Nothing Then Continue For
+
+            nRegexMapping.Add(New RegexMapping With {
+                                 .RegExp = aRow.Cells(0).Value.ToString.Trim,
+                                 .Result = If(aRow.Cells(1).Value IsNot Nothing, aRow.Cells(1).Value.ToString.Trim, String.Empty)
+                                 })
         Next
         Select Case _Type
             Case MappingType.EditionMapping

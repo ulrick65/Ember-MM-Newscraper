@@ -67,35 +67,45 @@ namespace XBMCRPC
             request.Credentials = new NetworkCredential(_settings.UserName, _settings.Password);
             request.ContentType = "application/json";
             request.Method = "POST";
-            var postStream = await request.GetRequestStreamAsync();
 
-            var requestId = JsonRpcId++;
-            var jsonRequest = BuildJsonPost(method, args, requestId);
-            byte[] postData = Encoding.UTF8.GetBytes(jsonRequest);
-            postStream.Write(postData, 0, postData.Length);
-            postStream.Dispose();
-
-            var response = await request.GetResponseAsync();
-            var responseStream = response.GetResponseStream();
-            string responseData = null;
-            if (responseStream != null)
+            using (var postStream = await request.GetRequestStreamAsync())
             {
-                var streamReader = new StreamReader(responseStream);
-                responseData = streamReader.ReadToEnd();
-                responseStream.Dispose();
-                streamReader.Dispose();
+                var requestId = JsonRpcId++;
+                var jsonRequest = BuildJsonPost(method, args, requestId);
+                byte[] postData = Encoding.UTF8.GetBytes(jsonRequest);
+                postStream.Write(postData, 0, postData.Length);
             }
 
-            response.Dispose();
+            string responseData;
+            using (var response = await request.GetResponseAsync())
+            using (var responseStream = response.GetResponseStream())
+            {
+                if (responseStream == null)
+                {
+                    throw new InvalidOperationException("No response stream received from Kodi API");
+                }
+
+                using (var streamReader = new StreamReader(responseStream))
+                {
+                    responseData = streamReader.ReadToEnd();
+                }
+            }
 
             JObject query = JObject.Parse(responseData);
+
             var error = query["error"];
             if (error != null)
             {
                 throw new Exception(error.ToString());
             }
-            var result = query["result"].ToObject<T>(Serializer);
-            return result;
+
+            var resultToken = query["result"];
+            if (resultToken == null)
+            {
+                throw new InvalidOperationException("Kodi API response missing 'result' field");
+            }
+
+            return resultToken.ToObject<T>(Serializer);
         }
 
         private static string BuildJsonPost(string method, object args, uint id)
@@ -172,200 +182,208 @@ namespace XBMCRPC
 
         private void ParseNotification(JObject jObject)
         {
-            if (jObject["method"] != null)
-            {
-                string _method;
-                _method = jObject["method"].ToString();
-                switch (_method)
-                {
-                    case "Application.OnVolumeChanged":
-                        Application.RaiseOnVolumeChanged(
-            jObject["params"]["sender"].ToObject<string>(Serializer)
-            , jObject["params"]["data"].ToObject<XBMCRPC.Application.OnVolumeChanged_data>(Serializer)
-            );
-                        break;
-                    case "AudioLibrary.OnCleanFinished":
-                        AudioLibrary.RaiseOnCleanFinished(
-            jObject["params"]["sender"].ToObject<string>(Serializer)
-            , jObject["params"]["data"].ToObject<object>(Serializer)
-            );
-                        break;
-                    case "AudioLibrary.OnCleanStarted":
-                        AudioLibrary.RaiseOnCleanStarted(
-            jObject["params"]["sender"].ToObject<string>(Serializer)
-            , jObject["params"]["data"].ToObject<object>(Serializer)
-            );
-                        break;
-                    case "AudioLibrary.OnRemove":
-                        AudioLibrary.RaiseOnRemove(
-            jObject["params"]["sender"].ToObject<string>(Serializer)
-            , jObject["params"]["data"].ToObject<XBMCRPC.AudioLibrary.OnRemove_data>(Serializer)
-            );
-                        break;
-                    case "AudioLibrary.OnScanFinished":
-                        AudioLibrary.RaiseOnScanFinished(
-            jObject["params"]["sender"].ToObject<string>(Serializer)
-            , jObject["params"]["data"].ToObject<object>(Serializer)
-            );
-                        break;
-                    case "AudioLibrary.OnScanStarted":
-                        AudioLibrary.RaiseOnScanStarted(
-            jObject["params"]["sender"].ToObject<string>(Serializer)
-            , jObject["params"]["data"].ToObject<object>(Serializer)
-            );
-                        break;
-                    case "AudioLibrary.OnUpdate":
-                        AudioLibrary.RaiseOnUpdate(
-            jObject["params"]["sender"].ToObject<string>(Serializer)
-            , jObject["params"]["data"].ToObject<XBMCRPC.AudioLibrary.OnUpdate_data>(Serializer)
-            );
-                        break;
-                    case "GUI.OnScreensaverActivated":
-                        GUI.RaiseOnScreensaverActivated(
-            jObject["params"]["sender"].ToObject<string>(Serializer)
-            , jObject["params"]["data"].ToObject<object>(Serializer)
-            );
-                        break;
-                    case "GUI.OnScreensaverDeactivated":
-                        GUI.RaiseOnScreensaverDeactivated(
-            jObject["params"]["sender"].ToObject<string>(Serializer)
-            , jObject["params"]["data"].ToObject<object>(Serializer)
-            );
-                        break;
-                    case "Input.OnInputFinished":
-                        Input.RaiseOnInputFinished(
-            jObject["params"]["sender"].ToObject<string>(Serializer)
-            , jObject["params"]["data"].ToObject<object>(Serializer)
-            );
-                        break;
-                    case "Input.OnInputRequested":
-                        Input.RaiseOnInputRequested(
-            jObject["params"]["sender"].ToObject<string>(Serializer)
-            , jObject["params"]["data"].ToObject<XBMCRPC.Input.OnInputRequested_data>(Serializer)
-            );
-                        break;
-                    case "Player.OnPause":
-                        Player.RaiseOnPause(
-            jObject["params"]["sender"].ToObject<string>(Serializer)
-            , jObject["params"]["data"].ToObject<XBMCRPC.Player.Notifications.Data>(Serializer)
-            );
-                        break;
-                    case "Player.OnPlay":
-                        Player.RaiseOnPlay(
-            jObject["params"]["sender"].ToObject<string>(Serializer)
-            , jObject["params"]["data"].ToObject<XBMCRPC.Player.Notifications.Data>(Serializer)
-            );
-                        break;
-                    case "Player.OnPropertyChanged":
-                        Player.RaiseOnPropertyChanged(
-            jObject["params"]["sender"].ToObject<string>(Serializer)
-            , jObject["params"]["data"].ToObject<XBMCRPC.Player.OnPropertyChanged_data>(Serializer)
-            );
-                        break;
-                    case "Player.OnSeek":
-                        Player.RaiseOnSeek(
-            jObject["params"]["sender"].ToObject<string>(Serializer)
-            , jObject["params"]["data"].ToObject<XBMCRPC.Player.OnSeek_data>(Serializer)
-            );
-                        break;
-                    case "Player.OnSpeedChanged":
-                        Player.RaiseOnSpeedChanged(
-            jObject["params"]["sender"].ToObject<string>(Serializer)
-            , jObject["params"]["data"].ToObject<XBMCRPC.Player.Notifications.Data>(Serializer)
-            );
-                        break;
-                    case "Player.OnStop":
-                        Player.RaiseOnStop(
-            jObject["params"]["sender"].ToObject<string>(Serializer)
-            , jObject["params"]["data"].ToObject<XBMCRPC.Player.OnStop_data>(Serializer)
-            );
-                        break;
-                    case "Playlist.OnAdd":
-                        Playlist.RaiseOnAdd(
-            jObject["params"]["sender"].ToObject<string>(Serializer)
-            , jObject["params"]["data"].ToObject<XBMCRPC.Playlist.OnAdd_data>(Serializer)
-            );
-                        break;
-                    case "Playlist.OnClear":
-                        Playlist.RaiseOnClear(
-            jObject["params"]["sender"].ToObject<string>(Serializer)
-            , jObject["params"]["data"].ToObject<XBMCRPC.Playlist.OnClear_data>(Serializer)
-            );
-                        break;
-                    case "Playlist.OnRemove":
-                        Playlist.RaiseOnRemove(
-            jObject["params"]["sender"].ToObject<string>(Serializer)
-            , jObject["params"]["data"].ToObject<XBMCRPC.Playlist.OnRemove_data>(Serializer)
-            );
-                        break;
-                    case "System.OnLowBattery":
-                        System.RaiseOnLowBattery(
-            jObject["params"]["sender"].ToObject<string>(Serializer)
-            , jObject["params"]["data"].ToObject<object>(Serializer)
-            );
-                        break;
-                    case "System.OnQuit":
-                        System.RaiseOnQuit(
-            jObject["params"]["sender"].ToObject<string>(Serializer)
-            , jObject["params"]["data"].ToObject<object>(Serializer)
-            );
-                        break;
-                    case "System.OnRestart":
-                        System.RaiseOnRestart(
-            jObject["params"]["sender"].ToObject<string>(Serializer)
-            , jObject["params"]["data"].ToObject<object>(Serializer)
-            );
-                        break;
-                    case "System.OnSleep":
-                        System.RaiseOnSleep(
-            jObject["params"]["sender"].ToObject<string>(Serializer)
-            , jObject["params"]["data"].ToObject<object>(Serializer)
-            );
-                        break;
-                    case "System.OnWake":
-                        System.RaiseOnWake(
-            jObject["params"]["sender"].ToObject<string>(Serializer)
-            , jObject["params"]["data"].ToObject<object>(Serializer)
-            );
-                        break;
-                    case "VideoLibrary.OnCleanFinished":
-                        VideoLibrary.RaiseOnCleanFinished(
-            jObject["params"]["sender"].ToObject<string>(Serializer)
-            , jObject["params"]["data"].ToObject<object>(Serializer)
-            );
-                        break;
-                    case "VideoLibrary.OnCleanStarted":
-                        VideoLibrary.RaiseOnCleanStarted(
-            jObject["params"]["sender"].ToObject<string>(Serializer)
-            , jObject["params"]["data"].ToObject<object>(Serializer)
-            );
-                        break;
-                    case "VideoLibrary.OnRemove":
-                        VideoLibrary.RaiseOnRemove(
-            jObject["params"]["sender"].ToObject<string>(Serializer)
-            , jObject["params"]["data"].ToObject<XBMCRPC.VideoLibrary.OnRemove_data>(Serializer)
-            );
-                        break;
-                    case "VideoLibrary.OnScanFinished":
-                        VideoLibrary.RaiseOnScanFinished(
-            jObject["params"]["sender"].ToObject<string>(Serializer)
-            , jObject["params"]["data"].ToObject<object>(Serializer)
-            );
-                        break;
-                    case "VideoLibrary.OnScanStarted":
-                        VideoLibrary.RaiseOnScanStarted(
-                            jObject["params"]["sender"].ToObject<string>(Serializer),
-                            jObject["params"]["data"].ToObject<object>(Serializer)
-                            );
-                        break;
-                    case "VideoLibrary.OnUpdate":
-                        VideoLibrary.RaiseOnUpdate(
-            jObject["params"]["sender"].ToObject<string>(Serializer)
-            , jObject["params"]["data"].ToObject<XBMCRPC.VideoLibrary.OnUpdate_data>(Serializer)
-            );
-                        break;
+            var methodToken = jObject["method"];
+            if (methodToken == null)
+                return;
 
-                }
+            var paramsToken = jObject["params"];
+            if (paramsToken == null)
+                return;
+
+            var senderToken = paramsToken["sender"];
+            var dataToken = paramsToken["data"];
+            if (senderToken == null)
+                return;
+
+            string method = methodToken.ToString();
+            switch (method)
+            {
+                case "Application.OnVolumeChanged":
+                    Application.RaiseOnVolumeChanged(
+                        senderToken.ToObject<string>(Serializer),
+                        dataToken?.ToObject<XBMCRPC.Application.OnVolumeChanged_data>(Serializer)
+                    );
+                    break;
+                case "AudioLibrary.OnCleanFinished":
+                    AudioLibrary.RaiseOnCleanFinished(
+                        senderToken.ToObject<string>(Serializer),
+                        dataToken?.ToObject<object>(Serializer)
+                    );
+                    break;
+                case "AudioLibrary.OnCleanStarted":
+                    AudioLibrary.RaiseOnCleanStarted(
+                        senderToken.ToObject<string>(Serializer),
+                        dataToken?.ToObject<object>(Serializer)
+                    );
+                    break;
+                case "AudioLibrary.OnRemove":
+                    AudioLibrary.RaiseOnRemove(
+                        senderToken.ToObject<string>(Serializer),
+                        dataToken?.ToObject<XBMCRPC.AudioLibrary.OnRemove_data>(Serializer)
+                    );
+                    break;
+                case "AudioLibrary.OnScanFinished":
+                    AudioLibrary.RaiseOnScanFinished(
+                        senderToken.ToObject<string>(Serializer),
+                        dataToken?.ToObject<object>(Serializer)
+                    );
+                    break;
+                case "AudioLibrary.OnScanStarted":
+                    AudioLibrary.RaiseOnScanStarted(
+                        senderToken.ToObject<string>(Serializer),
+                        dataToken?.ToObject<object>(Serializer)
+                    );
+                    break;
+                case "AudioLibrary.OnUpdate":
+                    AudioLibrary.RaiseOnUpdate(
+                        senderToken.ToObject<string>(Serializer),
+                        dataToken?.ToObject<XBMCRPC.AudioLibrary.OnUpdate_data>(Serializer)
+                    );
+                    break;
+                case "GUI.OnScreensaverActivated":
+                    GUI.RaiseOnScreensaverActivated(
+                        senderToken.ToObject<string>(Serializer),
+                        dataToken?.ToObject<object>(Serializer)
+                    );
+                    break;
+                case "GUI.OnScreensaverDeactivated":
+                    GUI.RaiseOnScreensaverDeactivated(
+                        senderToken.ToObject<string>(Serializer),
+                        dataToken?.ToObject<object>(Serializer)
+                    );
+                    break;
+                case "Input.OnInputFinished":
+                    Input.RaiseOnInputFinished(
+                        senderToken.ToObject<string>(Serializer),
+                        dataToken?.ToObject<object>(Serializer)
+                    );
+                    break;
+                case "Input.OnInputRequested":
+                    Input.RaiseOnInputRequested(
+                        senderToken.ToObject<string>(Serializer),
+                        dataToken?.ToObject<XBMCRPC.Input.OnInputRequested_data>(Serializer)
+                    );
+                    break;
+                case "Player.OnPause":
+                    Player.RaiseOnPause(
+                        senderToken.ToObject<string>(Serializer),
+                        dataToken?.ToObject<XBMCRPC.Player.Notifications.Data>(Serializer)
+                    );
+                    break;
+                case "Player.OnPlay":
+                    Player.RaiseOnPlay(
+                        senderToken.ToObject<string>(Serializer),
+                        dataToken?.ToObject<XBMCRPC.Player.Notifications.Data>(Serializer)
+                    );
+                    break;
+                case "Player.OnPropertyChanged":
+                    Player.RaiseOnPropertyChanged(
+                        senderToken.ToObject<string>(Serializer),
+                        dataToken?.ToObject<XBMCRPC.Player.OnPropertyChanged_data>(Serializer)
+                    );
+                    break;
+                case "Player.OnSeek":
+                    Player.RaiseOnSeek(
+                        senderToken.ToObject<string>(Serializer),
+                        dataToken?.ToObject<XBMCRPC.Player.OnSeek_data>(Serializer)
+                    );
+                    break;
+                case "Player.OnSpeedChanged":
+                    Player.RaiseOnSpeedChanged(
+                        senderToken.ToObject<string>(Serializer),
+                        dataToken?.ToObject<XBMCRPC.Player.Notifications.Data>(Serializer)
+                    );
+                    break;
+                case "Player.OnStop":
+                    Player.RaiseOnStop(
+                        senderToken.ToObject<string>(Serializer),
+                        dataToken?.ToObject<XBMCRPC.Player.OnStop_data>(Serializer)
+                    );
+                    break;
+                case "Playlist.OnAdd":
+                    Playlist.RaiseOnAdd(
+                        senderToken.ToObject<string>(Serializer),
+                        dataToken?.ToObject<XBMCRPC.Playlist.OnAdd_data>(Serializer)
+                    );
+                    break;
+                case "Playlist.OnClear":
+                    Playlist.RaiseOnClear(
+                        senderToken.ToObject<string>(Serializer),
+                        dataToken?.ToObject<XBMCRPC.Playlist.OnClear_data>(Serializer)
+                    );
+                    break;
+                case "Playlist.OnRemove":
+                    Playlist.RaiseOnRemove(
+                        senderToken.ToObject<string>(Serializer),
+                        dataToken?.ToObject<XBMCRPC.Playlist.OnRemove_data>(Serializer)
+                    );
+                    break;
+                case "System.OnLowBattery":
+                    System.RaiseOnLowBattery(
+                        senderToken.ToObject<string>(Serializer),
+                        dataToken?.ToObject<object>(Serializer)
+                    );
+                    break;
+                case "System.OnQuit":
+                    System.RaiseOnQuit(
+                        senderToken.ToObject<string>(Serializer),
+                        dataToken?.ToObject<object>(Serializer)
+                    );
+                    break;
+                case "System.OnRestart":
+                    System.RaiseOnRestart(
+                        senderToken.ToObject<string>(Serializer),
+                        dataToken?.ToObject<object>(Serializer)
+                    );
+                    break;
+                case "System.OnSleep":
+                    System.RaiseOnSleep(
+                        senderToken.ToObject<string>(Serializer),
+                        dataToken?.ToObject<object>(Serializer)
+                    );
+                    break;
+                case "System.OnWake":
+                    System.RaiseOnWake(
+                        senderToken.ToObject<string>(Serializer),
+                        dataToken?.ToObject<object>(Serializer)
+                    );
+                    break;
+                case "VideoLibrary.OnCleanFinished":
+                    VideoLibrary.RaiseOnCleanFinished(
+                        senderToken.ToObject<string>(Serializer),
+                        dataToken?.ToObject<object>(Serializer)
+                    );
+                    break;
+                case "VideoLibrary.OnCleanStarted":
+                    VideoLibrary.RaiseOnCleanStarted(
+                        senderToken.ToObject<string>(Serializer),
+                        dataToken?.ToObject<object>(Serializer)
+                    );
+                    break;
+                case "VideoLibrary.OnRemove":
+                    VideoLibrary.RaiseOnRemove(
+                        senderToken.ToObject<string>(Serializer),
+                        dataToken?.ToObject<XBMCRPC.VideoLibrary.OnRemove_data>(Serializer)
+                    );
+                    break;
+                case "VideoLibrary.OnScanFinished":
+                    VideoLibrary.RaiseOnScanFinished(
+                        senderToken.ToObject<string>(Serializer),
+                        dataToken?.ToObject<object>(Serializer)
+                    );
+                    break;
+                case "VideoLibrary.OnScanStarted":
+                    VideoLibrary.RaiseOnScanStarted(
+                        senderToken.ToObject<string>(Serializer),
+                        dataToken?.ToObject<object>(Serializer)
+                    );
+                    break;
+                case "VideoLibrary.OnUpdate":
+                    VideoLibrary.RaiseOnUpdate(
+                        senderToken.ToObject<string>(Serializer),
+                        dataToken?.ToObject<XBMCRPC.VideoLibrary.OnUpdate_data>(Serializer)
+                    );
+                    break;
             }
         }
 

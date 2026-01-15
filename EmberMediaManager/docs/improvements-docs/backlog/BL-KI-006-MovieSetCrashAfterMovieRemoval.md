@@ -1,58 +1,44 @@
-﻿# BL-KI-006: MovieSet Crash After Movie Removal
+﻿# BL-KI-006: MovieSet Crash When Opening MovieSets Tab
 
-| Document Info | |
-|---------------|---|
+| Field | Value |
+|-------|-------|
 | **ID** | BL-KI-006 |
-| **Category** | Known Issues (KI) |
-| **Priority** | Medium |
-| **Status** | Open |
 | **Created** | January 11, 2026 |
-| **Updated** | January 11, 2026 |
-| **Author** | ulrick65 |
+| **Updated** | January 14, 2026 |
+| **Category** | Known Issue (KI) |
+| **Priority** | Medium |
+| **Effort** | 1 hour |
+| **Status** | ✅ Complete |
 
-##### [← Return to Future Enhancements](../FutureEnhancements.md)
+##### [← Return to FutureEnhancements](../FutureEnhancements.md)
 
 ---
 
 ## Summary
 
-Removing movies from the database and then clicking on MovieSets crashes the application with an `ArgumentNullException` in `FillScreenInfoWith_Movieset()`.
+Opening the MovieSets tab crashed the application with an `ArgumentNullException` in `FillScreenInfoWith_Movieset()`. The crash occurred because `pnlGenre` (a dynamic Panel array) was null when accessed.
 
 ---
 
-## Problem Description
+## Table of Contents
 
-When movies are removed from the database, the MovieSet records still reference those movies. When the user selects a MovieSet in the UI, the code attempts to call `.Count` on a null collection (likely the list of movies in the set), causing the application to crash.
-
-After investigation, it appears that regardless of whether movies are missing or not, it crashes as soon as the user clicks on the MovieSet tab, with this exception:
-
-    EXCEPTION OCCURRED:System.ArgumentNullException: Value cannot be null.
-    Parameter name: source
-       at System.Linq.Enumerable.Count[TSource](IEnumerable`1 source)
-       at Ember_Media_Manager.frmMain.FillScreenInfoWith_Movieset()
-       at Ember_Media_Manager.frmMain.DataGridView_SelectRow_MovieSet(Int32 iRow)
-       at Ember_Media_Manager.frmMain.tmrLoad_MovieSet_Tick(Object sender, EventArgs e)
-       at System.Windows.Forms.Timer.OnTick(EventArgs e)
-       at System.Windows.Forms.Timer.TimerNativeWindow.WndProc(Message& m)
-       at System.Windows.Forms.NativeWindow.Callback(IntPtr hWnd, Int32 msg, IntPtr wparam, IntPtr lparam)*   at System.Linq.Enumerable.Count[TSource](IEnumerable`1 source)
-       at Ember_Media_Manager.frmMain.FillScreenInfoWith_Movieset()
-       at Ember_Media_Manager.frmMain.DataGridView_SelectRow_MovieSet(Int32 iRow)
-       at Ember_Media_Manager.frmMain.tmrLoad_MovieSet_Tick(Object sender, EventArgs e)
-       at System.Windows.Forms.Timer.OnTick(EventArgs e)
-       at System.Windows.Forms.Timer.TimerNativeWindow.WndProc(Message& m)
-       at System.Windows.Forms.NativeWindow.Callback(IntPtr hWnd, Int32 msg, IntPtr wparam, IntPtr lparam)
-
-**Steps to Reproduce:**
-
-1. Have movies that belong to a MovieSet in the database
-2. Remove those movies from the database (but not the MovieSet)
-3. Click on the MovieSets tab
-4. Select a MovieSet that referenced the removed movies
-5. Application crashes
+- [Problem Description](#problem-description)
+- [Exception Details](#exception-details)
+- [Root Cause](#root-cause)
+- [Solution Implemented](#solution-implemented)
+- [Related Files](#related-files)
+- [Testing Notes](#testing-notes)
+- [Change History](#change-history)
 
 ---
 
-## Exception Details
+## [↑](#table-of-contents) Problem Description
+
+When selecting a MovieSet in the UI, the application crashed immediately. This happened most reliably when navigating to the MovieSets tab before ever viewing a Movie or TV Show.
+
+---
+
+## [↑](#table-of-contents) Exception Details
 
     EXCEPTION OCCURRED: System.ArgumentNullException: Value cannot be null.
     Parameter name: source
@@ -60,53 +46,75 @@ After investigation, it appears that regardless of whether movies are missing or
        at Ember_Media_Manager.frmMain.FillScreenInfoWith_Movieset()
        at Ember_Media_Manager.frmMain.DataGridView_SelectRow_MovieSet(Int32 iRow)
        at Ember_Media_Manager.frmMain.tmrLoad_MovieSet_Tick(Object sender, EventArgs e)
-       at System.Windows.Forms.Timer.OnTick(EventArgs e)
-       at System.Windows.Forms.Timer.TimerNativeWindow.WndProc(Message& m)
-       at System.Windows.Forms.NativeWindow.Callback(IntPtr hWnd, Int32 msg, IntPtr wparam, IntPtr lparam)
 
 ---
 
-## Root Cause Analysis
+## [↑](#table-of-contents) Root Cause
 
-The `FillScreenInfoWith_Movieset()` method calls `.Count` on a collection without first checking if the collection is null. When the movies that belonged to a MovieSet are removed, the collection becomes null or the reference becomes invalid.
+The `pnlGenre` array is declared at the class level as:
 
-**Likely location:** `frmMain.vb` in `FillScreenInfoWith_Movieset()`
+    Private pnlGenre() As Panel = Nothing
 
----
+This array is populated dynamically by `createGenreThumbs()` when displaying Movies or TV Shows (which have genres). **MovieSets don't have genres**, so `createGenreThumbs()` is never called for them.
 
-## Proposed Solution
+The `FillScreenInfoWith_Movieset()` method contained this loop (likely copy-pasted from `FillScreenInfoWith_Movie()`):
 
-Add null checks before calling `.Count` on collections in `FillScreenInfoWith_Movieset()`:
+    For i As Integer = 0 To pnlGenre.Count - 1
+        pnlGenre(i).Visible = True
+    Next
 
-    ' Before
-    If collection.Count > 0 Then
+When the user navigates to MovieSets before ever viewing a Movie:
+1. `pnlGenre` is still `Nothing` (never initialized)
+2. Calling `.Count` on `Nothing` throws `ArgumentNullException`
 
-    ' After  
-    If collection IsNot Nothing AndAlso collection.Count > 0 Then
-
-This is similar to the fix applied for `MoveGenres` (completed January 2, 2026).
-
----
-
-## Related Items
-
-- [BL-CQ-002: Null check audit (.Count calls)](BL-CQ-002-NullCheckAudit.md) — This is another instance of the same pattern
+**Why the guard clause for `currMovieset` didn't help:** The issue wasn't `currMovieset` being null — the MovieSet data loaded fine. The crash was in the genre panel loop at the end of the method, which shouldn't even be in this method since MovieSets don't have genres.
 
 ---
 
-## Files Affected
+## [↑](#table-of-contents) Solution Implemented
 
-| File | Change Type |
+Added a null check before the genre panel loop:
+
+    If pbMPAA.Image IsNot Nothing Then pnlMPAA.Visible = True
+    If pnlGenre IsNot Nothing Then
+        For i As Integer = 0 To pnlGenre.Count - 1
+            pnlGenre(i).Visible = True
+        Next
+    End If
+
+This defensive fix:
+- Prevents the crash when `pnlGenre` hasn't been initialized
+- Doesn't change behavior for content types that do have genres
+- Keeps the code consistent with other `FillScreenInfoWith_*` methods
+
+**Note:** The genre panel loop probably shouldn't be in this method at all since MovieSets don't have genres. However, the null check is the safe minimal fix.
+
+---
+
+## [↑](#table-of-contents) Related Files
+
+| File | Change |
+|------|--------|
+| `EmberMediaManager\frmMain.vb` | Added null check for `pnlGenre` in `FillScreenInfoWith_Movieset()` |
+
+---
+
+## [↑](#table-of-contents) Testing Notes
+
+- Open application with existing MovieSets in database
+- Click MovieSets tab immediately (before viewing any Movies)
+- Select a MovieSet
+- **Expected:** MovieSet info displays without crash
+- **Verified:** No crash occurs
+
+---
+
+## [↑](#table-of-contents) Change History
+
+| Date | Description |
 |------|-------------|
-| `EmberMediaManager\frmMain.vb` | Add null checks in `FillScreenInfoWith_Movieset()` |
-
----
-
-## Testing Notes
-
-- Remove movies that belong to a MovieSet
-- Verify MovieSets tab doesn't crash
-- Verify empty MovieSets display gracefully
+| January 11, 2026 | Created — reported crash when clicking MovieSets tab |
+| January 14, 2026 | Fixed — added null check for `pnlGenre` array; root cause was uninitialized genre panel array |
 
 ---
 

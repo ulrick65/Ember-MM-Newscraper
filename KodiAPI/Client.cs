@@ -45,7 +45,13 @@ namespace XBMCRPC
             else
             {
                 var download = await Files.PrepareDownload(thumbnailUri);
-                downloadPath = ((JObject)download.details)["path"].ToString();
+                var details = download?.details as JObject;
+                var path = details?["path"];
+                if (path == null)
+                {
+                    throw new InvalidOperationException($"Kodi API returned no path for: {thumbnailUri}");
+                }
+                downloadPath = path.ToString();
             }
             var downloadUri = new Uri(_settings.BaseAddress + downloadPath);
             return downloadUri;
@@ -78,13 +84,15 @@ namespace XBMCRPC
 
         public async Task<Uri> PrepareDownload(string path)
         {
-            string downloadPath;
-
             var download = await Files.PrepareDownload(path);
-            downloadPath = ((JObject)download.details)["path"].ToString();
+            var details = download?.details as JObject;
+            var pathToken = details?["path"];
+            if (pathToken == null)
+            {
+                throw new InvalidOperationException($"Kodi API returned no path for: {path}");
+            }
 
-            var uri = new Uri(_settings.BaseAddress + downloadPath);
-
+            var uri = new Uri(_settings.BaseAddress + pathToken.ToString());
             return uri;
         }
     }

@@ -519,6 +519,8 @@
     <None Include="docs\analysis-docs\ImageThumbnailAnalysis.md" />
     <None Include="docs\analysis-docs\PerformanceAnalysis.md" />
     <None Include="docs\analysis-docs\AsyncImageDownloadAnalysis.md" />
+    <None Include="docs\improvements-docs\backlog\BL-CC-002-AuditMyNamespaceUsage.md" />
+    <None Include="docs\improvements-docs\backlog\BL-CC-003-NuGetCompatibilityReview.md" />
     <None Include="docs\improvements-docs\backlog\BL-CQ-006-ImproveLogging.md" />
     <None Include="docs\improvements-docs\backlog\BL-CQ-007-AddCertificationLanguages.md" />
     <None Include="docs\improvements-docs\backlog\BL-DR-001-RemoveThemeScraperCode.md" />
@@ -534,6 +536,7 @@
     <None Include="docs\improvements-docs\backlog\BL-FR-001-NFOStrategyPattern.md" />
     <None Include="docs\improvements-docs\backlog\BL-FR-002-NFOSeparateConcerns.md" />
     <None Include="docs\improvements-docs\backlog\BL-FR-004-KeyboardShortcutsSettings.md" />
+    <None Include="docs\improvements-docs\backlog\BL-FR-005-DotNet8Migration.md" />
     <None Include="docs\improvements-docs\backlog\BL-KI-001-TVSeasonImagesSaveIssue.md" />
     <None Include="docs\improvements-docs\backlog\BL-KI-002-EditSeasonImageSelectionBug.md" />
     <None Include="docs\improvements-docs\backlog\BL-KI-003-EditImagesAllSeasonsCrash.md" />

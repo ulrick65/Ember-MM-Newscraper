@@ -11769,6 +11769,12 @@ Public Class frmMain
     Private Sub FillScreenInfoWith_Movieset()
         SuspendLayout()
 
+        'Guard clause: exit early if currMovieset is null (BL-KI-006)
+        If currMovieset Is Nothing Then
+            ResumeLayout()
+            Exit Sub
+        End If
+
         'Title
         Dim moviesInSetCount As Integer = If(currMovieset.MoviesInSet IsNot Nothing, currMovieset.MoviesInSet.Count, 0)
         If currMovieset.MovieSet.TitleSpecified AndAlso moviesInSetCount > 0 Then
@@ -11812,9 +11818,11 @@ Public Class frmMain
         End If
 
         If pbMPAA.Image IsNot Nothing Then pnlMPAA.Visible = True
-        For i As Integer = 0 To pnlGenre.Count - 1
-            pnlGenre(i).Visible = True
-        Next
+        If pnlGenre IsNot Nothing Then
+            For i As Integer = 0 To pnlGenre.Count - 1
+                pnlGenre(i).Visible = True
+            Next
+        End If
 
         ResumeLayout()
     End Sub

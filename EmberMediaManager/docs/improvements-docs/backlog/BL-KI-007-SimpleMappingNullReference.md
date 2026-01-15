@@ -1,14 +1,14 @@
-﻿# BL-KI-003: NullReferenceException in dlgSimpleMapping.SaveChanges
+﻿# BL-KI-007: NullReferenceException in Mapping Dialog SaveChanges
 
 | Field | Value |
 |-------|-------|
-| **ID** | BL-KI-003 |
+| **ID** | BL-KI-007 |
 | **Created** | January 14, 2026 |
 | **Updated** | January 14, 2026 |
 | **Category** | Known Issue (KI) |
 | **Priority** | Low |
 | **Effort** | 1-2 hours |
-| **Status** | 📋 Backlog |
+| **Status** | ✅ Complete |
 
 ##### [← Return to FutureEnhancements](../FutureEnhancements.md)
 
@@ -16,7 +16,7 @@
 
 ## Summary
 
-The Simple Mapping dialog (Certification, Country, Status, Studio mappings) throws a `NullReferenceException` when saving if a row has been "deleted" by clearing its contents rather than removing the row entirely.
+The Simple Mapping and Regex Mapping dialogs threw a `NullReferenceException` when saving if a row had been "deleted" by clearing its contents rather than removing the row entirely. Fixed by adding null checks to skip empty rows during save.
 
 ---
 
@@ -26,7 +26,7 @@ The Simple Mapping dialog (Certification, Country, Status, Studio mappings) thro
 - [Steps to Reproduce](#steps-to-reproduce)
 - [Exception Details](#exception-details)
 - [Root Cause](#root-cause)
-- [Proposed Solution](#proposed-solution)
+- [Solution Implemented](#solution-implemented)
 - [Related Files](#related-files)
 - [Notes](#notes)
 - [Change History](#change-history)
@@ -35,19 +35,19 @@ The Simple Mapping dialog (Certification, Country, Status, Studio mappings) thro
 
 ## [↑](#table-of-contents) Problem Description
 
-When a user adds a mapping entry and then tries to delete it by clearing the cell contents (rather than using a delete row function), the `SaveChanges()` method encounters a null reference when iterating through the grid rows.
+When a user added a mapping entry and then tried to delete it by clearing the cell contents (rather than using a delete row function), the `SaveChanges()` method encountered a null reference when iterating through the grid rows.
 
-The dialog does not provide a way to delete rows — users can only clear cell contents, which leaves empty rows that cause the crash.
+The dialogs do not provide a way to delete rows — users can only clear cell contents, which left empty rows that caused the crash.
 
 ---
 
 ## [↑](#table-of-contents) Steps to Reproduce
 
-1. Open Settings → Certification Mapping (or any Simple Mapping dialog)
+1. Open Settings → Certification Mapping (or any Simple/Regex Mapping dialog)
 2. Add a new mapping entry
 3. Try to delete the entry by clearing the cell contents (there is no delete row button)
 4. Click OK to save
-5. **Result:** NullReferenceException
+5. **Result:** NullReferenceException (before fix)
 
 ---
 
@@ -61,45 +61,45 @@ The dialog does not provide a way to delete rows — users can only clear cell c
 
 ## [↑](#table-of-contents) Root Cause
 
-The `SaveChanges()` method in `dlgSimpleMapping.vb` iterates through DataGridView rows and attempts to access cell values without null checking. When a row has been "cleared" but not removed, the cell values are null/empty, causing the exception.
+The `SaveChanges()` method called `.ToString` on potentially null cell values without checking for null first. When a row was "cleared" but not removed, the cell values were null, causing the exception.
 
 ---
 
-## [↑](#table-of-contents) Proposed Solution
+## [↑](#table-of-contents) Solution Implemented
 
-Two options:
+Added null/empty checks in `SaveChanges()` to skip rows with empty values:
 
-### Option 1: Add Null Checking (Quick Fix)
-
-Add null/empty checks in `SaveChanges()` to skip rows with empty values:
-
-    For Each row As DataGridViewRow In dgvMappings.Rows
-        If row.IsNewRow Then Continue For
-        If row.Cells(0).Value Is Nothing OrElse String.IsNullOrEmpty(row.Cells(0).Value.ToString()) Then
-            Continue For
-        End If
-        ' ... existing save logic
+    For Each aRow As DataGridViewRow In dgvMappings.Rows
+        'Skip new row placeholder and rows with null/empty input values
+        If aRow.IsNewRow Then Continue For
+        If aRow.Cells(0).Value Is Nothing OrElse String.IsNullOrEmpty(aRow.Cells(0).Value.ToString.Trim) Then Continue For
+        If aRow.Cells(1).Value Is Nothing Then Continue For
+        
+        ' ... save logic
     Next
 
-### Option 2: Add Delete Row Functionality (Better UX)
-
-Add a context menu or button to properly delete rows from the grid, preventing empty rows from existing.
+This approach:
+- Prevents the crash
+- Prevents blank entries from being saved to XML
+- Doesn't change user workflow
 
 ---
 
 ## [↑](#table-of-contents) Related Files
 
-| File | Purpose |
-|------|---------|
-| `Addons\generic.EmberCore.Mapping\dlgSimpleMapping.vb` | Dialog with the bug |
+| File | Status |
+|------|--------|
+| `Addons\generic.EmberCore.Mapping\dlgSimpleMapping.vb` | ✅ Fixed — added null checks |
+| `Addons\generic.EmberCore.Mapping\dlgRegexMapping.vb` | ✅ Fixed — added null checks |
+| `Addons\generic.EmberCore.Mapping\dlgGenreMapping.vb` | ✅ Safe — uses different save pattern |
 
 ---
 
 ## [↑](#table-of-contents) Notes
 
 - Discovered while testing BL-CC-001 (Replace BinaryFormatter)
-- This is a pre-existing bug, not caused by recent changes
-- Affects all Simple Mapping dialogs (Certification, Country, Status, Studio)
+- This was a pre-existing bug, not caused by recent changes
+- Affects: Certification, Country, Status, Studio, and Edition mapping dialogs
 
 ---
 
@@ -108,6 +108,7 @@ Add a context menu or button to properly delete rows from the grid, preventing e
 | Date | Description |
 |------|-------------|
 | January 14, 2026 | Created — discovered during BL-CC-001 testing |
+| January 14, 2026 | Fixed — added null checks to `dlgSimpleMapping.vb` and `dlgRegexMapping.vb` |
 
 ---
 

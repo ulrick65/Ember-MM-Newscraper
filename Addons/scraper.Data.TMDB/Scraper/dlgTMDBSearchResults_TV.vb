@@ -409,14 +409,7 @@ Public Class dlgTMDBSearchResults_TV
     End Sub
 
     Private Function GetTVShowClone(ByVal original As MediaContainers.TVShow) As MediaContainers.TVShow
-        Using mem As New IO.MemoryStream()
-            Dim bin As New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter(Nothing, New System.Runtime.Serialization.StreamingContext(Runtime.Serialization.StreamingContextStates.Clone))
-            bin.Serialize(mem, original)
-            mem.Seek(0, IO.SeekOrigin.Begin)
-            Return DirectCast(bin.Deserialize(mem), MediaContainers.TVShow)
-        End Using
-
-        Return Nothing
+        Return CType(original.CloneDeep(), MediaContainers.TVShow)
     End Function
 
 
