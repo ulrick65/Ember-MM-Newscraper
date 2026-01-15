@@ -207,6 +207,12 @@ The following features are deprecated and slated for removal in a future version
 | Feature | Auto-select Extrafanarts view when only image type enabled | See [BL-UX-007](improvements-docs/backlog/BL-UX-007-AutoSelectExtrafanarts.md) |
 | Enhancement | Added complete ISO 3166-1 country list to certification languages (62 → 249 countries) | `EmberAPI\Defaults\Core.Languages.Certifications.xml` |
 | Documentation | Added status legend to BL template for testing section | `docs\improvements-docs\backlog\_BL-TEMPLATE.md` |
+| Cleanup | **BL-CC-001: Replace BinaryFormatter in CloneDeep** - Replaced deprecated BinaryFormatter with JSON serialization | See [BL-CC-001](improvements-docs/backlog/BL-CC-001-ReplaceBinaryFormatter.md) |
+| Cleanup | Updated `Movie.CloneDeep()`, `TVShow.CloneDeep()`, `EpisodeDetails.CloneDeep()`, `Fileinfo.CloneDeep()` | `EmberAPI\clsAPIMediaContainers.vb` |
+| Cleanup | Updated `clsXMLSimpleMapping.CloneDeep()`, `clsXMLRegexMapping.CloneDeep()`, `clsXMLGenreMapping.CloneDeep()` | `EmberAPI\XML Serialization\clsXML*.vb` |
+| Cleanup | Updated `Database.DBElement.CloneDeep()` | `EmberAPI\clsAPIDatabase.vb` |
+| Bug Fix | Added `<JsonIgnore>` to `Movie.Set_Kodi` and `Movie.Sets_YAMJ` - JSON cannot serialize XmlDocument types | `EmberAPI\clsAPIMediaContainers.vb` |
+| Bug Fix | Discovered BL-KI-007: Simple Mapping NullReference on Empty Row (pre-existing bug) | See [BL-KI-007](improvements-docs/backlog/BL-KI-007-SimpleMappingNullReference.md) |
 
 **Script Updates:**
 
@@ -232,6 +238,10 @@ The following features are deprecated and slated for removal in a future version
 | Documentation | Created BL-UX-007 Auto-select Extrafanarts backlog document | `docs\improvements-docs\backlog\BL-UX-007-AutoSelectExtrafanarts.md` |
 | Documentation | Created BL-CQ-007 Certification Languages backlog document (completed) | `docs\improvements-docs\backlog\BL-CQ-007-AddCertificationLanguages.md` |
 | Documentation | Created BL-PE-001 Edit Images Performance backlog document | `docs\improvements-docs\backlog\BL-PE-001-EditImagesQuickAccessPerformance.md` |
+| Documentation | Updated BL-CC-001 Replace BinaryFormatter - marked complete with all testing passed | `docs\improvements-docs\backlog\BL-CC-001-ReplaceBinaryFormatter.md` |
+| Documentation | Created BL-KI-007 Simple Mapping NullReference backlog document | `docs\improvements-docs\backlog\BL-KI-007-SimpleMappingNullReference.md` |
+| Documentation | Updated backlog template with numbering/ordering instructions | `docs\improvements-docs\backlog\_BL-TEMPLATE.md` |
+| Documentation | Updated FutureEnhancements.md - BL-CC-001 moved to Completed Items | `docs\improvements-docs\FutureEnhancements.md` |
 
 **Documentation Standards Established:**
 
