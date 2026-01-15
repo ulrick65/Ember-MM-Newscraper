@@ -1,15 +1,29 @@
-﻿# BL-XX-###: Brief Descriptive Title
+﻿<!-- 
+TEMPLATE INSTRUCTIONS (DELETE THIS ENTIRE COMMENT BLOCK IN YOUR NEW DOCUMENT):
+
+BEFORE CREATING THIS DOCUMENT:
+1. Check backlog/ folder for existing BL-XX-### files in your category
+2. Check FutureEnhancements.md category section AND Completed Items for used numbers
+3. Numbers are NEVER reused, even for completed items
+4. Use the next available number in sequence
+
+When adding to FutureEnhancements.md:
+- Order by Priority: High → Medium → Low → Monitor
+- Within same priority: Order by Added date, oldest first
+-->
+
+# BL-XX-###: Brief Descriptive Title
 
 | Field | Value |
 |-------|-------|
 | **ID** | BL-XX-### |
-| **Created** | January 8, 2026 |
+| **Created** | January 14, 2026 |
+| **Updated** | January 14, 2026 |
+| **Category** | *(see [category codes](../FutureEnhancements.md#backlog-id-format))* |
 | **Priority** | High / Medium / Low |
 | **Effort** | X-X hours |
 | **Status** | 📋 Open / 🔄 In Progress / ✅ Completed |
-| **Completed** | *(add date when completed, remove if open)* |
-| **Category** | *(see [category codes](../FutureEnhancements.md#backlog-id-format))* |
-| **Related Files** | [`file1.vb`](../../../file1.vb), [`file2.vb`](../../../file2.vb) |
+| **Completed** | *(add date when completed, remove if open or in progress)* |
 
 ##### [← Return to FutureEnhancements](../FutureEnhancements.md)
 
@@ -117,7 +131,7 @@
 
 | Date | Description |
 |------|-------------|
-| January 8, 2026 | Created |
+| January 14, 2026 | Created |
 | *(date)* | *(description of change)* |
 
 ---

@@ -537,6 +537,7 @@
     <None Include="docs\improvements-docs\backlog\BL-KI-001-TVSeasonImagesSaveIssue.md" />
     <None Include="docs\improvements-docs\backlog\BL-KI-002-EditSeasonImageSelectionBug.md" />
     <None Include="docs\improvements-docs\backlog\BL-KI-003-EditImagesAllSeasonsCrash.md" />
+    <None Include="docs\improvements-docs\backlog\BL-KI-007-SimpleMappingNullReference.md" />
     <None Include="docs\improvements-docs\backlog\BL-KI-004-ExtrafanartsPreselectFix.md" />
     <None Include="docs\improvements-docs\backlog\BL-KI-005-GenreTextSettingNotSaving.md" />
     <None Include="docs\improvements-docs\backlog\BL-KI-006-MovieSetCrashAfterMovieRemoval.md" />

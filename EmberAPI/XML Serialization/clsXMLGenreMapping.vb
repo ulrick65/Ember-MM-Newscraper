@@ -18,6 +18,7 @@
 ' # along with Ember Media Manager.  If not, see <http://www.gnu.org/licenses/>. #
 ' ################################################################################
 
+Imports Newtonsoft.Json
 Imports NLog
 Imports System.IO
 Imports System.Xml.Serialization
@@ -71,20 +72,19 @@ Public Class clsXMLGenreMapping
         Mappings.Clear()
     End Sub
 
-    Public Function CloneDeep() As Object _
-        Implements ICloneable.Clone
-        ' Gibt eine vollständige Kopie dieses Objekts zurück. 
-        ' Voraussetzung ist die Serialisierbarkeit aller beteiligten 
-        ' Objekte. 
-        Dim Stream As New MemoryStream(50000)
-        Dim Formatter As New Runtime.Serialization.Formatters.Binary.BinaryFormatter()
-        ' Serialisierung über alle Objekte hinweg in einen Stream 
-        Formatter.Serialize(Stream, Me)
-        ' Zurück zum Anfang des Streams und... 
-        Stream.Seek(0, SeekOrigin.Begin)
-        ' ...aus dem Stream in ein Objekt deserialisieren 
-        CloneDeep = Formatter.Deserialize(Stream)
-        Stream.Close()
+    ''' <summary>
+    ''' Creates a deep copy of this clsXMLGenreMapping instance.
+    ''' </summary>
+    ''' <returns>A new clsXMLGenreMapping object with all properties copied.</returns>
+    ''' <remarks>
+    ''' Uses JSON serialization via Newtonsoft.Json to perform the deep clone.
+    ''' This replaces the deprecated BinaryFormatter approach for security and 
+    ''' future .NET compatibility.
+    ''' </remarks>
+    Public Function CloneDeep() As Object Implements ICloneable.Clone
+        'Use JSON serialization for deep cloning (replaces deprecated BinaryFormatter)
+        Dim json As String = JsonConvert.SerializeObject(Me)
+        Return JsonConvert.DeserializeObject(Of clsXMLGenreMapping)(json)
     End Function
 
     Public Sub Load()

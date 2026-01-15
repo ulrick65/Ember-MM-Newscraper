@@ -19,11 +19,12 @@
 ' ################################################################################
 
 Imports System.IO
+Imports Newtonsoft.Json
+Imports NLog
 Imports System.Text.RegularExpressions
 Imports System.Threading.Tasks
 Imports System.Xml
 Imports System.Xml.Serialization
-Imports NLog
 
 Namespace MediaContainers
 
@@ -645,16 +646,19 @@ Namespace MediaContainers
 
 #Region "Methods"
 
+        ''' <summary>
+        ''' Creates a deep copy of this EpisodeDetails instance.
+        ''' </summary>
+        ''' <returns>A new EpisodeDetails object with all properties copied.</returns>
+        ''' <remarks>
+        ''' Uses JSON serialization via Newtonsoft.Json to perform the deep clone.
+        ''' This replaces the deprecated BinaryFormatter approach for security and 
+        ''' future .NET compatibility.
+        ''' </remarks>
         Public Function CloneDeep() As Object Implements ICloneable.Clone
-            Dim Stream As New MemoryStream(50000)
-            Dim Formatter As New Runtime.Serialization.Formatters.Binary.BinaryFormatter()
-            ' Serialize all objects into a stream
-            Formatter.Serialize(Stream, Me)
-            ' Return to the beginning of the stream and...
-            Stream.Seek(0, SeekOrigin.Begin)
-            ' ...deserialize from the stream into an object
-            CloneDeep = Formatter.Deserialize(Stream)
-            Stream.Close()
+            'Use JSON serialization for deep cloning (replaces deprecated BinaryFormatter)
+            Dim json As String = JsonConvert.SerializeObject(Me)
+            Return JsonConvert.DeserializeObject(Of EpisodeDetails)(json)
         End Function
 
         Public Sub CreateCachePaths_ActorsThumbs()
@@ -778,16 +782,19 @@ Namespace MediaContainers
 
 #Region "Methods"
 
+        ''' <summary>
+        ''' Creates a deep copy of this Fileinfo instance.
+        ''' </summary>
+        ''' <returns>A new Fileinfo object with all stream details copied.</returns>
+        ''' <remarks>
+        ''' Uses JSON serialization via Newtonsoft.Json to perform the deep clone.
+        ''' This replaces the deprecated BinaryFormatter approach for security and 
+        ''' future .NET compatibility.
+        ''' </remarks>
         Public Function CloneDeep() As Object Implements ICloneable.Clone
-            Dim Stream As New MemoryStream(50000)
-            Dim Formatter As New Runtime.Serialization.Formatters.Binary.BinaryFormatter()
-            ' Serialize all objects into a stream
-            Formatter.Serialize(Stream, Me)
-            ' Return to the beginning of the stream and...
-            Stream.Seek(0, SeekOrigin.Begin)
-            ' ...deserialize from the stream into an object
-            CloneDeep = Formatter.Deserialize(Stream)
-            Stream.Close()
+            'Use JSON serialization for deep cloning (replaces deprecated BinaryFormatter)
+            Dim json As String = JsonConvert.SerializeObject(Me)
+            Return JsonConvert.DeserializeObject(Of Fileinfo)(json)
         End Function
 
 #End Region 'Methods
@@ -1949,7 +1956,22 @@ Namespace MediaContainers
             End Get
         End Property
 
+        ''' <summary>
+        ''' Gets or sets the movie set information for Kodi NFO output.
+        ''' </summary>
+        ''' <value>An XmlDocument containing the set element for NFO serialization.</value>
+        ''' <remarks>
+        ''' <para>This property is used exclusively for XML serialization to/from NFO files.</para>
+        ''' <para>The getter returns an XmlDocument via <see cref="CreateSetNode"/> which embeds 
+        ''' directly into the NFO XML output.</para>
+        ''' <para>The setter receives an XmlElement when deserializing NFO files and parses it 
+        ''' via <see cref="AddSet(Object)"/>.</para>
+        ''' <para><c>JsonIgnore</c> is required because JSON serialization (used by CloneDeep) 
+        ''' cannot properly serialize/deserialize XmlDocument objects. The actual set data is 
+        ''' stored in <see cref="Sets"/> which JSON serializes correctly.</para>
+        ''' </remarks>
         <XmlAnyElement("set")>
+        <JsonIgnore>
         Public Property Set_Kodi() As Object
             Get
                 Return CreateSetNode()
@@ -1959,7 +1981,21 @@ Namespace MediaContainers
             End Set
         End Property
 
+        ''' <summary>
+        ''' Gets or sets the movie set information for YAMJ NFO compatibility.
+        ''' </summary>
+        ''' <value>A SetContainer with the sets collection for YAMJ-format NFO files.</value>
+        ''' <remarks>
+        ''' <para>This property provides backward compatibility with YAMJ (Yet Another Movie Jukebox) 
+        ''' NFO format which uses a different XML structure for movie sets.</para>
+        ''' <para>The getter returns a SetContainer via <see cref="CreateSetYAMJ"/> only when 
+        ''' YAMJ compatibility is enabled in settings.</para>
+        ''' <para><c>JsonIgnore</c> is required because this is a computed property that would 
+        ''' create redundant data during JSON cloning. The actual set data is stored in 
+        ''' <see cref="Sets"/>.</para>
+        ''' </remarks>
         <XmlElement("sets")>
+        <JsonIgnore>
         Public Property Sets_YAMJ() As SetContainer
             Get
                 Return CreateSetYAMJ()
@@ -2245,16 +2281,19 @@ Namespace MediaContainers
             End If
         End Sub
 
+        ''' <summary>
+        ''' Creates a deep copy of this Movie instance.
+        ''' </summary>
+        ''' <returns>A new Movie object with all properties copied.</returns>
+        ''' <remarks>
+        ''' Uses JSON serialization via Newtonsoft.Json to perform the deep clone.
+        ''' This replaces the deprecated BinaryFormatter approach for security and 
+        ''' future .NET compatibility.
+        ''' </remarks>
         Public Function CloneDeep() As Object Implements ICloneable.Clone
-            Dim Stream As New MemoryStream(50000)
-            Dim Formatter As New Runtime.Serialization.Formatters.Binary.BinaryFormatter()
-            ' Serialize all objects into a stream
-            Formatter.Serialize(Stream, Me)
-            ' Return to the beginning of the stream and...
-            Stream.Seek(0, SeekOrigin.Begin)
-            ' ...deserialize from the stream into an object
-            CloneDeep = Formatter.Deserialize(Stream)
-            Stream.Close()
+            'Use JSON serialization for deep cloning (replaces deprecated BinaryFormatter)
+            Dim json As String = JsonConvert.SerializeObject(Me)
+            Return JsonConvert.DeserializeObject(Of Movie)(json)
         End Function
 
         Public Sub CreateCachePaths_ActorsThumbs()
@@ -3669,16 +3708,19 @@ Namespace MediaContainers
             End If
         End Sub
 
+        ''' <summary>
+        ''' Creates a deep copy of this TVShow instance.
+        ''' </summary>
+        ''' <returns>A new TVShow object with all properties copied.</returns>
+        ''' <remarks>
+        ''' Uses JSON serialization via Newtonsoft.Json to perform the deep clone.
+        ''' This replaces the deprecated BinaryFormatter approach for security and 
+        ''' future .NET compatibility.
+        ''' </remarks>
         Public Function CloneDeep() As Object Implements ICloneable.Clone
-            Dim Stream As New MemoryStream(50000)
-            Dim Formatter As New Runtime.Serialization.Formatters.Binary.BinaryFormatter()
-            ' Serialize all objects into a stream
-            Formatter.Serialize(Stream, Me)
-            ' Return to the beginning of the stream and...
-            Stream.Seek(0, SeekOrigin.Begin)
-            ' ...deserialize from the stream into an object
-            CloneDeep = Formatter.Deserialize(Stream)
-            Stream.Close()
+            'Use JSON serialization for deep cloning (replaces deprecated BinaryFormatter)
+            Dim json As String = JsonConvert.SerializeObject(Me)
+            Return JsonConvert.DeserializeObject(Of TVShow)(json)
         End Function
 
         Public Sub CreateCachePaths_ActorsThumbs()

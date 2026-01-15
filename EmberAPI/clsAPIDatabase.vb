@@ -18,13 +18,14 @@
 ' # along with Ember Media Manager.  If not, see <http://www.gnu.org/licenses/>. #
 ' ################################################################################
 
+Imports Newtonsoft.Json
+Imports NLog
 Imports System.Data.SQLite
 Imports System.IO
 Imports System.Text.RegularExpressions
 Imports System.Threading.Tasks
 Imports System.Windows.Forms
 Imports System.Xml.Serialization
-Imports NLog
 
 ''' <summary>
 ''' Class defining and implementing the interface to the database
@@ -7846,7 +7847,7 @@ Public Class Database
             End Get
         End Property
 
-        Public ReadOnly Property ContentType() As Enums.ContentType
+        Public Property ContentType() As Enums.ContentType
 
         Public Property Edition() As String = String.Empty
 
@@ -8087,16 +8088,19 @@ Public Class Database
 
 #Region "Methods"
 
+        ''' <summary>
+        ''' Creates a deep copy of this DBElement instance.
+        ''' </summary>
+        ''' <returns>A new DBElement object with all properties copied.</returns>
+        ''' <remarks>
+        ''' Uses JSON serialization via Newtonsoft.Json to perform the deep clone.
+        ''' This replaces the deprecated BinaryFormatter approach for security and 
+        ''' future .NET compatibility.
+        ''' </remarks>
         Public Function CloneDeep() As Object Implements ICloneable.Clone
-            Dim Stream As New MemoryStream(50000)
-            Dim Formatter As New Runtime.Serialization.Formatters.Binary.BinaryFormatter()
-            ' Serialisierung über alle Objekte hinweg in einen Stream 
-            Formatter.Serialize(Stream, Me)
-            ' Zurück zum Anfang des Streams und... 
-            Stream.Seek(0, SeekOrigin.Begin)
-            ' ...aus dem Stream in ein Objekt deserialisieren 
-            CloneDeep = Formatter.Deserialize(Stream)
-            Stream.Close()
+            'Use JSON serialization for deep cloning (replaces deprecated BinaryFormatter)
+            Dim json As String = JsonConvert.SerializeObject(Me)
+            Return JsonConvert.DeserializeObject(Of DBElement)(json)
         End Function
 
         Public Sub LoadAllImages(ByVal LoadBitmap As Boolean, ByVal withExtraImages As Boolean)

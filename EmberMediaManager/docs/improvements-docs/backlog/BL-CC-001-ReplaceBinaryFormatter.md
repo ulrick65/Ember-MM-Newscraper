@@ -3,36 +3,38 @@
 | Field | Value |
 |-------|-------|
 | **ID** | BL-CC-001 |
+| **Created** | January 7, 2026 |
+| **Updated** | January 14, 2026 |
 | **Category** | Code Cleanup (CC) |
 | **Priority** | Medium |
-| **Effort** | 4-6 hrs |
-| **Created** | January 7, 2026 |
-| **Status** | Open |
-| **Related Files** | `clsAPIMediaContainers.vb` |
+| **Effort** | 4-6 hours |
+| **Status** | ✅ Complete |
+| **Completed** | January 14, 2026 |
 
 ##### [← Return to FutureEnhancements](../FutureEnhancements.md)
 
 ---
 
-## Overview
+## Summary
 
-The `CloneDeep()` methods in media container classes use `BinaryFormatter`, which is deprecated in .NET 5+ and has known security vulnerabilities. While the current project targets .NET Framework 4.8, this should be addressed for future compatibility and security.
+The `CloneDeep()` methods in media container classes use `BinaryFormatter`, which is deprecated in .NET 5+ and has known security vulnerabilities. This cleanup replaces all instances with JSON serialization using Newtonsoft.Json.
 
 ---
 
 ## Table of Contents
 
 - [Problem Description](#problem-description)
-- [Current Behavior](#current-behavior)
 - [Affected Methods](#affected-methods)
-- [Proposed Solutions](#proposed-solutions)
-  - [Option 1: JSON Serialization](#option-1-json-serialization)
-  - [Option 2: Manual Copy Constructor](#option-2-manual-copy-constructor)
-  - [Option 3: Expression-based Cloning](#option-3-expression-based-cloning)
+- [Chosen Solution](#chosen-solution)
+- [Implementation Reference](#implementation-reference)
+- [Implementation Progress](#implementation-progress)
+- [Testing Summary](#testing-summary)
+- [Proposed Solutions (Reference)](#proposed-solutions-reference)
 - [Related Files](#related-files)
 - [Benefits](#benefits)
 - [Risks](#risks)
-- [Source Reference](#source-reference)
+- [Notes](#notes)
+- [Change History](#change-history)
 
 ---
 
@@ -48,35 +50,183 @@ While Ember currently targets .NET Framework 4.8, addressing this now will ease 
 
 ---
 
-## [↑](#table-of-contents) Current Behavior
-
-CloneDeep methods use BinaryFormatter for deep copying objects:
-
-    Public Function CloneDeep() As Movie
-        Using ms As New MemoryStream()
-            Dim bf As New BinaryFormatter()
-            bf.Serialize(ms, Me)
-            ms.Position = 0
-            Return DirectCast(bf.Deserialize(ms), Movie)
-        End Using
-    End Function
-
----
-
 ## [↑](#table-of-contents) Affected Methods
 
-| Method | Class | File |
-|--------|-------|------|
-| `CloneDeep()` | `MediaContainers.Movie` | [clsAPIMediaContainers.vb](../../../EmberAPI/clsAPIMediaContainers.vb) |
-| `CloneDeep()` | `MediaContainers.EpisodeDetails` | [clsAPIMediaContainers.vb](../../../EmberAPI/clsAPIMediaContainers.vb) |
-| `CloneDeep()` | `MediaContainers.TVShow` | [clsAPIMediaContainers.vb](../../../EmberAPI/clsAPIMediaContainers.vb) |
-| `CloneDeep()` | `MediaContainers.Fileinfo` | [clsAPIMediaContainers.vb](../../../EmberAPI/clsAPIMediaContainers.vb) |
+### Phase 1: clsAPIMediaContainers.vb (Completed ✅)
+
+| Method | Class | File | Status |
+|--------|-------|------|:------:|
+| `CloneDeep()` | `MediaContainers.Movie` | clsAPIMediaContainers.vb | ✅ |
+| `CloneDeep()` | `MediaContainers.EpisodeDetails` | clsAPIMediaContainers.vb | ✅ |
+| `CloneDeep()` | `MediaContainers.TVShow` | clsAPIMediaContainers.vb | ✅ |
+| `CloneDeep()` | `MediaContainers.Fileinfo` | clsAPIMediaContainers.vb | ✅ |
+
+### Phase 2: Additional Discovered Items
+
+| Method | Class | File | Status |
+|--------|-------|------|:------:|
+| `CloneDeep()` | `clsXMLSimpleMapping` | XML Serialization\clsXMLSimpleMapping.vb | 📋 |
+| `CloneDeep()` | `clsXMLRegexMapping` | XML Serialization\clsXMLRegexMapping.vb | 📋 |
+| `CloneDeep()` | `clsXMLGenreMapping` | XML Serialization\clsXMLGenreMapping.vb | 📋 |
+| `CloneDeep()` | `Database.DBElement` | clsAPIDatabase.vb | 📋 |
 
 ---
 
-## [↑](#table-of-contents) Proposed Solutions
+## [↑](#table-of-contents) Chosen Solution
 
-### [↑](#table-of-contents) Option 1: JSON Serialization
+**Option 1: JSON Serialization** using Newtonsoft.Json (already referenced in project).
+
+This approach was chosen because:
+- Simple implementation (3 lines of code)
+- Well-tested library already in use throughout the project
+- No caller changes required — method signature remains identical
+- Handles complex object graphs correctly
+
+---
+
+## [↑](#table-of-contents) Implementation Reference
+
+This section provides a complete before/after example for reference when implementing additional classes.
+
+### [↑](#table-of-contents) Prerequisites
+
+Ensure `Newtonsoft.Json` import exists at top of file:
+
+    Imports Newtonsoft.Json
+
+If the file doesn't have this import, use fully qualified names instead:
+
+    Newtonsoft.Json.JsonConvert.SerializeObject(Me)
+    Newtonsoft.Json.JsonConvert.DeserializeObject(Of [ClassName])(json)
+
+### [↑](#table-of-contents) Before (BinaryFormatter — deprecated)
+
+    Public Function CloneDeep() As Object Implements ICloneable.Clone
+        Dim Stream As New MemoryStream(50000)
+        Dim Formatter As New Runtime.Serialization.Formatters.Binary.BinaryFormatter()
+        Formatter.Serialize(Stream, Me)
+        Stream.Seek(0, SeekOrigin.Begin)
+        CloneDeep = Formatter.Deserialize(Stream)
+        Stream.Close()
+    End Function
+
+### [↑](#table-of-contents) After (JSON Serialization — recommended)
+
+    ''' <summary>
+    ''' Creates a deep copy of this [ClassName] instance.
+    ''' </summary>
+    ''' <returns>A new [ClassName] object with all properties copied.</returns>
+    ''' <remarks>
+    ''' Uses JSON serialization via Newtonsoft.Json to perform the deep clone.
+    ''' This replaces the deprecated BinaryFormatter approach for security and 
+    ''' future .NET compatibility.
+    ''' </remarks>
+    Public Function CloneDeep() As Object Implements ICloneable.Clone
+        'Use JSON serialization for deep cloning (replaces deprecated BinaryFormatter)
+        Dim json As String = JsonConvert.SerializeObject(Me)
+        Return JsonConvert.DeserializeObject(Of [ClassName])(json)
+    End Function
+
+**Note:** Replace `[ClassName]` with the actual class name (e.g., `Movie`, `TVShow`, `clsXMLSimpleMapping`, `DBElement`).
+
+---
+
+## [↑](#table-of-contents) Implementation Progress
+
+### Phase 1 Complete — January 14, 2026
+
+All four `CloneDeep()` methods in `clsAPIMediaContainers.vb` have been updated using the pattern shown in [Implementation Reference](#implementation-reference).
+
+**Classes Updated:**
+- `Movie` 
+- `EpisodeDetails`
+- `TVShow`
+- `Fileinfo`
+
+### Phase 2 — Pending
+
+Four additional `CloneDeep()` methods discovered:
+
+| Class | File | Notes |
+|-------|------|-------|
+| `clsXMLSimpleMapping` | [`clsXMLSimpleMapping.vb`](../../../../EmberAPI/XML%20Serialization/clsXMLSimpleMapping.vb) | Add `Imports Newtonsoft.Json` |
+| `clsXMLRegexMapping` | [`clsXMLRegexMapping.vb`](../../../../EmberAPI/XML%20Serialization/clsXMLRegexMapping.vb) | Add `Imports Newtonsoft.Json` |
+| `clsXMLGenreMapping` | [`clsXMLGenreMapping.vb`](../../../../EmberAPI/XML%20Serialization/clsXMLGenreMapping.vb) | Add `Imports Newtonsoft.Json` |
+| `Database.DBElement` | [`clsAPIDatabase.vb`](../../../../EmberAPI/clsAPIDatabase.vb) | Nested class within `Database` class |
+
+---
+
+## [↑](#table-of-contents) Testing Summary
+
+**Status Legend:** ⬜ Not tested | ✅ Passed | ❌ Failed | ⏸️ Skipped
+
+### Phase 1: clsAPIMediaContainers.vb
+
+#### Movie
+
+| Status | Test Scenario |
+|:------:|---------------|
+| ✅ | Edit movie → Cancel → Original unchanged |
+| ✅ | Edit movie → Save → Changes persisted |
+| ✅ | Scrape movie → Data correct |
+
+#### EpisodeDetails
+
+| Status | Test Scenario |
+|:------:|---------------|
+| ✅ | Edit episode → Cancel → Original unchanged |
+| ✅ | Edit episode → Save → Changes persisted |
+| ✅ | Scrape episode → Data correct |
+
+#### TVShow
+
+| Status | Test Scenario |
+|:------:|---------------|
+| ✅ | Edit TV show → Cancel → Original unchanged |
+| ✅ | Edit TV show → Save → Changes persisted |
+| ✅ | Scrape TV show → Data correct |
+
+#### Fileinfo
+
+| Status | Test Scenario |
+|:------:|---------------|
+| ✅ | Edit file info → Cancel → Original unchanged |
+| ✅ | Edit file info → Save → Changes persisted |
+
+### Phase 2: Additional Classes
+
+#### clsXMLSimpleMapping (Certification, Country, Status, Studio mappings)
+
+| Status | Test Scenario |
+|:------:|---------------|
+| ✅ | Settings → Certification Mapping → Edit → Cancel → No changes saved |
+| ✅ | Settings → Country Mapping → Add/modify entry → Save → Changes persisted |
+
+#### clsXMLRegexMapping
+
+| Status | Test Scenario |
+|:------:|---------------|
+| ✅ | Build completes without errors (class may be unused/legacy) |
+
+#### clsXMLGenreMapping
+
+| Status | Test Scenario |
+|:------:|---------------|
+| ✅ | Settings → Genre Mapping → Edit genre → Cancel → No changes saved |
+| ✅ | Settings → Genre Mapping → Add mapping → Save → Changes persisted |
+
+#### Database.DBElement
+
+| Status | Test Scenario |
+|:------:|---------------|
+| ✅ | Scan TV show with multi-episode file (e.g., S01E01E02) → Both episodes created with correct distinct metadata |
+| ✅ | Edit Episode dialog → Change episode number → Save → Verify each episode in multi-episode file retains correct data |
+
+---
+
+## [↑](#table-of-contents) Proposed Solutions (Reference)
+
+### Option 1: JSON Serialization ← CHOSEN
 
 Use Newtonsoft.Json (already referenced in project):
 
@@ -96,7 +246,7 @@ Use Newtonsoft.Json (already referenced in project):
 
 ---
 
-### [↑](#table-of-contents) Option 2: Manual Copy Constructor
+### Option 2: Manual Copy Constructor
 
 Implement explicit property copying:
 
@@ -120,7 +270,7 @@ Implement explicit property copying:
 
 ---
 
-### [↑](#table-of-contents) Option 3: Expression-based Cloning
+### Option 3: Expression-based Cloning
 
 Use libraries like FastDeepCloner:
 
@@ -142,7 +292,11 @@ Use libraries like FastDeepCloner:
 
 | File | Purpose |
 |------|---------|
-| [clsAPIMediaContainers.vb](../../../EmberAPI/clsAPIMediaContainers.vb) | Media container classes with CloneDeep methods |
+| [`EmberAPI\clsAPIMediaContainers.vb`](../../../../EmberAPI/clsAPIMediaContainers.vb) | Phase 1: Media container classes (completed) |
+| [`EmberAPI\XML Serialization\clsXMLSimpleMapping.vb`](../../../../EmberAPI/XML%20Serialization/clsXMLSimpleMapping.vb) | Phase 2: Simple mapping class |
+| [`EmberAPI\XML Serialization\clsXMLRegexMapping.vb`](../../../../EmberAPI/XML%20Serialization/clsXMLRegexMapping.vb) | Phase 2: Regex mapping class |
+| [`EmberAPI\XML Serialization\clsXMLGenreMapping.vb`](../../../../EmberAPI/XML%20Serialization/clsXMLGenreMapping.vb) | Phase 2: Genre mapping class |
+| [`EmberAPI\clsAPIDatabase.vb`](../../../../EmberAPI/clsAPIDatabase.vb) | Phase 2: DBElement nested class |
 
 ---
 
@@ -150,22 +304,42 @@ Use libraries like FastDeepCloner:
 
 - Future .NET compatibility (.NET 5/6/7+)
 - Improved security (eliminates BinaryFormatter vulnerabilities)
-- Potentially better performance (depending on approach chosen)
+- Consistent implementation pattern across all classes
 
 ---
 
 ## [↑](#table-of-contents) Risks
 
 - JSON serialization may handle some edge cases differently
-- Manual copying requires ongoing maintenance when properties change
 - Need thorough testing to ensure deep copy completeness
+- Properties with `<XmlIgnore>` attributes are still serialized by JSON (verified working)
+- `Database.DBElement` is a complex nested class — may require additional testing
 
 ---
 
-## [↑](#table-of-contents) Source Reference
+## [↑](#table-of-contents) Notes
 
-[NfoFileImprovements.md](../NfoFileImprovements.md) - Item 3.1
+**Source Reference:** [NfoFileImprovements.md](../NfoFileImprovements.md) - Item 3.1
+
+**Phase 1 Implementation Notes:**
+- `Movie` class required `<JsonIgnore>` attributes on `Set_Kodi` and `Sets_YAMJ` properties because these are computed properties that return `XmlDocument`/`SetContainer` for NFO serialization — JSON cannot properly serialize/deserialize these types. The actual data is stored in the `Sets` property which JSON handles correctly.
+
+**Phase 2 Implementation Notes:**
+- XML Serialization classes don't have `Imports Newtonsoft.Json` — use fully qualified names
+- `Database.DBElement` is a nested class inside `Database` — ensure proper class reference in `DeserializeObject(Of Database.DBElement)`
 
 ---
 
-*Created: January 7, 2026*
+## [↑](#table-of-contents) Change History
+
+| Date | Description |
+|------|-------------|
+| January 7, 2026 | Created |
+| January 14, 2026 | Completed Phase 1: All four CloneDeep methods in clsAPIMediaContainers.vb updated and tested |
+| January 14, 2026 | Added Phase 2: Discovered four additional BinaryFormatter usages in XML Serialization classes and clsAPIDatabase.vb |
+| January 14, 2026 | Added `<JsonIgnore>` to `Movie.Set_Kodi` and `Movie.Sets_YAMJ` to fix JSON serialization error for movies in sets |
+| January 14, 2026 | All testing complete — Phase 1 and Phase 2 fully verified ✅ |
+
+---
+
+*End of file*

@@ -48,11 +48,25 @@ where `XX` is the category code and `###` is a sequential number.
 **Workflow:**
 
 1. **Determine the category code** from the table above
-2. **Find the next available number** in that category (check existing `BL-XX-###` files in `backlog/`)
+2. **Find the next available number** in that category:
+   - Check existing `BL-XX-###` files in `backlog/` folder
+   - Also check this document's category section AND Completed Items for used numbers
+   - Numbers are never reused, even for completed items
 3. **Create the document** using the template: [`backlog/_BL-TEMPLATE.md`](backlog/_BL-TEMPLATE.md)
-4. **Name the file:** `BL-XX-###-BriefTitle.md` (e.g., `BL-KI-005-ImageCacheBug.md`)
+4. **Name the file:** `BL-XX-###-BriefTitle.md` (e.g., `BL-KI-008-NewBugName.md`)
 5. **Add entry to this document** in the appropriate category section with link to the BL document
 6. **When completed:** Move the entry to [Completed Items](#completed-items) with date and link
+
+**Entry Format:**
+
+Each category table uses this column order:
+
+| Priority | Item | Effort | Added | Source | Notes | Details |
+
+**Section Ordering Rules:**
+- **Priority order:** High → Medium → Low → Monitor (if applicable)
+- **Within same priority:** Order by Added date, oldest first
+- Example: A "Low" item from January 5 comes before a "Low" item from January 10
 
 **Template location:** [`backlog/_BL-TEMPLATE.md`](backlog/_BL-TEMPLATE.md) *(authoritative template — see [Documentation Standards](../process-docs/DocumentationStandardsProcess.md#backlog-document-template-for-backlog) for quick reference)*
 
@@ -82,7 +96,6 @@ where `XX` is the category code and `###` is a sequential number.
 
 | Priority | Item | Effort | Added | Source | Notes | Details |
 |----------|------|--------|-------|--------|-------|---------|
-| Medium | Replace BinaryFormatter in CloneDeep | 4-6 hrs | December 26, 2025 | NfoFileImprovements 3.1 | Deprecated, security vulnerabilities | [BL-CC-001](backlog/BL-CC-001-ReplaceBinaryFormatter.md) |
 | Low | Find/remove orphaned files | 1-2 hrs | December 31, 2025 | SolutionCleanupAnalysis | Script provided in doc | |
 | Low | Remove commented code blocks | 2-4 hrs | December 31, 2025 | SolutionCleanupAnalysis | Multiple files identified | |
 
@@ -148,10 +161,12 @@ where `XX` is the category code and `###` is a sequential number.
 
 | Priority | Item | Effort | Added | Source | Notes | Details |
 |----------|------|--------|-------|--------|-------|---------|
-| Monitor | Parallel download race conditions in SaveToFile | — | December 29, 2025 | Phase 1 | Reverted `File.Exists` check that broke image editing | |
-| Low | Edit Images crash with All Seasons selected | 2-3 hrs | January 5, 2026 | Testing | Unscraped show + All Seasons causes ArgumentNullException | [BL-KI-003](backlog/BL-KI-003-EditImagesAllSeasonsCrash.md) |
-| High | Setting "Create imdb/tmdb node in nfo file" will not stay selected | 1-2 hrs | January 11, 2026 | ulrick65 | Location is `Settings-TV Shows-Scrapers-Data` the ID of the settings are: `chkMovieScraperIdWriteNodeIMDbId` and `chkTVScraperIdWriteNodeTMDbId` |  |
+| High | Setting "Create imdb/tmdb node in nfo file" will not stay selected | 1-2 hrs | January 11, 2026 | ulrick65 | Location is `Settings-TV Shows-Scrapers-Data` the ID of the settings are: `chkMovieScraperIdWriteNodeIMDbId` and `chkTVScraperIdWriteNodeTMDbId` | |
 | Medium | MovieSet crash after removing movies from database | 1-2 hrs | January 11, 2026 | ulrick65 | Null collection in `FillScreenInfoWith_Movieset()` causes ArgumentNullException | [BL-KI-006](backlog/BL-KI-006-MovieSetCrashAfterMovieRemoval.md) |
+| Low | Edit Images crash with All Seasons selected | 2-3 hrs | January 5, 2026 | Testing | Unscraped show + All Seasons causes ArgumentNullException | [BL-KI-003](backlog/BL-KI-003-EditImagesAllSeasonsCrash.md) |
+| Low | Simple Mapping NullReference on Empty Row | 1-2 hrs | January 14, 2026 | BL-CC-001 Testing | Certification/Country/Status/Studio mapping dialogs crash when saving cleared rows | [BL-KI-007](backlog/BL-KI-007-SimpleMappingNullReference.md) |
+| Monitor | Parallel download race conditions in SaveToFile | — | December 29, 2025 | Phase 1 | Reverted `File.Exists` check that broke image editing | |
+
 
 ---
 
@@ -254,6 +269,13 @@ where `XX` is the category code and `###` is a sequential number.
 | Remove Check for Updates and Donate features | January 8, 2026 | January 8, 2026 | 0 | [BL-DR-003](backlog/BL-DR-003-RemoveCheckForUpdates.md) |
 | "Always Show Genre Text" setting not saving | January 9, 2026 | January 9, 2026 | 0 | [BL-KI-005](backlog/BL-KI-005-GenreTextSettingNotSaving.md) |
 | Auto-select Extrafanarts view when only image type enabled | January 10, 2026 | January 10, 2026 | 0 | [BL-UX-007](backlog/BL-UX-007-AutoSelectExtrafanarts.md) |
+| Replace BinaryFormatter in CloneDeep | December 26, 2025 | January 14, 2026 | 19 | [BL-CC-001](backlog/BL-CC-001-ReplaceBinaryFormatter.md) |
+
+
+---
+
+*End of file*
+
 
 
 ---
