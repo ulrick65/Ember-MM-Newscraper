@@ -2610,7 +2610,7 @@ Namespace FileUtils
 
                     'Create a list of all media files with a valid extension in the directory
                     lMediaList = lFi.Where(Function(f) Master.eSettings.FileSystemValidExts.Contains(f.Extension.ToLower) AndAlso
-                             Not Regex.IsMatch(f.Name, String.Concat("[^\w\s]\s?(", AdvancedSettings.GetSetting("NotValidFileContains", "trailer|sample"), ")"), RegexOptions.IgnoreCase) AndAlso ((Master.eSettings.MovieSkipStackedSizeCheck AndAlso
+                             Not Regex.IsMatch(f.Name, AdvancedSettings.GetSetting("NotValidFileContains", "[\-\.\s\[\(]trailer[\]\)]?\.[a-z0-9]{2,4}$|[\-\.\s\[\(]sample[\]\)]?\.[a-z0-9]{2,4}$"), RegexOptions.IgnoreCase) AndAlso ((Master.eSettings.MovieSkipStackedSizeCheck AndAlso
                             Common.isStacked(f.FullName)) OrElse (Not Convert.ToInt32(Master.eSettings.MovieSkipLessThan) > 0 OrElse f.Length >= Master.eSettings.MovieSkipLessThan * 1048576))).OrderByDescending(Function(f) Path.GetFileNameWithoutExtension(f.FullName))
 
                     'For each valid file in the directory...

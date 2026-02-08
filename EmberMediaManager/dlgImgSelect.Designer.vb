@@ -29,9 +29,9 @@ Partial Class dlgImgSelect
         Me.pnlTopImages = New System.Windows.Forms.Panel()
         Me.pnlImgSelectBottom = New System.Windows.Forms.Panel()
         Me.tblImgSelectBottom = New System.Windows.Forms.TableLayoutPanel()
+        Me.btnIncludeFanarts = New System.Windows.Forms.Button()
         Me.btnOK = New System.Windows.Forms.Button()
         Me.btnCancel = New System.Windows.Forms.Button()
-        Me.btnIncludeFanarts = New System.Windows.Forms.Button()
         Me.pnlImgSelectLeft = New System.Windows.Forms.Panel()
         Me.tblImgSelectLeft = New System.Windows.Forms.TableLayoutPanel()
         Me.pnlSubImages = New System.Windows.Forms.Panel()
@@ -140,17 +140,6 @@ Partial Class dlgImgSelect
         Me.tblImgSelectBottom.Size = New System.Drawing.Size(1991, 36)
         Me.tblImgSelectBottom.TabIndex = 0
         '
-        'btnOK
-        '
-        Me.btnOK.Anchor = System.Windows.Forms.AnchorStyles.None
-        Me.btnOK.Location = New System.Drawing.Point(1779, 4)
-        Me.btnOK.Margin = New System.Windows.Forms.Padding(4)
-        Me.btnOK.Name = "btnOK"
-        Me.btnOK.Size = New System.Drawing.Size(100, 28)
-        Me.btnOK.TabIndex = 0
-        Me.btnOK.Text = "OK"
-        Me.btnOK.UseVisualStyleBackColor = True
-        '
         'btnIncludeFanarts
         '
         Me.btnIncludeFanarts.Anchor = System.Windows.Forms.AnchorStyles.Left
@@ -164,6 +153,17 @@ Partial Class dlgImgSelect
         Me.btnIncludeFanarts.Text = "Include Fanarts"
         Me.btnIncludeFanarts.UseVisualStyleBackColor = True
         Me.btnIncludeFanarts.Visible = False
+        '
+        'btnOK
+        '
+        Me.btnOK.Anchor = System.Windows.Forms.AnchorStyles.None
+        Me.btnOK.Location = New System.Drawing.Point(1779, 4)
+        Me.btnOK.Margin = New System.Windows.Forms.Padding(4)
+        Me.btnOK.Name = "btnOK"
+        Me.btnOK.Size = New System.Drawing.Size(100, 28)
+        Me.btnOK.TabIndex = 0
+        Me.btnOK.Text = "OK"
+        Me.btnOK.UseVisualStyleBackColor = True
         '
         'btnCancel
         '
@@ -511,6 +511,7 @@ Partial Class dlgImgSelect
         Me.pnlImgSelectBottom.ResumeLayout(False)
         Me.pnlImgSelectBottom.PerformLayout()
         Me.tblImgSelectBottom.ResumeLayout(False)
+        Me.tblImgSelectBottom.PerformLayout()
         Me.pnlImgSelectLeft.ResumeLayout(False)
         Me.pnlImgSelectLeft.PerformLayout()
         Me.tblImgSelectLeft.ResumeLayout(False)
